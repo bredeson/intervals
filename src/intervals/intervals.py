@@ -1281,7 +1281,7 @@ class Interval(BaseInterval):
     """
     # To maintain memory and speed efficiency, every child object
     # must also define __slots__ = ()
-    __slots__ = ()  # 'namespace','_beg','_end')  
+    __slots__ = ()
     
     def __init__(self, name=_NULL_NS, beg=_NULL_BEG, end=_NULL_END):
         """
@@ -1403,14 +1403,106 @@ class Interval(BaseInterval):
 
         Test whether self.end - self.beg == 1
         """
-        return False
+        return ((self.end - self.beg) == 1)
 
     
-    # Method aliases
-    to_string = __str__
+
+class Point(Interval):
+    __slots__ = ()
+    
+    def __init__(self, name=_NULL_NS, pos=_NULL_BEG):
+        """
+        >>> Point("Chr1", 37) -> Point
+        """
+        super().__init__(name, pos-1, pos)
 
 
+    def __hash__(self):
+        return id(self)
+        
+        
+    @property
+    def beg(self):
+        """
+        self.beg -> int
 
+        The beginning (0-based) coordinate of the interval.
+
+        >>> interval.beg = 350
+        >>> print(interval.beg)
+        350
+        """
+        return self._beg
+
+
+    @beg.setter
+    def beg(self, beg):
+        self._beg = _int(beg)
+        self._end = _int(beg) + 1
+
+        
+    @property
+    def end(self):
+        return self._end
+
+
+    @end.setter
+    def end(self, end):
+        """
+        self.end -> int
+
+        The ending (1-based) coordinate of the interval.
+
+        >>> interval.end = 500
+        >>> print(interval.end)
+        500
+        """
+        self._beg = _int(end) - 1
+        self._end = _int(end)
+    
+    
+    @property
+    def mid(self):
+        """
+        self.mid -> int
+
+        The midpoint of the interval.
+
+        >>> print(self.mid)
+        412
+        """        
+        return self.end
+
+
+    @property
+    def pos(self):
+        return self.end
+
+
+    @pos.setter
+    def pos(self, pos):
+        self.end = pos
+
+
+    @property
+    def pos0(self):
+        return self.beg
+
+
+    @pos0.setter
+    def pos0(self, pos0):
+        self.beg = pos0
+
+        
+    def issingleton(self):
+        """
+        self.issingleton() -> bool
+
+        Test whether self.end - self.beg == 1
+        """
+        return True
+
+        
 #       10        20        30        40        50        60        70        80
 #---+----|----+----|----+----|----+----|----+----|----+----|----+----|----+----|
 
