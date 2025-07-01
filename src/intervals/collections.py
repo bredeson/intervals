@@ -65,7 +65,7 @@ def _reprify(item, sep=', ', indent=False):
         return repr(item)  # .instance)
 
 
-def _filter_proper(nodes, sort=False):
+def _filter_nested(nodes, sort=False):
     if sort:
        nodes = sorted(nodes, key=sort)
     prev_node = None
@@ -751,7 +751,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         nodes = map(lambda i: self._set(i, setter), _listify(intervals))
         length = len(self)
         upper = 0
-        for node in _filter_proper(nodes, sort=_node_pos_longest):
+        for node in _filter_nested(nodes, sort=_node_pos_longest):
             index = self.find_index_beg(node.interval, lower=upper, setter=_pass)
             while index < length and \
                   self._get_node(index).interval.isoverlapping(node.interval):
@@ -777,7 +777,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         length = len(self)
         lower = -1
         upper = -1
-        for node in _filter_proper(nodes, sort=_node_pos_longest):
+        for node in _filter_nested(nodes, sort=_node_pos_longest):
             index = self.find_index_beg(node.interval, lower=upper, setter=_pass)
             while index < length and \
                   self._get_node(index).interval.isoverlapping(node.interval):
@@ -855,7 +855,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         # if pairwise:
         nodes = sorted(nodes, key=_node_pos)
         # else:
-        #     nodes = _filter_proper(nodes, sort=_node_pos_longest)
+        #     nodes = _filter_nested(nodes, sort=_node_pos_longest)
 
         #nr = not pairwise
         #visited = set()
@@ -1221,7 +1221,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         and outputs a single Interval-descendant object.
         """
         upper = 0
-        for node in _filter_proper(_listify(nodes), sort=_node_pos_longest):
+        for node in _filter_nested(_listify(nodes), sort=_node_pos_longest):
             index = self.find_index_beg(node, lower=upper)
             while 0 <= index < self.length and \
                   node.interval.isoverlapping(self[index].interval):
@@ -1245,7 +1245,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         """
         lower = -1
         upper = -1
-        for node in _filter_proper(_listify(nodes), sort=_node_pos_longest):
+        for node in _filter_nested(_listify(nodes), sort=_node_pos_longest):
             index = self.find_index_beg(node, lower=upper)
             while 0 <= index < self.length and \
                   node.interval.isoverlapping(self[index].interval):
@@ -1398,13 +1398,13 @@ class IntervalSet(BaseIntervalCollection):
                 break
             if nodes[i].interval.namespace != nodes[p].interval.namespace:
                 raise ValueError("mixed-namespace IntervalSet")
-            if nodes[i].interval.issubinterval(nodes[p].interval, proper=True):
+            if nodes[i].interval.issubinterval(nodes[p].interval, strict=True):
                 if hash(nodes[i]) in visited:
                     i += 1
                     d += 1
                     continue
                 
-                if nodes[i].interval.issubinterval(nodes[i-1].interval, proper=True):
+                if nodes[i].interval.issubinterval(nodes[i-1].interval, strict=True):
                     # if the parent is not already in the stack, add it:
                     if ((parents.length < 1) or (parents[0] != i-1)):
                         parents.appendleft(i-1)
@@ -1943,7 +1943,7 @@ class IntervalSet(BaseIntervalCollection):
         of IntervalSet. The function must accept one (and only one) argument
         and outputs a single Interval-descendant object.
         """
-        nodes = _filter_proper(
+        nodes = _filter_nested(
             map(lambda n: self._set(n, setter), _listify(intervals)),
             sort=_node_pos_longest
         )
@@ -2053,29 +2053,34 @@ class IntervalSet(BaseIntervalCollection):
         return self._length < 1    
 
     
-    def issuperinterval(self, other, proper=False, strict=False):
-        return (Interval.issuperinterval(self, other, proper) and
-                ((not strict) or self._isoverlapping(other)))
+    def issuperinterval(self, other, strict=False, overlapping=True):
+        """
+        strict: require that other is a strict subinterval of self
+
+        overlapping: require intervals in self overlap intervals in other
+        """
+        return (Interval.issuperinterval(self, other, strict) and
+                ((not overlapping) or self._isoverlapping(other)))
 
     
-    def issubinterval(self, other, proper=False, strict=False):
-        return (Interval.issubinterval(self, other, proper) and
-                ((not strict) or self._isoverlapping(other)))
+    def issubinterval(self, other, strict=False, overlapping=True):
+        return (Interval.issubinterval(self, other, strict) and
+                ((not overlapping) or self._isoverlapping(other)))
 
     
-    def isoverlapping(self, other, strict=False):
+    def isoverlapping(self, other, overlapping=True):
         return (Interval.isoverlapping(self, other) and
-                ((not strict) or self._isoverlapping(other)))
+                ((not overlapping) or self._isoverlapping(other)))
 
     
-    def isoverlapping_beg(self, other, strict=False):
+    def isoverlapping_beg(self, other, overlapping=True):
         return (Interval.isoverlapping_beg(self, other) and
-                ((not strict) or self._isoverlapping(other)))
+                ((not overlapping) or self._isoverlapping(other)))
 
     
-    def isoverlapping_end(self, other, strict=False):
+    def isoverlapping_end(self, other, overlapping=True):
         return (Interval.isoverlapping_end(self, other) and
-                ((not strict) or self._isoverlapping(other)))
+                ((not overlapping) or self._isoverlapping(other)))
 
     
     def merge(self, abutting=False):

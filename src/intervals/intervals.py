@@ -63,7 +63,7 @@ def _floor(x, y):
 class BaseInterval(object):
     """
     Base class for 0-indexed generic mathematical intervals. Assumes
-    interval coordinates are half-open (specifically left-closed 
+    interval coordinates are fully-open (specifically, left-closed 
     right-open), same as Pythonic slice notation.
 
     The `self.namespace` attribute provides an abstraction allowing 
@@ -285,17 +285,6 @@ class BaseInterval(object):
         return ((self.namespace == other.namespace) and
                 (self.beg == other.beg) and
                 (self.end == other.end))
-
-        
-    def __ge__(self, other):
-        """
-        self >= other -> bool
-
-        Test if self Interval is greater-than or equal-to other: 
-        """
-        return ((self.namespace == other.namespace) and
-                (self.beg >= other.beg) and
-                (self.end >= other.end))
     
 
     def __gt__(self, other):
@@ -308,18 +297,16 @@ class BaseInterval(object):
                 ((self.beg > other.beg) or
                  (self.beg == other.beg) and
                  (self.end > other.end)))
+
+
+    def __ge__(self, other):
+        """
+        self >= other -> bool
+
+        Test if self Interval is greater-than or equal-to other: 
+        """
+        return self == other or self > other
     
-
-    def __le__(self, other):
-        """
-        self <= other -> bool
-
-        Test if self Interval is less-than or equal-to other.
-        """
-        return ((self.namespace == other.namespace) and
-                (self.beg <= other.beg) and
-                (self.end <= other.end))
-
 
     def __lt__(self, other):
         """
@@ -331,6 +318,15 @@ class BaseInterval(object):
                 ((self.beg < other.beg) or
                  (self.beg == other.beg) and
                  (self.end < other.end)))
+
+
+    def __le__(self, other):
+        """
+        self <= other -> bool
+
+        Test if self Interval is less-than or equal-to other.
+        """
+        return self == other or self < other
 
 
     def __ne__(self, other):
@@ -840,7 +836,9 @@ class BaseInterval(object):
         True
         """
         return ((self.namespace == other.namespace) and
-                (self.end == other.beg))
+                (self.end == other.beg) and
+                (other.beg < other.end) and
+                (self.beg < other.end))
 
 
     def isabutting_end(self, other):
@@ -853,16 +851,18 @@ class BaseInterval(object):
         True
         """
         return ((self.namespace == other.namespace) and
-                (other.end == self.beg))
+                (other.end == self.beg) and
+                (other.beg < other.end) and
+                (self.beg < self.end))
 
 
-    def issuperinterval(self, other, proper=False):
+    def issuperinterval(self, other, strict=False):
         """
         self.issuperinterval(other) -> bool
 
         Test whether self is containing other (whether self is a 
-        superinterval of self). When `proper=True`, evaluate to True
-        only when self is a proper superinterval of other.
+        superinterval of self). When `strict=True`, evaluate to True
+        only when self is a strict superinterval of other.
 
         >>> i1 = Interval("Chr", 20, 80)
         >>> i2 = Interval("Chr", 40, 60)
@@ -870,24 +870,24 @@ class BaseInterval(object):
         True
         >>> i2.issuperinterval(i1)
         False
-        >>> i1.issuperinterval(i1, proper=False)
+        >>> i1.issuperinterval(i1, strict=False)
         True
-        >>> i1.issuperinterval(i1, proper=True)
+        >>> i1.issuperinterval(i1, strict=True)
         False
         """
-        proper = proper and (self.beg == other.beg) and (self.end == other.end)
+        strict = strict and (self.beg == other.beg) and (self.end == other.end)
         return ((self.namespace == other.namespace) and
-                (self.beg <= other.beg < other.end <= self.end) and
-                (not proper))
+                (self.beg <= other.beg <= other.end <= self.end) and
+                (not strict))
 
 
-    def issubinterval(self, other, proper=False):
+    def issubinterval(self, other, strict=False):
         """
         self.issubinterval(other) -> bool
 
         Test whether self is contained within other (whether self is
-        a subinterval of other). When `proper=True`, evaluate to True
-        only when self is a proper subinterval of other.
+        a subinterval of other). When `strict=True`, evaluate to True
+        only when self is a strict subinterval of other.
 
         >>> i1 = Interval("Chr", 20, 80)
         >>> i2 = Interval("Chr", 40, 60)
@@ -895,15 +895,15 @@ class BaseInterval(object):
         False
         >>> i2.issubinterval(i1)
         True
-        >>> i1.issubinterval(i1, proper=False)
+        >>> i1.issubinterval(i1, strict=False)
         True
-        >>> i1.issubinterval(i1, proper=True)
+        >>> i1.issubinterval(i1, strict=True)
         False
         """
-        proper = proper and (self.beg == other.beg) and (self.end == other.end)
+        strict = strict and (self.beg == other.beg) and (self.end == other.end)
         return ((self.namespace == other.namespace) and 
-                (other.beg <= self.beg < self.end <= other.end) and
-                (not proper))
+                (other.beg <= self.beg <= self.end <= other.end) and
+                (not strict))
 
 
     def isoverlapping(self, other):
@@ -916,7 +916,7 @@ class BaseInterval(object):
         True
         """
         return ((self.namespace == other.namespace) and
-                (other.beg < self.end and self.beg < other.end))
+                (other.beg <= self.end and self.beg <= other.end))
     
 
     def isoverlapping_beg(self, other):
@@ -930,10 +930,10 @@ class BaseInterval(object):
         >>> Interval("Chr", 40, 80).isoverlapping_beg(Interval("Chr", 20, 60))
         False
         """
-        # self.beg *=========o self.end
-        #      other.beg *==============o other.end
+        # self.beg *=========* self.end
+        #      other.beg *==============* other.end
         return ((self.namespace == other.namespace) and
-                (self.beg <= other.beg < self.end < other.end))
+                (self.beg <= other.beg <= self.end <= other.end))
 
 
     def isoverlapping_end(self, other):
@@ -947,10 +947,10 @@ class BaseInterval(object):
         >>> Interval("Chr", 20, 60).isoverlapping_end(Interval("Chr", 40, 80))
         False
         """
-        #           self.beg *=========o self.end
-        # other.beg *==============o other.end            
+        #           self.beg *=========* self.end
+        # other.beg *==============* other.end            
         return ((self.namespace == other.namespace) and
-                (other.beg < self.beg < other.end <= self.end))
+                (other.beg <= self.beg <= other.end <= self.end))
 
 
     def overlap_length(self, other):
@@ -1272,12 +1272,131 @@ class BaseInterval(object):
     issuperset = issuperinterval
 
 
-
-class Interval(BaseInterval):
+    
+class LeftClosedInterval(BaseInterval):
     """
-    Class representing a generic left-closed, right-open interval
-    (start/begin coordinates are inclusive (0-based) and stop/end
-    cooridnates are exclusive (or 1-based).
+    Class for 0-indexed generic mathematical intervals. Assumes
+    interval coordinates are half-open (specifically, left-closed 
+    right-open), same as Pythonic slice notation.
+
+    The `self.namespace` attribute provides an abstraction allowing 
+    this module access to a stable id or name and enable comparions
+    between objects in potentially different namespaces (X, Y, or Z
+    dimensions, sequence names, etc.).
+    """
+    __slots__ = ()
+    
+    def issuperinterval(self, other, strict=False):
+        """
+        self.issuperinterval(other) -> bool
+        
+        Test whether self is containing other (whether self is a 
+        superinterval of self). When `strict=True`, evaluate to True
+        only when self is a strict superinterval of other.
+
+        >>> i1 = Interval("Chr", 20, 80)
+        >>> i2 = Interval("Chr", 40, 60)
+        >>> i1.issuperinterval(i2)
+        True
+        >>> i2.issuperinterval(i1)
+        False
+        >>> i1.issuperinterval(i1, strict=False)
+        True
+        >>> i1.issuperinterval(i1, strict=True)
+        False
+        """
+        strict = strict and (self.beg == other.beg) and (self.end == other.end)
+        return ((self.namespace == other.namespace) and
+                (self.beg <= other.beg < other.end <= self.end) and
+                (not strict))
+
+    
+    def issubinterval(self, other, strict=False):
+        """
+        self.issubinterval(other) -> bool
+
+        Test whether self is contained within other (whether self is
+        a subinterval of other). When `strict=True`, evaluate to True
+        only when self is a strict subinterval of other.
+
+        >>> i1 = Interval("Chr", 20, 80)
+        >>> i2 = Interval("Chr", 40, 60)
+        >>> i1.issubinterval(i2)
+        False
+        >>> i2.issubinterval(i1)
+        True
+        >>> i1.issubinterval(i1, strict=False)
+        True
+        >>> i1.issubinterval(i1, strict=True)
+        False
+        """
+        strict = strict and (self.beg == other.beg) and (self.end == other.end)
+        return ((self.namespace == other.namespace) and 
+                (other.beg <= self.beg < self.end <= other.end) and
+                (not strict))
+
+    
+    def isoverlapping(self, other):
+        """
+        self.isoverlapping(other) -> bool
+
+        Test whether self has any kind of overlap with other.
+
+        >>> Interval("Chr", 20, 60).isoverlapping(Interval("Chr", 40, 80))
+        True
+        """
+        return ((self.namespace == other.namespace) and
+                (other.beg < self.end and self.beg < other.end))
+
+
+    def isoverlapping_beg(self, other):
+        """
+        self.isoverlapping_beg(other) -> bool
+
+        Test whether self isoverlapping the left-most edge of other.
+
+        >>> Interval("Chr", 20, 60).isoverlapping_beg(Interval("Chr", 40, 80))
+        True
+        >>> Interval("Chr", 40, 80).isoverlapping_beg(Interval("Chr", 20, 60))
+        False
+        """
+        # self.beg *=========o self.end
+        #      other.beg *==============o other.end
+        return ((self.namespace == other.namespace) and
+                (self.beg <= other.beg < self.end < other.end))
+
+
+    def isoverlapping_end(self, other):
+        """
+        self.isoverlapping_end(other) -> bool
+
+        Test whether self isoverlapping the right-most edge of other.
+
+        >>> Interval("Chr", 40, 80).isoverlapping_end(Interval("Chr", 20, 60))
+        True
+        >>> Interval("Chr", 20, 60).isoverlapping_end(Interval("Chr", 40, 80))
+        False
+        """
+        #           self.beg *=========o self.end
+        # other.beg *==============o other.end            
+        return ((self.namespace == other.namespace) and
+                (other.beg < self.beg < other.end <= self.end))
+
+    
+    isoverlapping_start = isoverlapping_beg
+
+    isoverlapping_stop = isoverlapping_end
+
+    issubset = issubinterval
+
+    issuperset = issuperinterval
+
+
+
+class ClosedInterval(BaseInterval):
+    """
+    Class representing a fully-closed interval, i.e., start/begin 
+    and stop/end coordinates are inclusive (0-based).
     """
     # To maintain memory and speed efficiency, every child object
     # must also define __slots__ = ()
@@ -1287,11 +1406,40 @@ class Interval(BaseInterval):
         """
         >>> Interval("Chr1", 15, 37) -> Interval
         """
-        super().__init__(beg=beg, end=end, namespace=name)
-        
+        super().__init__(namespace=name, beg=beg, end=end)
 
-    def __hash__(self):
-        return id(self)
+
+    def __str__(self):
+        """
+        str(self) -> str
+
+        Return a string representation of the object.
+
+        >>> str(Interval("Chr", 350,475))
+        'Chr:350-475'
+        """
+        return "%s:%s-%s" % (str(self.namespace), str(self.beg), str(self.end))
+
+
+    to_string = __str__
+
+
+
+class Interval(LeftClosedInterval):
+    """
+    Class representing a generic left-closed, right-open interval,
+    i.e., start/begin coordinates are inclusive (0-based) and stop/end
+    coordinates are exclusive (or 1-based).
+    """
+    # To maintain memory and speed efficiency, every child object
+    # must also define __slots__ = ()
+    __slots__ = ()
+    
+    def __init__(self, name=_NULL_NS, beg=_NULL_BEG, end=_NULL_END):
+        """
+        >>> Interval("Chr1", 15, 37) -> Interval
+        """
+        super().__init__(namespace=name, beg=beg, end=end)
         
 
     def __str__(self):
@@ -1405,7 +1553,93 @@ class Interval(BaseInterval):
         """
         return ((self.end - self.beg) == 1)
 
+
+    to_string = __str__
+
+
+
+class ClosedPoint(ClosedInterval):
+    __slots__ = ()
     
+    def __init__(self, name=_NULL_NS, pos=_NULL_BEG):
+        """
+        >>> Point("Chr1", 37) -> Point
+        """
+        super().__init__(namespace=name, beg=pos, end=pos)
+
+
+    @property
+    def beg(self):
+        """
+        self.beg -> int
+
+        The beginning (0-based) coordinate of the interval.
+
+        >>> interval.beg = 350
+        >>> print(interval.beg)
+        350
+        """
+        return self._beg
+
+
+    @beg.setter
+    def beg(self, beg):
+        self._beg = beg
+        self._end = beg
+
+        
+    @property
+    def end(self):
+        return self._end
+
+
+    @end.setter
+    def end(self, end):
+        """
+        self.end -> int
+
+        The ending (1-based) coordinate of the interval.
+
+        >>> interval.end = 500
+        >>> print(interval.end)
+        500
+        """
+        self._beg = end
+        self._end = end
+    
+    
+    @property
+    def mid(self):
+        """
+        self.mid -> int
+
+        The midpoint of the interval.
+
+        >>> print(self.mid)
+        412
+        """        
+        return self.end
+
+
+    @property
+    def pos(self):
+        return self.end
+
+
+    @pos.setter
+    def pos(self, pos):
+        self.end = pos
+
+
+    def issingleton(self):
+        """
+        self.issingleton() -> bool
+
+        Test whether self.end - self.beg == 1
+        """
+        return True
+
+
 
 class Point(Interval):
     __slots__ = ()
@@ -1414,13 +1648,9 @@ class Point(Interval):
         """
         >>> Point("Chr1", 37) -> Point
         """
-        super().__init__(name, pos-1, pos)
+        super().__init__(namespace=name, beg=pos, end=pos)
 
 
-    def __hash__(self):
-        return id(self)
-        
-        
     @property
     def beg(self):
         """
@@ -1502,7 +1732,8 @@ class Point(Interval):
         """
         return True
 
-        
+
+
 #       10        20        30        40        50        60        70        80
 #---+----|----+----|----+----|----+----|----+----|----+----|----+----|----+----|
 

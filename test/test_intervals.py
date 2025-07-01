@@ -2,11 +2,14 @@
 from unittest import TestCase
 from intervals import (
     BaseInterval,
+    ClosedInterval,
+    LeftClosedInterval,
     Interval,
     IntervalList,
 )
 from intervals.collections import _Node
 from math import isnan, nan, isinf, inf
+
 
 class TestCase001_BaseInterval(TestCase):
     def setUp(self):
@@ -268,7 +271,8 @@ class TestCase001_BaseInterval(TestCase):
     def test_and_3(self):
         i = self.interval0 & self.interval5
         self.assertIsInstance(i, self.interval.__class__)
-        self.assertTrue(i.isnull())
+        self.assertFalse(i.isnull())
+        self.assertEqual(len(i), 0)
 
     def test_and_4(self):  ###
         i = self.interval8 & self.interval0
@@ -545,67 +549,61 @@ class TestCase001_BaseInterval(TestCase):
         self.assertTrue(hasattr(self.interval, '__or__'))
 
     def test_or_1(self):
-        # i0:  50 *================o 100
-        # i2:       70 *===o 75        
+        # i0:  50 *================* 100
+        # i2:       70 *===* 75        
         i = self.interval0 | self.interval2
         self.assertIsInstance(i, self.interval.__class__)
         self.assertEqual(i, self.interval0)
 
     def test_or_2(self):
-        # i0:  50 *================o 100
-        # i3:  50 *============o 75        
+        # i0:  50 *================* 100
+        # i3:  50 *============* 75        
         i = self.interval0 | self.interval3
         self.assertIsInstance(i, self.interval.__class__)
         self.assertEqual(i, self.interval0)
 
     def test_or_3(self):
-        # i0:  50 *================o 100
-        # i6:          75 *========o 100
+        # i0:  50 *================* 100
+        # i6:          75 *========* 100
         i = self.interval0 | self.interval6
         self.assertIsInstance(i, self.interval.__class__)
         self.assertEqual(i, self.interval0)
         
     def test_or_4(self):
-        # i0:           50 *================o 100
-        # i1:  25 *================o 75
+        # i0:           50 *================* 100
+        # i1:  25 *================* 75
         i = self.interval0 | self.interval1
         self.assertIsInstance(i, self.interval.__class__)
         self.assertEqual(i.beg,  25)
         self.assertEqual(i.end, 100)
 
     def test_or_5(self):
-        # i0:  50 *================o 100
-        # i7:           75 *================o 125
+        # i0:  50 *================* 100
+        # i7:           75 *================* 125
         i = self.interval0 | self.interval7
         self.assertIsInstance(i, self.interval.__class__)
-        self.assertEqual(i.beg,  50)
+        self.assertEqual(i.beg, 50)
         self.assertEqual(i.end, 125)
 
     def test_or_6(self):
-        # i3:           50 *======o 75
-        # i5: 0 *==========o 50
+        # i3:           50 *======* 75
+        # i5: 0 *==========* 50
         i = self.interval3 | self.interval5
-        self.assertIsInstance(i, tuple)
-        self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval3)
-        self.assertEqual(i[1], self.interval5)
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertEqual(i.beg, 0)
+        self.assertEqual(i.end, 75)
 
     def test_or_7(self):
-        # i3:  50 *======o 75
-        # i6:         75 *======o 100
+        # i3:  50 *======* 75
+        # i6:         75 *======* 100
         i = self.interval3 | self.interval6
-        self.assertIsInstance(i, tuple)
-        self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval3)
-        self.assertEqual(i[1], self.interval6)
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertEqual(i.beg, 50)
+        self.assertEqual(i.end, 100)
         
     def test_or_8(self):
-        # i2:                     70 *====o 75
-        # i5:  0 *===============o 50
+        # i2:                     70 *====* 75
+        # i5:  0 *===============* 50
         i = self.interval2 | self.interval5
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
@@ -615,8 +613,8 @@ class TestCase001_BaseInterval(TestCase):
         self.assertEqual(i[1], self.interval5)
 
     def test_or_9(self):
-        # i5:  0 *===============o 50
-        # i2:                     70 *====o 75
+        # i5:  0 *===============* 50
+        # i2:                     70 *====* 75
         i = self.interval5 | self.interval2
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
@@ -861,8 +859,8 @@ class TestCase001_BaseInterval(TestCase):
         self.assertFalse(self.interval6.issuperinterval(self.interval0))
 
     def test_issubinterval_8(self):
-        self.assertTrue(self.interval.issuperinterval(self.interval0, proper=False))
-        self.assertFalse(self.interval.issuperinterval(self.interval0, proper=True))
+        self.assertTrue(self.interval.issuperinterval(self.interval0, strict=False))
+        self.assertFalse(self.interval.issuperinterval(self.interval0, strict=True))
         
     def test_difference_0(self):
         self.assertTrue(hasattr(self.interval, 'difference'))
@@ -955,12 +953,14 @@ class TestCase001_BaseInterval(TestCase):
     def test_intersection_6(self):
         i = self.interval0.intersection(self.interval5)
         self.assertIsInstance(i, self.interval.__class__)
-        self.assertTrue(i.isnull())        
+        self.assertFalse(i.isnull())
+        self.assertEqual(len(i), 0)
 
     def test_intersection_7(self):
         i = self.interval1.intersection(self.interval7)
         self.assertIsInstance(i, self.interval.__class__)
-        self.assertTrue(i.isnull())
+        self.assertFalse(i.isnull())
+        self.assertEqual(len(i), 0)
 
     def test_intersection_update_0(self):
         self.assertTrue(hasattr(self.interval, 'intersection_update'))
@@ -976,10 +976,10 @@ class TestCase001_BaseInterval(TestCase):
         self.assertTrue(self.interval5.isdisjoint(self.interval2))
 
     def test_isdisjoint_2(self):
-        self.assertTrue(self.interval5.isdisjoint(self.interval3))
+        self.assertFalse(self.interval5.isdisjoint(self.interval3))
 
     def test_isdisjoint_3(self):
-        self.assertTrue(self.interval3.isdisjoint(self.interval5))
+        self.assertFalse(self.interval3.isdisjoint(self.interval5))
 
     def test_isdisjoint_4(self):
         self.assertTrue(self.interval2.isdisjoint(self.interval5))
@@ -1126,10 +1126,10 @@ class TestCase001_BaseInterval(TestCase):
         self.assertTrue(self.interval0.isoverlapping(self.interval7))
 
     def test_isoverlapping_6(self):
-        self.assertFalse(self.interval0.isoverlapping(self.interval5))
+        self.assertTrue(self.interval0.isoverlapping(self.interval5))
 
     def test_isoverlapping_7(self):
-        self.assertFalse(self.interval3.isoverlapping(self.interval7))
+        self.assertTrue(self.interval3.isoverlapping(self.interval7))
 
     def test_isoverlapping_8(self):
         self.assertFalse(self.interval5.isoverlapping(self.interval2))
@@ -1147,7 +1147,7 @@ class TestCase001_BaseInterval(TestCase):
         self.assertFalse(self.interval2.isoverlapping_beg(self.interval0))
 
     def test_isoverlapping_beg_4(self):
-        self.assertFalse(self.interval5.isoverlapping_beg(self.interval0))
+        self.assertTrue(self.interval5.isoverlapping_beg(self.interval0))
         
     def test_isoverlapping_end_0(self):
         self.assertTrue(hasattr(self.interval, 'isoverlapping_end'))
@@ -1162,7 +1162,7 @@ class TestCase001_BaseInterval(TestCase):
         self.assertFalse(self.interval2.isoverlapping_end(self.interval0))    
 
     def test_isoverlapping_end_4(self):
-        self.assertFalse(self.interval7.isoverlapping_end(self.interval1))
+        self.assertTrue(self.interval7.isoverlapping_end(self.interval1))
         
     def test_symmetric_difference_0(self):
         self.assertTrue(hasattr(self.interval, 'symmetric_difference'))
@@ -1339,26 +1339,20 @@ class TestCase001_BaseInterval(TestCase):
         self.assertEqual(i.end, 125)
 
     def test_union_6(self):
-        # i3:           50 *======o 75
-        # i5: 0 *==========o 50
+        # i3:           50 *======* 75
+        # i5: 0 *==========* 50
         i = self.interval3.union(self.interval5)
-        self.assertIsInstance(i, tuple)
-        self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval3)
-        self.assertEqual(i[1], self.interval5)
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertEqual(i.beg, 0)
+        self.assertEqual(i.end, 75)
 
     def test_union_7(self):
         # i3:  50 *======o 75
         # i6:         75 *======o 100
         i = self.interval3.union(self.interval6)
-        self.assertIsInstance(i, tuple)
-        self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval3)
-        self.assertEqual(i[1], self.interval6)
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertEqual(i.beg, 50)
+        self.assertEqual(i.end, 100)
         
     def test_union_8(self):
         # i2:                     70 *====o 75
@@ -1410,22 +1404,115 @@ class TestCase001_BaseInterval(TestCase):
         self.assertFalse(self.interval6.issubinterval(self.interval3))
 
     def test_issubinterval_9(self):
-        self.assertTrue(self.interval.issubinterval(self.interval0, proper=False))
-        self.assertFalse(self.interval.issubinterval(self.interval0, proper=True))
-        
-        
-class TestCase002_Interval(TestCase001_BaseInterval):
+        self.assertTrue(self.interval.issubinterval(self.interval0, strict=False))
+        self.assertFalse(self.interval.issubinterval(self.interval0, strict=True))
+
+
+
+class TestCase002_LeftClosedInterval(TestCase001_BaseInterval):
     def setUp(self):
-        self.interval  = Interval("Chr1", 50, 100)
-        self.interval0 = Interval("Chr1", 50, 100)
-        self.interval1 = Interval("Chr1", 25,  75)
-        self.interval2 = Interval("Chr1", 70,  75)
-        self.interval3 = Interval("Chr1", 50,  75)
-        self.interval4 = Interval("Chr2", 50, 100)
-        self.interval5 = Interval("Chr1",  0,  50)
-        self.interval6 = Interval("Chr1", 75, 100)
-        self.interval7 = Interval("Chr1", 75, 125)
-        self.interval8 = Interval()
+        self.interval  = LeftClosedInterval(50, 100)
+        self.interval0 = LeftClosedInterval(50, 100)
+        self.interval1 = LeftClosedInterval(25,  75)
+        self.interval2 = LeftClosedInterval(70,  75)
+        self.interval3 = LeftClosedInterval(50,  75)
+        self.interval4 = LeftClosedInterval( 0, 100)
+        self.interval5 = LeftClosedInterval( 0,  50)
+        self.interval6 = LeftClosedInterval(75, 100)
+        self.interval7 = LeftClosedInterval(75, 125)
+        self.interval8 = LeftClosedInterval()
+
+    def test_and_3(self):
+        i = self.interval0 & self.interval5
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertTrue(i.isnull())
+
+    def test_intersection_6(self):
+        i = self.interval0.intersection(self.interval5)
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertTrue(i.isnull())        
+        
+    def test_intersection_7(self):
+        i = self.interval1.intersection(self.interval7)
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertTrue(i.isnull())
+
+    def test_isdisjoint_2(self):
+        self.assertTrue(self.interval5.isdisjoint(self.interval3))
+
+    def test_isdisjoint_3(self):
+        self.assertTrue(self.interval3.isdisjoint(self.interval5))
+
+    def test_isoverlapping_6(self):
+        self.assertFalse(self.interval0.isoverlapping(self.interval5))
+
+    def test_isoverlapping_7(self):
+        self.assertFalse(self.interval3.isoverlapping(self.interval7))
+
+    def test_isoverlapping_beg_4(self):
+        self.assertFalse(self.interval5.isoverlapping_beg(self.interval0))
+
+    def test_isoverlapping_end_4(self):
+        self.assertFalse(self.interval7.isoverlapping_end(self.interval1))
+
+    def test_or_6(self):
+        # i3:           50 *======o 75
+        # i5: 0 *==========o 50
+        i = self.interval3 | self.interval5
+        self.assertIsInstance(i, tuple)
+        self.assertEqual(len(i), 2)
+        self.assertIsInstance(i[0], self.interval.__class__)
+        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertEqual(i[0], self.interval3)
+        self.assertEqual(i[1], self.interval5)
+
+    def test_or_7(self):
+        # i3:  50 *======o 75
+        # i6:         75 *======o 100
+        i = self.interval3 | self.interval6
+        self.assertIsInstance(i, tuple)
+        self.assertEqual(len(i), 2)
+        self.assertIsInstance(i[0], self.interval.__class__)
+        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertEqual(i[0], self.interval3)
+        self.assertEqual(i[1], self.interval6)
+
+    def test_union_6(self):
+        # i3:           50 *======o 75
+        # i5: 0 *==========o 50
+        i = self.interval3.union(self.interval5)
+        self.assertIsInstance(i, tuple)
+        self.assertEqual(len(i), 2)
+        self.assertIsInstance(i[0], self.interval.__class__)
+        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertEqual(i[0], self.interval3)
+        self.assertEqual(i[1], self.interval5)
+
+    def test_union_7(self):
+        # i3:  50 *======o 75
+        # i6:         75 *======o 100
+        i = self.interval3.union(self.interval6)
+        self.assertIsInstance(i, tuple)
+        self.assertEqual(len(i), 2)
+        self.assertIsInstance(i[0], self.interval.__class__)
+        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertEqual(i[0], self.interval3)
+        self.assertEqual(i[1], self.interval6)
+
+        
+
+class TestCase003_ClosedInterval(TestCase001_BaseInterval):
+    def setUp(self):
+        self.interval  = ClosedInterval("Chr1", 50, 100)
+        self.interval0 = ClosedInterval("Chr1", 50, 100)
+        self.interval1 = ClosedInterval("Chr1", 25,  75)
+        self.interval2 = ClosedInterval("Chr1", 70,  75)
+        self.interval3 = ClosedInterval("Chr1", 50,  75)
+        self.interval4 = ClosedInterval("Chr2", 50, 100)
+        self.interval5 = ClosedInterval("Chr1",  0,  50)
+        self.interval6 = ClosedInterval("Chr1", 75, 100)
+        self.interval7 = ClosedInterval("Chr1", 75, 125)
+        self.interval8 = ClosedInterval()
 
     def tearDown(self):
         del(self.interval)
@@ -1454,7 +1541,7 @@ class TestCase002_Interval(TestCase001_BaseInterval):
         self.assertEqual(self.interval.namespace, 3)
 
     def test_mid_1(self):
-        self.assertEqual(self.interval6.mid, 87)
+        self.assertEqual(self.interval6.mid, 87.5)
         
     def test_to_string_1(self):
         s = self.interval0.to_string()
@@ -1462,7 +1549,7 @@ class TestCase002_Interval(TestCase001_BaseInterval):
         self.assertEqual(s, 'Chr1:50-100')
 
     def test_to_string_2(self):
-        s = Interval(2, 50, 100).to_string()
+        s = ClosedInterval(2, 50, 100).to_string()
         self.assertIsInstance(s, str)
         self.assertEqual(s, '2:50-100')
 
@@ -1478,7 +1565,7 @@ class TestCase002_Interval(TestCase001_BaseInterval):
 
     def test_isempty_4(self):
         self.assertFalse(self.interval.isempty())
-        self.interval.end = self.interval.beg
+        self.interval.end = self.interval.beg - 1
         self.assertTrue(self.interval.isempty())
         
     def test_abs_1(self):
@@ -1826,7 +1913,114 @@ class TestCase002_Interval(TestCase001_BaseInterval):
         self.assertFalse(self.interval2.issubinterval(self.interval4))
 
 
-class TestCase003__Node(TestCase):
+
+class TestCase004_Interval(TestCase003_ClosedInterval):
+    def setUp(self):
+        self.interval  = Interval("Chr1", 50, 100)
+        self.interval0 = Interval("Chr1", 50, 100)
+        self.interval1 = Interval("Chr1", 25,  75)
+        self.interval2 = Interval("Chr1", 70,  75)
+        self.interval3 = Interval("Chr1", 50,  75)
+        self.interval4 = Interval("Chr2", 50, 100)
+        self.interval5 = Interval("Chr1",  0,  50)
+        self.interval6 = Interval("Chr1", 75, 100)
+        self.interval7 = Interval("Chr1", 75, 125)
+        self.interval8 = Interval()
+
+    def test_to_string_2(self):
+        s = Interval(2, 50, 100).to_string()
+        self.assertIsInstance(s, str)
+        self.assertEqual(s, '2:50-100')
+
+    def test_isempty_4(self):
+        self.assertFalse(self.interval.isempty())
+        self.interval.end = self.interval.beg
+        self.assertTrue(self.interval.isempty())
+        
+    def test_mid_1(self):
+        self.assertEqual(self.interval6.mid, 87)
+
+
+    def test_and_3(self):
+        i = self.interval0 & self.interval5
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertTrue(i.isnull())
+
+    def test_intersection_6(self):
+        i = self.interval0.intersection(self.interval5)
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertTrue(i.isnull())        
+        
+    def test_intersection_7(self):
+        i = self.interval1.intersection(self.interval7)
+        self.assertIsInstance(i, self.interval.__class__)
+        self.assertTrue(i.isnull())
+
+    def test_isdisjoint_2(self):
+        self.assertTrue(self.interval5.isdisjoint(self.interval3))
+
+    def test_isdisjoint_3(self):
+        self.assertTrue(self.interval3.isdisjoint(self.interval5))
+
+    def test_isoverlapping_6(self):
+        self.assertFalse(self.interval0.isoverlapping(self.interval5))
+
+    def test_isoverlapping_7(self):
+        self.assertFalse(self.interval3.isoverlapping(self.interval7))
+
+    def test_isoverlapping_beg_4(self):
+        self.assertFalse(self.interval5.isoverlapping_beg(self.interval0))
+
+    def test_isoverlapping_end_4(self):
+        self.assertFalse(self.interval7.isoverlapping_end(self.interval1))
+
+    def test_or_6(self):
+        # i3:           50 *======o 75
+        # i5: 0 *==========o 50
+        i = self.interval3 | self.interval5
+        self.assertIsInstance(i, tuple)
+        self.assertEqual(len(i), 2)
+        self.assertIsInstance(i[0], self.interval.__class__)
+        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertEqual(i[0], self.interval3)
+        self.assertEqual(i[1], self.interval5)
+
+    def test_or_7(self):
+        # i3:  50 *======o 75
+        # i6:         75 *======o 100
+        i = self.interval3 | self.interval6
+        self.assertIsInstance(i, tuple)
+        self.assertEqual(len(i), 2)
+        self.assertIsInstance(i[0], self.interval.__class__)
+        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertEqual(i[0], self.interval3)
+        self.assertEqual(i[1], self.interval6)
+
+    def test_union_6(self):
+        # i3:           50 *======o 75
+        # i5: 0 *==========o 50
+        i = self.interval3.union(self.interval5)
+        self.assertIsInstance(i, tuple)
+        self.assertEqual(len(i), 2)
+        self.assertIsInstance(i[0], self.interval.__class__)
+        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertEqual(i[0], self.interval3)
+        self.assertEqual(i[1], self.interval5)
+
+    def test_union_7(self):
+        # i3:  50 *======o 75
+        # i6:         75 *======o 100
+        i = self.interval3.union(self.interval6)
+        self.assertIsInstance(i, tuple)
+        self.assertEqual(len(i), 2)
+        self.assertIsInstance(i[0], self.interval.__class__)
+        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertEqual(i[0], self.interval3)
+        self.assertEqual(i[1], self.interval6)
+
+        
+        
+class TestCase005__Node(TestCase):
     def test_init_0(self):
         with self.assertRaisesRegex(
                 TypeError,
@@ -1854,7 +2048,7 @@ class TestCase003__Node(TestCase):
         self.assertIsInstance(node, _Node)
 
         
-class TestCase004__Node(TestCase):
+class TestCase006__Node(TestCase):
     def setUp(self):
         self.interval0 = Interval("Chr", 2, 5)
         self.interval1 = Interval("Chr", 5, 8)
@@ -1897,7 +2091,7 @@ class TestCase004__Node(TestCase):
         
         
                                   
-class TestCase005_IntervalList(TestCase):
+class TestCase007_IntervalList(TestCase):
     def setUp(self):
         self.interval0 = Interval("Chr", 2, 5)
 
@@ -1915,7 +2109,7 @@ class TestCase005_IntervalList(TestCase):
         self.assertEqual(len(ilist), 1)
         
 
-class TestCase006_IntervalList(TestCase):
+class TestCase008_IntervalList(TestCase):
     def setUp(self):
         self.interval0 = Interval("Chr", 0, 4)
         self.interval1 = Interval("Chr", 1, 5)
@@ -2516,7 +2710,7 @@ class TestCase006_IntervalList(TestCase):
     
 
                 
-class TestCase007_IntervalList(TestCase):
+class TestCase009_IntervalList(TestCase):
     def setUp(self):
         pass
 
@@ -2528,7 +2722,7 @@ class TestCase007_IntervalList(TestCase):
 # TEST IntervalSet: test interval set operations after _remove() and _insert()
 
 
-class TestCase009_IntervalSet(TestCase):
+class TestCase010_IntervalSet(TestCase):
     def setUp(self):
         pass
 
