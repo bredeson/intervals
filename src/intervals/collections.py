@@ -15,12 +15,12 @@ from .constants import NULL_NAMESPACE as _NULL_NS
 from .constants import NULL_BEG as _NULL_BEG
 from .constants import NULL_END as _NULL_END
 from .constants import inf as _INF
-from .intervals import Interval
+from .intervals import BaseInterval, Interval
 from math import isnan as _isnull
 from math import isinf as _isinf
 
 
-def _pass(x):
+def remit(x):
     return x
 
 
@@ -126,7 +126,7 @@ class _Node(object):
 
 class BaseIntervalCollection(object):
     # Copied and extended this pattern from collections.abc.Collection
-    def __init__(self, setter=_pass):
+    def __init__(self, setter=remit):
         self._setter = setter
 
 
@@ -143,7 +143,12 @@ class BaseIntervalCollection(object):
     
 
     def _set(self, interval, setter=None):
-        setter = setter or self._setter
+        # setter = setter or self._setter
+        if setter is None:
+            if isinstance(interval, BaseInterval):
+                setter = remit
+            else:
+                setter = self._setter
         return _Node(setter(interval), interval)
 
 
@@ -196,7 +201,7 @@ class BaseIntervalCollection(object):
     
     
 class IntervalList(BaseIntervalCollection, _deque):
-    def __init__(self, intervals=[], setter=_pass):
+    def __init__(self, intervals=[], setter=remit):
         """
         The `setter` keyword argument accepts a function used to 
         extract/construct from the input object an Interval-descendant
@@ -600,7 +605,7 @@ class IntervalList(BaseIntervalCollection, _deque):
             upper = length
         while lower < upper:
             middle = (lower + upper) // 2
-            if self._get_node(middle).instance == node.instance:
+            if self._get_node(middle).interval == node.interval:
                 return middle
             elif self._get_node(middle).interval < node.interval:
                 lower = middle + 1
@@ -678,7 +683,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         one) argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter)
-        index = self.find_index_beg(node.interval, lower, upper, _pass)
+        index = self.find_index_beg(node.interval, lower, upper, remit)
         return index \
             if 0 <= index < len(self) and \
                self._get_node(index).interval.isoverlapping(node.interval) \
@@ -701,7 +706,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         one) argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter)
-        index = self.find_index_end(node.interval, lower, upper, _pass)
+        index = self.find_index_end(node.interval, lower, upper, remit)
         return index \
             if 0 < index <= len(self) and \
                self._get_node(index-1).interval.isoverlapping(node.interval) \
@@ -725,7 +730,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         one) argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter)
-        index = self.find_index_nearest(node.interval, lower, upper, _pass)
+        index = self.find_index_nearest(node.interval, lower, upper, remit)
         return index \
             if 0 <= index < len(self) and \
                self._get_node(index).interval.isoverlapping(node.interval) \
@@ -752,7 +757,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         length = len(self)
         upper = 0
         for node in _filter_nested(nodes, sort=_node_pos_longest):
-            index = self.find_index_beg(node.interval, lower=upper, setter=_pass)
+            index = self.find_index_beg(node.interval, lower=upper, setter=remit)
             while index < length and \
                   self._get_node(index).interval.isoverlapping(node.interval):
                 yield index
@@ -778,7 +783,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         lower = -1
         upper = -1
         for node in _filter_nested(nodes, sort=_node_pos_longest):
-            index = self.find_index_beg(node.interval, lower=upper, setter=_pass)
+            index = self.find_index_beg(node.interval, lower=upper, setter=remit)
             while index < length and \
                   self._get_node(index).interval.isoverlapping(node.interval):
                 if lower < 0:
@@ -804,7 +809,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         length = len(self)
         overlap_length = 0
         for node in sorted(nodes, key=_node_pos):
-            index = self.find_overlap_index_beg(node.interval, setter=_pass)
+            index = self.find_overlap_index_beg(node.interval, setter=remit)
             if index < 0:
                 continue
             while index < length and \
@@ -861,7 +866,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         #visited = set()
         length = len(self)
         for node in nodes:
-            index = self.find_overlap_index_beg(node.interval, setter=_pass)
+            index = self.find_overlap_index_beg(node.interval, setter=remit)
             while ((0 <= index < length) and
                    (self._get_node(index).interval.isoverlapping(node.interval))):
                 # if nr and hash(self._get_node(index).instance) in visited:
@@ -901,7 +906,7 @@ class IntervalList(BaseIntervalCollection, _deque):
     
 
 class _Sublist(BaseIntervalCollection, _deque):
-    def __init__(self, nodes=None, index=-1, setter=_pass):
+    def __init__(self, nodes=None, index=-1, setter=remit):
         BaseIntervalCollection.__init__(self, setter)
         if nodes is None:
             _deque.__init__(self)
@@ -1359,7 +1364,7 @@ class IntervalSet(BaseIntervalCollection):
 
     # Constructors
     # ============
-    def __init__(self, intervals=[], setter=_pass):
+    def __init__(self, intervals=[], setter=remit):
         """
         Multiple references to the same object(s) are silently ignored.
 
@@ -1926,7 +1931,7 @@ class IntervalSet(BaseIntervalCollection):
             map(lambda i: self._set(i, setter), _listify(intervals)),
             key=_node_pos
         )
-        for i,o in self._find_nodes(nodes, True, _pass):
+        for i,o in self._find_nodes(nodes, True, remit):
             yield (i.instance, o.instance)
             
                     
@@ -2011,10 +2016,10 @@ class IntervalSet(BaseIntervalCollection):
         if isinstance(other, BaseIntervalCollection):
             return other
         else:
-            return self.__class__(_listify(other), setter or _pass)
+            return self.__class__(_listify(other), setter or remit)
 
     
-    def _isoverlapping(self, other, setter=_pass):
+    def _isoverlapping(self, other, setter=remit):
         if not isinstance(other, BaseIntervalCollection):
             return self._isoverlapping(
                 self.__class__(_listify(other), setter=setter)

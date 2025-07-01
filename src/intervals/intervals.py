@@ -1420,7 +1420,37 @@ class ClosedInterval(BaseInterval):
         """
         return "%s:%s-%s" % (str(self.namespace), str(self.beg), str(self.end))
 
+    
+    @property
+    def name(self):
+        """
+        self.name -> value
+        
+        In an inheriting child class, if the `namespace` attribute is
+        best defined by another attribute (e.g., as `self.contig`, 
+        `self.scaff`, `self.chrom`, etc.) for the purpose of the class,
+        the `self.namespace` attribute will require initializization in
+        the `__init__()` method.
 
+        For example: 
+            def __init__(self, chrom, beg, end):
+                Interval.__init__(self, chrom, beg, end)
+            @property
+            def chrom(self):
+                return self.namespace
+            @chrom.setter
+            def chrom(self, chrom):
+                self.namespace = chrom
+
+        """
+        return self.namespace
+
+
+    @name.setter
+    def name(self, name):
+        self.namespace = name
+
+    
     to_string = __str__
 
 
@@ -1565,7 +1595,7 @@ class ClosedPoint(ClosedInterval):
         """
         >>> Point("Chr1", 37) -> Point
         """
-        super().__init__(namespace=name, beg=pos, end=pos)
+        super().__init__(name=name, beg=pos, end=pos)
 
 
     @property
@@ -1648,7 +1678,7 @@ class Point(Interval):
         """
         >>> Point("Chr1", 37) -> Point
         """
-        super().__init__(namespace=name, beg=pos, end=pos)
+        super().__init__(name=name, beg=pos, end=pos)
 
 
     @property
