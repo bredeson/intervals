@@ -2,11 +2,11 @@
 PREFIX     := /usr/local
 
 PACKAGE    := intervals
+LICENSE    := LICENSE
 SRC_DIR    := src
 BUILD_DIR  := build
 TEST_DIR   := test
 LIB_DIR    := $(BUILD_DIR)/lib
-
 CURR_DIR   := $(shell pwd)
 
 ECHO       := echo
@@ -16,16 +16,12 @@ MKDIR      := $(filter /%,$(shell /bin/sh -c 'type mkdir'))
 AWK        := $(filter /%,$(shell /bin/sh -c 'type awk'))
 CAT        := $(filter /%,$(shell /bin/sh -c 'type cat'))
 RM         := $(filter /%,$(shell /bin/sh -c 'type rm'))
-
 RM_R        = $(RM) -r
-
-PYTHON_VER := $(shell $(PYTHON) --version 2>&1 | awk '{if (/Python/) {split($$2,v,".");print "python"v[1]"."v[2]}}')
 INSTALL_REG = $(INSTALL) -p -m 644 -D
 MKDIR_P     = $(MKDIR) -p
 
-LICENSE     := LICENSE
-
-INSTALL_PATH ?= $(PREFIX)/lib/$(PYTHON_VER)/site-packages
+PYTHON_VERSION := $(shell $(PYTHON) --version 2>&1 | awk '{if (/Python/) {split($$2,v,".");print "python"v[1]"."v[2]}}')
+INSTALL_PATH ?= $(PREFIX)/lib/$(PYTHON_VERSION)/site-packages
 
 SOURCE_FILES = $(wildcard $(SRC_DIR)/$(PACKAGE)/*.py)
 BUILD_TARGETS = $(patsubst $(SRC_DIR)/%,$(LIB_DIR)/%,$(SOURCE_FILES))
