@@ -15,7 +15,7 @@ make install PREFIX=/full/path/to/installbase
 
 - **null**: an interval without both start and stop coordinates. Null coordinates are implemented with `nan` values and null namespace as `None`.
 
-- **empty(*: an interval that is null or that contains start and stop coordinates with distance (length) less-than or equal-to zero units long.
+- **empty**: an interval that is null or that contains start and stop coordinates with distance (length) less-than or equal-to zero units long.
 
 
 ## Usage
