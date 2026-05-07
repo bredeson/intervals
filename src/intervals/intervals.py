@@ -6,7 +6,8 @@ specified.
 
 About mathematical and genomic intervals:
   1. https://en.wikipedia.org/wiki/Interval_(mathematics)#Terminology
-  2. http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
+  2. https://en.wikipedia.org/wiki/Interval_arithmetic
+  3. http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
 
 """
 
@@ -18,13 +19,16 @@ from copy import deepcopy as _deepcopy
 from .constants import NULL_NAMESPACE as _NULL_NS
 from .constants import NULL_BEG as _NULL_BEG
 from .constants import NULL_END as _NULL_END
-from .constants import inf as _INF
+from .constants import inf as _POS_INF
 
-_bad_operand_type = \
+
+_NEG_INF = -_POS_INF
+
+_BAD_OPERAND_TYPE = \
     "unsupported operand type(s) for {0:s}: '{1}' and '{2}'".format
-_bad_operand_name = \
+_BAD_OPERAND_NAME = \
     "mismatched operand namespaces for {0:s}: '{1}' and '{2}'".format
-_ill_defined = \
+_ILL_DEFINED = \
     "Result ill-defined, use {0:s}() instead".format
 
 
@@ -93,7 +97,7 @@ class BaseInterval(object):
         >>> bool(Interval())
         False
         """
-        return not self.isempty()
+        return not (self.isempty() or self.isnull())
 
 
     def __hash__(self):
@@ -236,6 +240,21 @@ class BaseInterval(object):
         >>> interval = Interval("Chr", 15, 55)
         >>> interval.empty()
         >>> print(interval)
+        Chr:0-0
+        """
+        self.beg = 0
+        self.end = 0
+    
+        
+    def null(self):
+        """
+        self.null() -> None
+
+        Empty the Interval object.
+        
+        >>> interval = Interval("Chr", 15, 55)
+        >>> interval.null()
+        >>> print(interval)
         None:nan-nan
         """
         self.namespace = _NULL_NS
@@ -270,7 +289,7 @@ class BaseInterval(object):
         >>> print(string[interval.to_slice()])
         cdefghij
         """
-        if self.isempty():
+        if self.isnull():
             return slice(0, 0)
         return slice(self.beg, self.end)
 
@@ -344,7 +363,7 @@ class BaseInterval(object):
             if other.isnull():
                 return i(other)
             if self.namespace != other.namespace:
-                raise ValueError(_bad_operand_name(
+                raise ValueError(_BAD_OPERAND_NAME(
                     op, other.namespace, self.namespace
                 )) from None
             beg = other.beg
@@ -353,7 +372,7 @@ class BaseInterval(object):
             beg = end = other
         else:
             raise TypeError(
-                _bad_operand_type(op, type(other), type(self))
+                _BAD_OPERAND_TYPE(op, type(other), type(self))
             )
         return (beg, end)
 
@@ -363,7 +382,7 @@ class BaseInterval(object):
             if other.isnull():
                 return i(other)
             if self.namespace != other.namespace:
-                raise ValueError(_bad_operand_name(
+                raise ValueError(_BAD_OPERAND_NAME(
                     op, self.namespace, other.namespace
                 )) from None
             beg = other.beg
@@ -372,7 +391,7 @@ class BaseInterval(object):
             beg = end = other
         else:
             raise TypeError(
-                _bad_operand_type(op, type(self), type(other))
+                _BAD_OPERAND_TYPE(op, type(self), type(other))
             )
         return (beg, end)
     
@@ -385,8 +404,8 @@ class BaseInterval(object):
         points.
         """
         copy = self.copy()
-        copy.beg = abs(self.beg)
-        copy.end = abs(self.end)
+        copy.beg = min(abs(self.beg),abs(self.end))
+        copy.end = max(abs(self.beg),abs(self.end))
         return copy
     
 
@@ -451,9 +470,22 @@ class BaseInterval(object):
         descendant class instance.
         """
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='//', i=_0div)
-        copy.beg = _floor(self.beg, beg)
-        copy.end = _floor(self.end, end)
+        beg, end = self.__lvalue_get(value, op='//', i=_1s)
+        if beg == 0 and end == 0:
+            raise ZeroDivisionError("division by zero")
+        elif beg == 0:
+            copy.beg = min(self.beg / end, self.end / end)
+            copy.end = _POS_INF
+        elif end == 0:
+            copy.beg = _NEG_INF
+            copy.end = max(self.beg / beg, self.end / beg)
+        else:
+            copy.beg = min(self.beg / beg, self.end / beg,
+                           self.beg / end, self.end / end)
+            copy.end = max(self.beg / beg, self.end / beg,
+                           self.beg / end, self.end / end)
+        copy.beg = _floor(copy.beg, 1)
+        copy.end = _floor(copy.end, 1)
         return copy
 
 
@@ -480,8 +512,12 @@ class BaseInterval(object):
         BaseInterval-descendant class instance.
         """
         beg, end = self.__lvalue_get(value, op='*=', i=_0s)
-        self.beg *= beg
-        self.end *= end
+        _beg = min(self.beg * beg, self.beg * end,
+                   self.end * beg, self.end * end)
+        _end = max(self.beg * beg, self.beg * end,
+                   self.end * beg, self.end * end)
+        self.beg = _beg
+        self.end = _end
         return self
             
 
@@ -530,14 +566,16 @@ class BaseInterval(object):
         """
         self % value -> Interval
 
-        Module the interval beginning-/end-points by value, where
+        Modulo the interval beginning-/end-points by value, where
         value can be any numeric primitive or BaseInterval-
         descendant class instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='<<', i=_0s)
-        copy.beg = self.beg % beg
-        copy.end = self.end % end
+        copy.beg = min(self.beg % beg, self.beg % end,
+                       self.end % beg, self.end % end)
+        copy.end = min(self.beg % beg, self.beg % end,
+                       self.end % beg, self.end % end)
         return copy
     
     
@@ -551,8 +589,10 @@ class BaseInterval(object):
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='*', i=_0s)
-        copy.beg = self.beg * beg
-        copy.end = self.end * end
+        copy.beg = min(self.beg * beg, self.beg * end,
+                       self.end * beg, self.end * end)
+        copy.end = max(self.beg * beg, self.beg * end,
+                       self.end * beg, self.end * end)
         return copy
 
 
@@ -563,8 +603,8 @@ class BaseInterval(object):
         Change the numeric sign of the interval beginning-/end-points.
         """
         copy = self.copy()
-        copy.beg *= -1
-        copy.end *= -1
+        copy.beg = -1 * self.end
+        copy.end = -1 * self.beg
         return copy
 
 
@@ -578,7 +618,7 @@ class BaseInterval(object):
         return self.copy()
 
 
-    def __pow__(self, mod):
+    def __pow__(self, value):
         """
         self**mod -> Interval
         pow(self, mod) -> Interval
@@ -588,8 +628,10 @@ class BaseInterval(object):
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='*', i=_0s)
-        copy.beg = pow(self.beg, beg)
-        copy.end = pow(self.end, end)
+        copy.beg = min(pow(self.beg, beg), pow(self.beg, end),
+                       pow(self.end, beg), pow(self.end, end))
+        copy.end = max(pow(self.beg, beg), pow(self.beg, end),
+                       pow(self.end, beg), pow(self.end, end))
         return copy
 
     
@@ -615,9 +657,20 @@ class BaseInterval(object):
         numeric primitive.
         """
         copy = self.copy()
-        beg, end = self.__rvalue_get(value, op='//', i=_0s)
-        copy.beg = _floor(beg, self.beg)
-        copy.end = _floor(end, self.end)
+        value, _ = self.__rvalue_get(value, op='//', i=_nulls)
+        if self.beg == 0 and self.end == 0:
+            raise ZeroDivisionError("division by zero")
+        elif self.beg == 0:
+            copy.beg = value / self.end
+            copy.end = _POS_INF
+        elif self.end == 0:
+            copy.beg = _NEG_INF
+            copy.end = value / self.beg
+        else:
+            copy.beg = min(value / self.beg, value / self.end)
+            copy.end = max(value / self.beg, value / self.end)
+        copy.beg = _floor(copy.beg, 1)
+        copy.end = _floor(copy.end, 1)
         return copy
 
 
@@ -627,7 +680,7 @@ class BaseInterval(object):
 
         Bitwise left-shift value by the beginning-/end-points of self, 
         where value can be any numeric primitive.
-        """
+        """        
         copy = self.copy()
         beg, end = self.__rvalue_get(value, op='<<', i=_0s)
         copy.beg = beg << self.beg
@@ -643,9 +696,9 @@ class BaseInterval(object):
         primitive.
         """
         copy = self.copy()
-        beg, end = self.__rvalue_get(value, op='*', i=_0s)
-        copy.beg = beg * self.beg
-        copy.end = end * self.end
+        value, _ = self.__rvalue_get(value, op='*', i=_0s)
+        copy.beg = min(value * self.beg, value * self.end)
+        copy.end = max(value * self.beg, value * self.end)
         return copy
 
 
@@ -657,9 +710,9 @@ class BaseInterval(object):
         primitive.
         """
         copy = self.copy()
-        beg, end = self.__rvalue_get(value, op='%', i=_0s)
-        copy.beg = beg % self.beg
-        copy.end = end % self.end
+        value, _ = self.__rvalue_get(value, op='%', i=_0s)
+        copy.beg = min(value % self.beg, value % self.end)
+        copy.end = max(value % self.beg, value % self.end)
         return copy
     
 
@@ -684,9 +737,9 @@ class BaseInterval(object):
         where value can be any numeric primitive.
         """
         copy = self.copy()
-        beg, end = self.__rvalue_get(value, op='>>', i=_0s)
-        copy.beg = beg >> self.beg
-        copy.end = end >> self.end
+        value, _ = self.__rvalue_get(value, op='>>', i=_0s)
+        copy.beg = min(value >> self.beg, value >> self.end)
+        copy.end = max(value >> self.beg, value >> self.end)
         return copy
     
 
@@ -713,9 +766,9 @@ class BaseInterval(object):
         by value, where value can be any numeric primitive.
         """        
         copy = self.copy()
-        beg, end = self.__rvalue_get(value, op='-', i=_0s)
-        copy.beg = beg - self.beg
-        copy.end = end - self.end
+        value, _ = self.__rvalue_get(value, op='-', i=_0s)
+        copy.beg = min(value - self.beg, value - self.end)
+        copy.end = max(value - self.beg, value - self.end)
         return copy
 
 
@@ -727,9 +780,18 @@ class BaseInterval(object):
         can be any numeric primitive.
         """
         copy = self.copy()
-        beg, end = self.__rvalue_get(value, op='/', i=_nulls)
-        copy.beg = beg / self.beg
-        copy.end = end / self.end
+        value, _ = self.__rvalue_get(value, op='/', i=_nulls)
+        if self.beg == 0 and self.end == 0:
+            raise ZeroDivisionError("division by zero")
+        elif self.beg == 0:
+            copy.beg = value / self.end
+            copy.end = _POS_INF
+        elif self.end == 0:
+            copy.beg = _NEG_INF
+            copy.end = value / self.beg
+        else:
+            copy.beg = min(value / self.beg, value / self.end)
+            copy.end = max(value / self.beg, value / self.end)
         return copy
     
 
@@ -743,8 +805,8 @@ class BaseInterval(object):
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='-', i=_0s)
-        copy.beg = self.beg - beg
-        copy.end = self.end - end
+        copy.beg = self.beg - end
+        copy.end = self.end - beg
         return copy
 
 
@@ -758,8 +820,19 @@ class BaseInterval(object):
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='/', i=_1s)
-        copy.beg = self.beg / beg
-        copy.end = self.end / end
+        if beg == 0 and end == 0:
+            raise ZeroDivisionError("division by zero")
+        elif beg == 0:
+            copy.beg = min(self.beg / end, self.end / end)
+            copy.end = _POS_INF
+        elif end == 0:
+            copy.beg = _NEG_INF
+            copy.end = max(self.beg / beg, self.end / beg)
+        else:
+            copy.beg = min(self.beg / beg, self.end / beg,
+                           self.beg / end, self.end / end)
+            copy.end = max(self.beg / beg, self.end / beg,
+                           self.beg / end, self.end / end)
         return copy
 
 
@@ -997,14 +1070,14 @@ class BaseInterval(object):
         -25
         """
         if self.isnull() or other.isnull():
-            return _INF
+            return _POS_INF
         if self.isoverlapping(other):
             return 0
         if self < other:
             return other.beg - self.end
         if self > other:
             return other.end - self.beg
-        return _INF
+        return _POS_INF
 
     
     def outer_distance(self, other, maxrange=False):
@@ -1033,7 +1106,7 @@ class BaseInterval(object):
         10
         """
         if self.isnull() or other.isnull():
-            return _INF
+            return _POS_INF
         if self.namespace == other.namespace:
             if maxrange:
                 beg = min(self.beg, other.beg)
@@ -1048,7 +1121,7 @@ class BaseInterval(object):
                 return end - beg
             else:
                 return beg - end
-        return _INF
+        return _POS_INF
     
 
     def difference(self, other):
@@ -1071,7 +1144,7 @@ class BaseInterval(object):
         if other.isempty():
             return copy
         elif other.issuperinterval(self):
-            copy.empty()
+            copy.null()
         elif other.isoverlapping_beg(self):
             copy.beg = other.end
         elif other.isoverlapping_end(self):
@@ -1086,7 +1159,7 @@ class BaseInterval(object):
 
     def difference_update(self, other):
         """Raises NotImplementedError."""
-        raise NotImplementedError(_ill_defined('difference'))
+        raise NotImplementedError(_ILL_DEFINED('difference'))
         
 
     def hull(self, other=None):
@@ -1099,7 +1172,7 @@ class BaseInterval(object):
         """
         copy = self.copy()
         if copy.isempty():
-            copy.empty()
+            copy.null()
         if other:
             if other.isempty():
                 other = Interval()
@@ -1128,13 +1201,13 @@ class BaseInterval(object):
             copy.beg = max(self.beg, other.beg)
             copy.end = min(self.end, other.end)
         else:
-            copy.empty()
+            copy.null()
         return copy
 
 
     def intersection_update(self, other):
         """Raises NotImplementedError."""
-        raise NotImplementedError(_ill_defined('intersection'))
+        raise NotImplementedError(_ILL_DEFINED('intersection'))
 
 
     def symmetric_difference(self, other):
@@ -1166,7 +1239,7 @@ class BaseInterval(object):
 
     def symmetric_difference_update(self, other):
         """Raises NotImplementedError."""
-        raise NotImplementedError(_ill_defined('symmetric_difference'))
+        raise NotImplementedError(_ILL_DEFINED('symmetric_difference'))
     
 
     def union(self, other, abutting=False):
@@ -1200,7 +1273,7 @@ class BaseInterval(object):
 
     def union_update(self, other):
         """Raises NotImplementedError."""
-        raise NotImplementedError(_ill_defined('union_update'))
+        raise NotImplementedError(_ILL_DEFINED('union_update'))
 
     
     def isdisjoint(self, other):
@@ -1255,7 +1328,7 @@ class BaseInterval(object):
     
 
     # Method aliases
-    clear = empty
+    clear = null
     
     to_string = __str__
 
@@ -1285,7 +1358,7 @@ class LeftClosedInterval(BaseInterval):
     dimensions, sequence names, etc.).
     """
     __slots__ = ()
-    
+
     def issuperinterval(self, other, strict=False):
         """
         self.issuperinterval(other) -> bool
@@ -1402,25 +1475,13 @@ class ClosedInterval(BaseInterval):
     # must also define __slots__ = ()
     __slots__ = ()
     
-    def __init__(self, name=_NULL_NS, beg=_NULL_BEG, end=_NULL_END):
+    def __init__(self, beg=_NULL_BEG, end=_NULL_END, namespace=_NULL_NS):
         """
         >>> Interval("Chr1", 15, 37) -> Interval
         """
-        super().__init__(namespace=name, beg=beg, end=end)
+        super().__init__(beg=beg, end=end, namespace=namespace)
 
 
-    def __str__(self):
-        """
-        str(self) -> str
-
-        Return a string representation of the object.
-
-        >>> str(Interval("Chr", 350,475))
-        'Chr:350-475'
-        """
-        return "%s:%s-%s" % (str(self.namespace), str(self.beg), str(self.end))
-
-    
     @property
     def name(self):
         """
@@ -1451,9 +1512,6 @@ class ClosedInterval(BaseInterval):
         self.namespace = name
 
     
-    to_string = __str__
-
-
 
 class Interval(LeftClosedInterval):
     """
@@ -1464,13 +1522,13 @@ class Interval(LeftClosedInterval):
     # To maintain memory and speed efficiency, every child object
     # must also define __slots__ = ()
     __slots__ = ()
-    
+
     def __init__(self, name=_NULL_NS, beg=_NULL_BEG, end=_NULL_END):
         """
         >>> Interval("Chr1", 15, 37) -> Interval
         """
         super().__init__(namespace=name, beg=beg, end=end)
-        
+
 
     def __str__(self):
         """
@@ -1483,7 +1541,7 @@ class Interval(LeftClosedInterval):
         """
         return "%s:%s-%s" % (str(self.namespace), str(self.beg), str(self.end))
 
-    
+
     @property
     def name(self):
         """
@@ -1681,6 +1739,10 @@ class Point(Interval):
         super().__init__(name=name, beg=pos, end=pos)
 
 
+    def __index__(self):
+        return self.beg
+    
+        
     @property
     def beg(self):
         """

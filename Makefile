@@ -20,7 +20,7 @@ RM_R        = $(RM) -r
 INSTALL_REG = $(INSTALL) -p -m 644 -D
 MKDIR_P     = $(MKDIR) -p
 
-PYTHON_VERSION := $(shell $(PYTHON) --version 2>&1 | awk '{if (/Python/) {split($$2,v,".");print "python"v[1]"."v[2]}}')
+PYTHON_VERSION := $(shell $(PYTHON) --version 2>&1 | $(AWK) '{if (/Python/) {split($$2,v,".");print "python"v[1]"."v[2]}}')
 INSTALL_PATH ?= $(PREFIX)/lib/$(PYTHON_VERSION)/site-packages
 
 SOURCE_FILES = $(wildcard $(SRC_DIR)/$(PACKAGE)/*.py)
@@ -31,7 +31,7 @@ INSTALL_TARGETS = $(patsubst $(SRC_DIR)/%,$(INSTALL_PATH)/%,$(SOURCE_FILES))
 .SUFFIXES:
 .SUFFIXES: .py
 
-.PHONY: install activate test clean 
+.PHONY: install activate test check clean 
 
 all: build
 
@@ -49,7 +49,7 @@ $(LIB_DIR)/%: $(SRC_DIR)/%
 	@$(AWK) '{print "#",$$_}' $(LICENSE) | $(CAT) - $< >$@
 
 
-
+check: test
 test: $(BUILD_TARGETS)
 	PYTHONPATH="$(CURR_DIR)/$(LIB_DIR)" $(PYTHON) -m unittest discover test -v
 
