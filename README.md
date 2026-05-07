@@ -9,6 +9,15 @@ cd intervals
 make install PREFIX=/full/path/to/installbase
 ```
 
+## Terminology
+
+- **namespace**: Optional depending on class. Namespace can be represent axis (*i.e.*, `"X"`) or contig name. Intervals only function in the same namespace.
+
+- **null**: an interval without both start and stop coordinates. Null coordinates are implemented with `nan` values and null namespace as `None`.
+
+- **empty(*: an interval that is null or that contains start and stop coordinates with distance (length) less-than or equal-to zero units long.
+
+
 ## Usage
 
 ### Manipulating `Interval()`s 
@@ -61,52 +70,52 @@ False
 
 | Attribute                                 | Description                                                  |
 | ----------------------------------------- | ------------------------------------------------------------ |
-| `self.beg`                                | Return the begin/start coordinate (0-based, inclusive) of `self` |
-| `self.clear()`                            | Alias for `null()`                                           |
-| `self.copy()`                             | Return new copy of `self`                                    |
-| `self.difference(other)`                  | Return an Interval object representing the set difference of `self` and `other` |
-| `self.difference_update(other)`           | Update `self` with the result of `difference()`              |
-| `self.empty()`                            | Set the `self` start and end coordinates both to zero        |
-| `self.end`                                | Return the end/stop coordinate (0-based, exclusive) of `self` |
-| `self.hull()` or `self.hull(other)`       | Return an Interval representing the hull of `self` or, optionally, `self` and `other` |
-| `self.inner_distance(other)`              | Return the numeric inner distance between two `self` and `other` |
-| `self.intersection(other)`                | Return an Interval representing the set intersection between `self` and `other` |
-| `self.intersection_update(other)`         | Update the `self` with the result of `intersection()`        |
-| `self.isabutting(other)`                  | Test if `self` is abutting the start or end of `other`       |
-| `self.isabutting_beg(other)`              | Test if `self` is abutting the start of `other`              |
-| `self.isabutting_end(other)`              | Test if `self` is abutting the end of `other`                |
-| `self.isabutting_start(other)`            | Alias for `isabutting_beg()`                                 |
-| `self.isabutting_stop(other)`             | Alias for `isabutting_stop()`                                |
-| `self.isdisjoint(other)`                  | Test if `self` and `other` are non-overlapping               |
-| `self.isempty()`                          | Test if `self` is a zero-lengthed interval                   |
-| `self.isfinite()`                         | Test if `self` is a finite interval                          |
-| `self.isnull()`                           | Test if `self` has `nan`-valued start or end                 |
-| `self.isoverlapping(other)`               | Test if `self` overlaps `other`                              |
-| `self.isoverlapping_beg(other)`           | Test if `self` overlaps the start of `other`                 |
-| `self.isoverlapping_end(other)`           | Test if `self` overlaps the end of `other`                   |
-| `self.isoverlapping_start(other)`         | Alias for `isoverlapping_beg()`                              |
-| `self.isoverlapping_stop(other)`          | Alias for `isoverlapping_end()`                              |
-| `self.issingleton()`                      | Test if `self` is 1 unit long                                |
-| `self.issubinterval(other)`               | Alias for `issubset()`                                       |
-| `self.issubset(other)`                    | Test if `self` is contained within `other`                   |
-| `self.issuperinterval(other)`             | Alias for `issuperset()`                                     |
-| `self.issuperset(other)`                  | Test if `self` contains `other`                              |
-| `self.mid`                                | Return the mid-point coordinate of `self`                    |
-| `self.name`                               | Alias for `namespace`                                        |
-| `self.namespace`                          | The namespace of `self` (optional)                           |
-| `self.null()`                             | Delete from `self` the values in the `name`, `start`, and `end` bound variables |
-| `self.outer_distance(other)`              | Return the outer distance between `self` and `other`         |
-| `self.overlap_fraction(other)`            | Return the overlap fraction as relative to length of `self`  |
-| `self.overlap_length(other)`              | Return the length of overlap betwen `self` and `other`       |
-| `self.start`                              | Alias for `beg`                                              |
-| `self.stop`                               | Alias for `end`                                              |
-| `self.symmetric_difference(other)`        | Return 2-tuple representing the symmetric difference (XOR) between `self` and `other` |
-| `self.symmetric_difference_update(other)` | raises `NotImplementedError`                                 |
-| `self.to_slice()`                         | Return a `slice()` object representing the coordinates in `self` |
-| `self.to_string()`                        | Return string representatio of `self`. Same as `str(self)`   |
-| `self.union(other)`                       | Return an Interval object representing the union of `self` and `other` |
-| `self.union_update(other)`                | Update `self` with the result of `update()`                  |
-|                                           |                                                              |
+| `self.beg`                                | Return the begin/start coordinate (0-based, inclusive) of `self`. |
+| `self.clear()`                            | Alias for `null()`.                                           |
+| `self.copy()`                             | Return new copy of `self`.                                    |
+| `self.difference(other)`                  | Return an Interval object representing the set difference of `self` and `other`. |
+| `self.difference_update(other)`           | Update `self` with the result of `difference()`.              |
+| `self.empty()`                            | Set the `self` start and end coordinates both to zero.        |
+| `self.end`                                | Return the end/stop coordinate (0-based, exclusive) of `self`. |
+| `self.hull()` or `self.hull(other)`       | Return an Interval representing the hull of `self` or, optionally, `self` and `other`. |
+| `self.inner_distance(other)`              | Return the numeric inner distance between two `self` and `other`. |
+| `self.intersection(other)`                | Return an Interval representing the set intersection between `self` and `other`. |
+| `self.intersection_update(other)`         | Update the `self` with the result of `intersection()`.        |
+| `self.isabutting(other)`                  | Test if `self` is abutting the start or end of `other`.       |
+| `self.isabutting_beg(other)`              | Test if `self` is abutting the start of `other`.              |
+| `self.isabutting_end(other)`              | Test if `self` is abutting the end of `other`.                |
+| `self.isabutting_start(other)`            | Alias for `isabutting_beg()`.                                 |
+| `self.isabutting_stop(other)`             | Alias for `isabutting_stop()`.                                |
+| `self.isdisjoint(other)`                  | Test if `self` and `other` are non-overlapping.               |
+| `self.isempty()`                          | Test if `self` is a zero-lengthed interval.                   |
+| `self.isfinite()`                         | Test if `self` is a finite interval.                          |
+| `self.isnull()`                           | Test if `self` has `nan`-valued start or end.                 |
+| `self.isoverlapping(other)`               | Test if `self` overlaps `other`.                              |
+| `self.isoverlapping_beg(other)`           | Test if `self` overlaps the start of `other`.                 |
+| `self.isoverlapping_end(other)`           | Test if `self` overlaps the end of `other`.                   |
+| `self.isoverlapping_start(other)`         | Alias for `isoverlapping_beg()`.                              |
+| `self.isoverlapping_stop(other)`          | Alias for `isoverlapping_end()`.                              |
+| `self.issingleton()`                      | Test if `self` is 1 unit long.                                |
+| `self.issubinterval(other)`               | Alias for `issubset()`.                                       |
+| `self.issubset(other)`                    | Test if `self` is contained within `other`.                   |
+| `self.issuperinterval(other)`             | Alias for `issuperset()`.                                     |
+| `self.issuperset(other)`                  | Test if `self` contains `other`.                              |
+| `self.mid`                                | Return the mid-point coordinate of `self`.                    |
+| `self.name`                               | Alias for `namespace`.                                        |
+| `self.namespace`                          | The namespace of `self` (optional).                           |
+| `self.null()`                             | Delete from `self` the values in the `name`, `start`, and `end` bound variables. |
+| `self.outer_distance(other)`              | Return the outer distance between `self` and `other`.         |
+| `self.overlap_fraction(other)`            | Return the overlap fraction as relative to length of `self`.  |
+| `self.overlap_length(other)`              | Return the length of overlap betwen `self` and `other`.       |
+| `self.start`                              | Alias for `beg`.                                              |
+| `self.stop`                               | Alias for `end`.                                              |
+| `self.symmetric_difference(other)`        | Return 2-tuple representing the symmetric difference (XOR) between `self` and `other`. |
+| `self.symmetric_difference_update(other)` | Raises `NotImplementedError`.                                 |
+| `self.to_slice()`                         | Return a `slice` object containing the Pythonic range of overlapping items, or `slice(-1, -1)` if none.  |
+| `self.to_string()`                        | Return string representatio of `self`. Same as `str(self)`.   |
+| `self.union(other)`                       | Return an Interval object representing the union of `self` and `other`. |
+| `self.union_update(other)`                | Update `self` with the result of `union()`.                   |
+|                                           |                                                               |
 
 
 
@@ -174,7 +183,7 @@ chr1:150-350
 | `self.find_overlap_index_stop(interval)`    | Alias for `find_overlap_index_end()`. |
 | `self.find_overlap_length(iterable)`        | Returns the length of intersects an `iterable` of interval objects have with `self`. |
 | `self.find_overlap_pairs(iterable)`         | Preform an overlap search of `self` with one or more interval objects in `iterable` and return a generator object producing a 2-tuple for each interval in `iterable` and its overlapping member in `self`. |
-| `self.find_overlaps(iterable)`              | Perform an overlap search of IntervalList with an `iterable` of interval objects and return an generator object producing members of `self` that overlap. |
+| `self.find_overlaps(iterable)`              | Perform an overlap search of `self` with an `iterable` of interval objects and return an generator object producing members of `self` that overlap. |
 | `self.index(interval)`                      | Alias of `find_index()`. |
 | `self.insert(index, interval)`              | Insert `interval` into `self` before `index`. |
 | `self.insort(interval)`                     | Insert an `interval` into its sorted position, with identical intervals inserted to the right of existing ones. |

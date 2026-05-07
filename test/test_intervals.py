@@ -218,8 +218,8 @@ class TestCase001_BaseInterval(TestCase):
     def test_to_slice_2(self):  ###
         s = self.interval8.to_slice()
         self.assertIsInstance(s, slice)
-        self.assertEqual(s.start, 0)
-        self.assertEqual(s.stop, 0)
+        self.assertEqual(s.start, -1)
+        self.assertEqual(s.stop, -1)
         
     def test_abs_0(self):
         self.assertTrue(hasattr(self.interval, '__abs__'))

@@ -281,7 +281,7 @@ class BaseInterval(object):
         self.to_slice() -> slice
 
         Return the interval as a slice object for use with lists, 
-        strings, or other list-like objects. Returns slice(0, 0)
+        strings, or other list-like objects. Returns slice(-1, -1)
         if null.
         
         >>> string = 'abcdefghijklmnopqrstuvwxyz'
@@ -289,9 +289,7 @@ class BaseInterval(object):
         >>> print(string[interval.to_slice()])
         cdefghij
         """
-        if self.isnull():
-            return slice(0, 0)
-        return slice(self.beg, self.end)
+        return slice(self.beg, self.end) if self else slice(-1, -1)
 
 
     # Equality and comparison methods:
