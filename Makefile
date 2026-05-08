@@ -17,6 +17,8 @@ INSTALL    := $(shell which install 2>/dev/null)
 MKDIR      := $(shell which mkdir 2>/dev/null)
 AWK        := $(shell which awk 2>/dev/null)
 CAT        := $(shell which cat 2>/dev/null)
+CP         := $(shell which cp 2>/dev/null)
+CP_R        = $(CP) -R
 RM         := $(shell which rm 2>/dev/null)
 RM_R        = $(RM) -R
 INSTALL_REG = $(INSTALL) -p -m 644
@@ -38,6 +40,7 @@ endif
 
 PYTHON_VERSION := $(shell $(PYTHON) --version 2>&1 | $(AWK) '{if (/Python/) {split($$2,v,".");print "python"v[1]"."v[2]}}')
 
+
 SOURCE_FILES = $(wildcard $(SRC_DIR)/$(PACKAGE)/*.py)
 BUILD_TARGETS = $(patsubst $(SRC_DIR)/%,$(LIB_DIR)/%,$(SOURCE_FILES))
 INSTALL_TARGETS = $(patsubst $(SRC_DIR)/%,$(INSTALL_PATH)/%,$(SOURCE_FILES))
@@ -54,14 +57,24 @@ all: build
 
 build: build-intervals
 
-build-intervals: $(BUILD_TARGETS)
+build-intervals: $(LIB_DIR)/$(PACKAGE) $(BUILD_TARGETS)
+
+$(LIB_DIR)/$(PACKAGE): $(LIB_DIR)
+	@$(MKDIR_P) $@
 
 $(LIB_DIR):
 	@$(MKDIR_P) $@
 
 $(LIB_DIR)/%: $(SRC_DIR)/%
-	@$(MKDIR_P) $(@D)
-	@$(AWK) '{print "#",$$_}' $(LICENSE) | $(CAT) - $< >$@
+	@$(AWK) '{print "#",$$0}' $(LICENSE) | $(CAT) - $< >$@
+
+$(INSTALL_PATH)/$(PACKAGE): $(INSTALL_PATH)
+	@$(MKDIR_P) $@
+
+$(INSTALL_PATH):
+	@$(MKDIR_P) $@
+
+
 
 
 check: test
@@ -78,7 +91,7 @@ activate:
 
 install: build test install-intervals
 
-install-intervals: $(INSTALL_TARGETS)
+install-intervals: $(INSTALL_PATH) $(INSTALL_PATH)/$(PACKAGE) $(INSTALL_TARGETS)
 
 $(INSTALL_PATH)/$(PACKAGE)/%.py: $(LIB_DIR)/$(PACKAGE)/%.py
 	$(INSTALL_REG) $< $@
