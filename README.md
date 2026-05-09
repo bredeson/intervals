@@ -7,9 +7,9 @@ The `intervals` module implements classes for performing arithmetic, `set`-like,
 
 ### Terminology
 
-- **namespace**: Optional, depending on class. Namespace can represent axes (*e.g.*, `X`), contig names (*e.g.*, `Chr1`), etc. Interval methods operate only between instances in same namespace. The default namespace is `None`.
+- **namespace**: Optional, depending on class. Namespace can represent axes (*e.g.*, `X`), contig names (*e.g.*, `Chr1`), etc. Interval methods operate only between instances in the same namespace. The default namespace is `None`.
 
-- **null**: an interval without both start and stop coordinates. Null coordinates are implemented as `nan` values and null namespace as `None`.
+- **null**: an interval without both start *and* stop coordinate values. Null coordinates are implemented as `nan` values and null namespace as `None`.
 
 - **empty**: an interval that is null or with distance (length) between beginning and end coordinates less-than or equal-to zero units long.
 
@@ -185,7 +185,7 @@ chr1:150-350
 
 #### `IntervalList` variables and methods
 
-In the following table, `self` represents an `IntervalList` instance, `interval` a `BaseInterval`-descendant class instance, and `iterable` is an iterable object containing zero or more query `interval`s.
+In the following table, `self` represents an `IntervalList` instance, `interval` a `BaseInterval`-descendant class instance, and `iterable` is an iterable object containing zero or more `interval` objects as queries for searching. 
 
 | Attribute  | Description |
 |---------------------------------------------|------------------------------|
@@ -233,6 +233,33 @@ In the following table, `self` represents an `IntervalList` instance, `interval`
 | `self.stop`                                 | Alias for `end`. |
 | `self.update(iterable)`                     | Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the right of existing ones. |
 | `self.updateleft(iterable)`                 | Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the left of existing ones. |
+
+The `IntervalList` constructor and its methods taking `interval` or `iterable` arguments as input provide a `setter` keyword argument, which accepts a function used to extract/construct from the input object a `BaseInterval`-descendant class instance for setting the `IntervalList`. This is useful when the inputs are not of the same object class/interface as the members of `IntervalList`. The `setter` argument function must accept one (and only one) positional input argument and output a single `BaseInterval`-descendant object.
+
+```python
+$ class IntervalPair(object):
+>     def __init__(self, trg, qry):
+>         self.trg = trg
+>         self.qry = qry
+
+$ pair = IntervalPair(
+>     trg=Interval("chr1",1000000, 1500000),
+>     qry=Interval("chr2",1100000, 1600000)
+> )
+
+$ ilist = IntervalList([pair], setter=lambda p: p.trg)
+
+$ pair in ilist
+True
+```
+
+The constructed `IntervalList` instance assumes all method arguments will be of the same class/interface as that given at construction. Using the `setter` keyword argument can be used to temporarily override the constructor's `setter` argument and allow objects of different class/interface:
+
+```python
+$ for ipair in ilist.find_overlaps(Interval("chr1",1001000,1005000), setter=lambda i: i):
+>    print(ipair.trg, ipair.qry)
+chr1:1000000-1500000 chr2:1100000-1600000
+```
 
 
 ### `IntervalSet`
