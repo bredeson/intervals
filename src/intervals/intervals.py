@@ -2,7 +2,8 @@
 Module for representing genomic intervals
 
 All class methods assume a 0-index coordinate system unless otherwise
-specified.
+specified. Classes represent "open" or "closed" intervals in the context
+of intersection.
 
 About mathematical and genomic intervals:
   1. https://en.wikipedia.org/wiki/Interval_(mathematics)#Terminology
@@ -24,12 +25,20 @@ from .constants import inf as _POS_INF
 
 _NEG_INF = -_POS_INF
 
-_BAD_OPERAND_TYPE = \
-    "unsupported operand type(s) for {0:s}: '{1}' and '{2}'".format
-_BAD_OPERAND_NAME = \
-    "mismatched operand namespaces for {0:s}: '{1}' and '{2}'".format
-_ILL_DEFINED = \
-    "Result ill-defined, use {0:s}() instead".format
+_BAD_OPERAND_TYPE = (
+    "unsupported operand type(s) for {0:s}: "
+    "'{1.__class__.__name__:s}' and '{2.__class__.__name__:s}'"
+).format
+
+_BAD_OPERAND_NAME = (
+    "mismatched operand namespaces for {0:s}: "
+    "'{1.namespace:s}' and '{2.namespace:s}'"
+).format
+
+_ILL_DEFINED = (
+    "Result is ill-defined, use {0:s}() instead"
+).format
+
 
 
 def _0s(x):
@@ -281,7 +290,7 @@ class BaseInterval(object):
         self.to_slice() -> slice
 
         Return the interval as a slice object for use with lists, 
-        strings, or other list-like objects. Returns slice(-1, -1)
+        strings, or other list-like objects. Returns `slice(-1, -1)`
         if null.
         
         >>> string = 'abcdefghijklmnopqrstuvwxyz'
@@ -361,17 +370,13 @@ class BaseInterval(object):
             if other.isnull():
                 return i(other)
             if self.namespace != other.namespace:
-                raise ValueError(_BAD_OPERAND_NAME(
-                    op, other.namespace, self.namespace
-                )) from None
+                raise ValueError(_BAD_OPERAND_NAME(op, other, self)) from None
             beg = other.beg
             end = other.end
         elif isinstance(other, (float, int)):
             beg = end = other
         else:
-            raise TypeError(
-                _BAD_OPERAND_TYPE(op, type(other), type(self))
-            )
+            raise TypeError(_BAD_OPERAND_TYPE(op, other, self)) from None
         return (beg, end)
 
 
@@ -380,17 +385,13 @@ class BaseInterval(object):
             if other.isnull():
                 return i(other)
             if self.namespace != other.namespace:
-                raise ValueError(_BAD_OPERAND_NAME(
-                    op, self.namespace, other.namespace
-                )) from None
+                raise ValueError(_BAD_OPERAND_NAME(op, self, other)) from None
             beg = other.beg
             end = other.end
         elif isinstance(other, (float, int)):
             beg = end = other
         else:
-            raise TypeError(
-                _BAD_OPERAND_TYPE(op, type(self), type(other))
-            )
+            raise TypeError(_BAD_OPERAND_TYPE(op, self, other)) from None
         return (beg, end)
     
 
@@ -499,7 +500,7 @@ class BaseInterval(object):
         self.beg += beg
         self.end += end
         return self
-
+    
 
     def __imul__(self, value):
         """
@@ -731,7 +732,7 @@ class BaseInterval(object):
         """
         value >> self -> Interval
 
-        Bitwise right-shift value by the beginning-/end-points of self, 
+        Bitwise right-shift value by the beginning-/end-points of self,
         where value can be any numeric primitive.
         """
         copy = self.copy()
@@ -745,7 +746,7 @@ class BaseInterval(object):
         """
         self >> value -> Interval
 
-        Bitwise right-shift the beginning-/end-points of self by value, 
+        Bitwise right-shift the beginning-/end-points of self by value,
         where value can be any numeric primitive or BaseInterval-
         descendant class instance.
         """
@@ -774,7 +775,7 @@ class BaseInterval(object):
         """
         value / self -> Interval
 
-        Divide value by beginning-/end-points of self, where value
+        Divide value by beginning-/end-points of self, where value 
         can be any numeric primitive.
         """
         copy = self.copy()
@@ -797,9 +798,9 @@ class BaseInterval(object):
         """
         self - value -> Interval
 
-        Shift interval beginning-/end-points by value, where value can
-        be any numeric primitive or an BaseInterval-descendant class
-        instance.
+        Shift interval beginning-/end-points by value, where value
+        can be any numeric primitive or an BaseInterval-descendant
+        class instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='-', i=_0s)
@@ -851,13 +852,28 @@ class BaseInterval(object):
         """
         return self.intersection(other)
 
+    
+    def __iand__(self, value):
+        """
+        self &= other -> None
+        self.intersection_update(other) -> None
+
+        Update self with the intersection of itself and other.
+        """
+        self.intersection_update(value)
+
+
+    def __rand__(self, other):
+        """Raises TypeError"""
+        raise TypeError(_BAD_OPERAND_TYPE('&',other,self))
+        
 
     def __contains__(self, other):
         """
         other in self -> bool
 
-        Test if other is contained within self. See the `issuperinterval()`
-        method documentation for more information.
+        Test if other is contained within self. See `issuperinterval()`
+        documentation for more information.
         """
         return self.issuperinterval(other)
 
@@ -866,12 +882,22 @@ class BaseInterval(object):
         """
         self | other -> Interval or 2-tuple
 
-        Return the union interval of two Intervals. See the `union()`
-        method documentation for more information.
+        Return the union interval of two Intervals. See `union()`
+        documentation for more information.
         """
         return self.union(other)
+
+
+    def __ior__(self, other):
+        """Raises NotImplementedError."""
+        self.union_update(other)
     
 
+    def __ror__(self, other):
+        """Raises TypeError"""
+        raise TypeError(_BAD_OPERAND_TYPE('|',other,self))
+        
+        
     def __xor__(self, other):
         """
         self ^ other -> 2-tuple of Intervals
@@ -885,6 +911,16 @@ class BaseInterval(object):
         return self.symmetric_difference(other)
 
 
+    def __ixor__(self, other):
+        """Raises NotImplementedError."""
+        self.symmetric_difference_update(other)
+    
+
+    def __rxor__(self, other):
+        """Raises TypeError"""
+        raise TypeError(_BAD_OPERAND_TYPE('^',other,self))
+
+        
     def isabutting(self, other):
         """
         self.isabutting(other) -> bool
@@ -977,28 +1013,28 @@ class BaseInterval(object):
                 (not strict))
 
 
-    def isoverlapping(self, other):
+    def isintersecting(self, other):
         """
-        self.isoverlapping(other) -> bool
+        self.isintersecting(other) -> bool
 
         Test whether self has any kind of overlap with other.
 
-        >>> Interval("Chr", 20, 60).isoverlapping(Interval("Chr", 40, 80))
+        >>> Interval("Chr", 20, 60).isintersecting(Interval("Chr", 40, 80))
         True
         """
         return ((self.namespace == other.namespace) and
                 (other.beg <= self.end and self.beg <= other.end))
     
 
-    def isoverlapping_beg(self, other):
+    def isintersecting_beg(self, other):
         """
-        self.isoverlapping_beg(other) -> bool
+        self.isintersecting_beg(other) -> bool
 
-        Test whether self isoverlapping the left-most edge of other.
+        Test whether self isintersecting the left-most edge of other.
 
-        >>> Interval("Chr", 20, 60).isoverlapping_beg(Interval("Chr", 40, 80))
+        >>> Interval("Chr", 20, 60).isintersecting_beg(Interval("Chr", 40, 80))
         True
-        >>> Interval("Chr", 40, 80).isoverlapping_beg(Interval("Chr", 20, 60))
+        >>> Interval("Chr", 40, 80).isintersecting_beg(Interval("Chr", 20, 60))
         False
         """
         # self.beg *=========* self.end
@@ -1007,15 +1043,15 @@ class BaseInterval(object):
                 (self.beg <= other.beg <= self.end <= other.end))
 
 
-    def isoverlapping_end(self, other):
+    def isintersecting_end(self, other):
         """
-        self.isoverlapping_end(other) -> bool
+        self.isintersecting_end(other) -> bool
 
-        Test whether self isoverlapping the right-most edge of other.
+        Test whether self isintersecting the right-most edge of other.
 
-        >>> Interval("Chr", 40, 80).isoverlapping_end(Interval("Chr", 20, 60))
+        >>> Interval("Chr", 40, 80).isintersecting_end(Interval("Chr", 20, 60))
         True
-        >>> Interval("Chr", 20, 60).isoverlapping_end(Interval("Chr", 40, 80))
+        >>> Interval("Chr", 20, 60).isintersecting_end(Interval("Chr", 40, 80))
         False
         """
         #           self.beg *=========* self.end
@@ -1024,13 +1060,13 @@ class BaseInterval(object):
                 (other.beg <= self.beg <= other.end <= self.end))
 
 
-    def overlap_length(self, other):
+    def intersection_length(self, other):
         """
-        self.overlap_length(other) -> value
+        self.intersection_length(other) -> value
 
-        Returns the overlap length between two intervals.
+        Returns the intersection length between two intervals.
 
-        >>> Interval("Chr", 20, 60).overlap_length(Interval("Chr", 40, 70))
+        >>> Interval("Chr", 20, 60).intersection_length(Interval("Chr", 40, 70))
         20
         """
         if self.namespace == other.namespace:
@@ -1038,27 +1074,28 @@ class BaseInterval(object):
         return 0
         
 
-    def overlap_fraction(self, other):
+    def intersection_fraction(self, other):
         """
-        self.overlap_fraction(other) -> float
+        self.intersection_fraction(other) -> float
 
-        Calculates overlap length as a fraction of self.
+        Calculates intersection length as a fraction of self.
 
         >>> I1 = Interval("Chr", 20, 60)
         >>> I2 = Interval("Chr", 40, 70)
-        >>> I1.overlap_fraction(I2)
+        >>> I1.intersection_fraction(I2)
         0.5
         """
-        return float(self.overlap_length(other)) / max(1, len(self))
-
-
+        return float(self.intersection_length(other)) / max(1, len(self))
+    
+    
     def inner_distance(self, other):
         """
         self.inner_distance(other) -> value
 
-        Returns the distance between the inner-most coordinates of two 
-        intervals. A negative distances indicates that self is downstream
-        of other. Abutting and overlapping intervals return `0`.
+        Returns the distance between the inner-most coordinates of
+        two intervals. A negative distances indicates that self is
+        downstream of other. Abutting and intersecting intervals 
+        return `0`.
 
         >>> I1 = Interval("Chr", 10, 20)
         >>> I2 = Interval("Chr", 45, 80)
@@ -1069,7 +1106,7 @@ class BaseInterval(object):
         """
         if self.isnull() or other.isnull():
             return _POS_INF
-        if self.isoverlapping(other):
+        if self.isintersecting(other):
             return 0
         if self < other:
             return other.beg - self.end
@@ -1077,22 +1114,38 @@ class BaseInterval(object):
             return other.end - self.beg
         return _POS_INF
 
+
+    def jaccard_distance(self, other):
+        """
+        self.jaccard_distance(other) -> value
+
+        Returns the Jaccard distance (1 - Jaccard similarity) between
+        two intervals.
+
+        >>> I1 = Interval("Chr", 10, 20)
+        >>> I2 = Interval("Chr", 15, 30)
+        >>> I1.jaccard_distance(I2)
+        0.75
+        """
+        intersection_length = float(self.intersection_length(other))
+        return 1.0 - intersection_length / (len(self) + len(other) - intersection_length)
+
     
     def outer_distance(self, other, maxrange=False):
         """
         self.outer_distance(other) -> value
         self.outer_distance(other, maxrange=True) -> value
 
-        Returns the distance between the outer-most points of two 
-        intervals. A negative distance indicates that self is downstream
-        of other.
+        Returns the distance between the outer-most points of 
+        two intervals. A negative distance indicates that self
+        is downstream of other.
 
         >>> I1 = Interval("Chr", 10, 17)
         >>> I2 = Interval("Chr", 5, 8)
         >>> I1.outer_distance(I2)
         -12
 
-        If maxrange=True, then the outer distance of overlapping
+        If maxrange=True, then the outer distance of intersecting
         intervals is calculated as min(self.beg, other.beg) and 
         max(self.end, other.end).
 
@@ -1143,9 +1196,9 @@ class BaseInterval(object):
             return copy
         elif other.issuperinterval(self):
             copy.null()
-        elif other.isoverlapping_beg(self):
+        elif other.isintersecting_beg(self):
             copy.beg = other.end
-        elif other.isoverlapping_end(self):
+        elif other.isintersecting_end(self):
             copy.end = other.beg            
         elif other.issubinterval(self):
             copy.end = other.beg
@@ -1166,17 +1219,12 @@ class BaseInterval(object):
         self.hull(other) -> Interval
 
         Returns the smallest interval closure of self (and, optionally,
-        other).
+        other). 
         """
         copy = self.copy()
-        if copy.isempty():
-            copy.null()
-        if other:
-            if other.isempty():
-                other = Interval()
-            if copy.namespace == other.namespace:
-                copy.beg = min(copy.beg, other.beg)
-                copy.end = max(copy.end, other.end)
+        if other and self.namespace == other.namespace:
+            copy.beg = min(copy.beg, other.beg)
+            copy.end = max(copy.end, other.end)
         return copy
     
         
@@ -1195,17 +1243,28 @@ class BaseInterval(object):
         Interval(Chr:45-60)
         """
         copy = self.copy()
-        if self.isoverlapping(other):
+        if self.isintersecting(other):
             copy.beg = max(self.beg, other.beg)
             copy.end = min(self.end, other.end)
+        elif self.namespace == other.namespace:
+            copy.beg = _NULL_BEG
+            copy.end = _NULL_END
         else:
             copy.null()
         return copy
 
 
     def intersection_update(self, other):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_ILL_DEFINED('intersection'))
+        """
+        self &= other -> None
+        self.intersection_update(other) -> None
+
+        Update self with the intersection of itself and other.
+        """
+        copy = self.intersection(other)
+        self.namespace = copy.namespace
+        self.beg = copy.beg
+        self.end = copy.end
 
 
     def symmetric_difference(self, other):
@@ -1257,7 +1316,7 @@ class BaseInterval(object):
         if other.isempty():
             return self.copy()
         copy = self.copy()
-        if self.isoverlapping(other):
+        if self.isintersecting(other):
             copy.beg = min(self.beg, other.beg)
             copy.end = max(self.end, other.end)
         elif abutting and self.isabbutting(other):
@@ -1271,21 +1330,21 @@ class BaseInterval(object):
 
     def union_update(self, other):
         """Raises NotImplementedError."""
-        raise NotImplementedError(_ILL_DEFINED('union_update'))
+        raise NotImplementedError(_ILL_DEFINED('union'))
 
     
     def isdisjoint(self, other):
         """
         self.isdisjoint(other) -> bool
 
-        Test whether self and other are disjoint (non-overlapping).
+        Test whether self and other are disjoint (non-intersecting).
 
         >>> Interval("Chr", 0, 20).isdisjoint(Interval("Chr", 45, 80))
         True
         >>> Interval("Chr", 0, 60).isdisjoint(Interval("Chr", 45, 80))
         False
         """
-        return not self.isoverlapping(other)
+        return not self.isintersecting(other)
     
 
     def isempty(self):
@@ -1334,13 +1393,15 @@ class BaseInterval(object):
 
     isabutting_stop = isabutting_end
     
-    isoverlapping_start = isoverlapping_beg
+    isintersecting_start = isintersecting_beg
 
-    isoverlapping_stop = isoverlapping_end
+    isintersecting_stop = isintersecting_end
 
     issubset = issubinterval
 
     issuperset = issuperinterval
+
+    update = union_update
 
 
     
@@ -1407,28 +1468,28 @@ class LeftClosedInterval(BaseInterval):
                 (not strict))
 
     
-    def isoverlapping(self, other):
+    def isintersecting(self, other):
         """
-        self.isoverlapping(other) -> bool
+        self.isintersecting(other) -> bool
 
         Test whether self has any kind of overlap with other.
 
-        >>> Interval("Chr", 20, 60).isoverlapping(Interval("Chr", 40, 80))
+        >>> Interval("Chr", 20, 60).isintersecting(Interval("Chr", 40, 80))
         True
         """
         return ((self.namespace == other.namespace) and
                 (other.beg < self.end and self.beg < other.end))
 
 
-    def isoverlapping_beg(self, other):
+    def isintersecting_beg(self, other):
         """
-        self.isoverlapping_beg(other) -> bool
+        self.isintersecting_beg(other) -> bool
 
-        Test whether self isoverlapping the left-most edge of other.
+        Test whether self isintersecting the left-most edge of other.
 
-        >>> Interval("Chr", 20, 60).isoverlapping_beg(Interval("Chr", 40, 80))
+        >>> Interval("Chr", 20, 60).isintersecting_beg(Interval("Chr", 40, 80))
         True
-        >>> Interval("Chr", 40, 80).isoverlapping_beg(Interval("Chr", 20, 60))
+        >>> Interval("Chr", 40, 80).isintersecting_beg(Interval("Chr", 20, 60))
         False
         """
         # self.beg *=========o self.end
@@ -1437,15 +1498,15 @@ class LeftClosedInterval(BaseInterval):
                 (self.beg <= other.beg < self.end < other.end))
 
 
-    def isoverlapping_end(self, other):
+    def isintersecting_end(self, other):
         """
-        self.isoverlapping_end(other) -> bool
+        self.isintersecting_end(other) -> bool
 
-        Test whether self isoverlapping the right-most edge of other.
+        Test whether self isintersecting the right-most edge of other.
 
-        >>> Interval("Chr", 40, 80).isoverlapping_end(Interval("Chr", 20, 60))
+        >>> Interval("Chr", 40, 80).isintersecting_end(Interval("Chr", 20, 60))
         True
-        >>> Interval("Chr", 20, 60).isoverlapping_end(Interval("Chr", 40, 80))
+        >>> Interval("Chr", 20, 60).isintersecting_end(Interval("Chr", 40, 80))
         False
         """
         #           self.beg *=========o self.end
@@ -1454,9 +1515,9 @@ class LeftClosedInterval(BaseInterval):
                 (other.beg < self.beg < other.end <= self.end))
 
     
-    isoverlapping_start = isoverlapping_beg
+    isintersecting_start = isintersecting_beg
 
-    isoverlapping_stop = isoverlapping_end
+    isintersecting_stop = isintersecting_end
 
     issubset = issubinterval
 
@@ -1545,11 +1606,11 @@ class Interval(LeftClosedInterval):
         """
         self.name -> value
         
-        In an inheriting child class, if the `namespace` attribute is
-        best defined by another attribute (e.g., as `self.contig`, 
+        In an inheriting child class, if the `namespace` attribute
+        is best defined by another attribute (e.g., as `self.contig`, 
         `self.scaff`, `self.chrom`, etc.) for the purpose of the class,
-        the `self.namespace` attribute will require initializization in
-        the `__init__()` method.
+        the `self.namespace` attribute will require initializization
+        in the `__init__()` method.
 
         For example: 
             def __init__(self, chrom, beg, end):
@@ -1625,8 +1686,8 @@ class Interval(LeftClosedInterval):
         """
         self.isempty() -> bool
 
-        Test whether self is a valid interval range. If either self.beg
-        or self.end are nan, this method returns True.
+        Test whether self is a valid interval range. If either
+        self.beg or self.end are nan, this method returns True.
         """
         return not (self.beg < self.end)
 
@@ -1726,6 +1787,11 @@ class ClosedPoint(ClosedInterval):
         return True
 
 
+    start = beg
+
+    stop = end
+
+    
 
 class Point(Interval):
     __slots__ = ()
@@ -1822,6 +1888,10 @@ class Point(Interval):
         """
         return True
 
+
+    start = beg
+
+    stop = end
 
 
 #       10        20        30        40        50        60        70        80

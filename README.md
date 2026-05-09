@@ -44,7 +44,7 @@ To see the full documentation for the `intervals` API, there are two ways of get
     $ help(IntervalList)
     
     # for a specific method:
-    $ help(Interval.isoverlapping)
+    $ help(Interval.isintersecting)
     ```
 
 # Examples
@@ -66,16 +66,16 @@ Interval(chr1:100-2000)
 $ i1 ^ i2
 (Interval(chr1:100-750), Interval(chr1:1000-2000))
 
-$ i1.isoverlapping(i2)
+$ i1.isintersecting(i2)
 True
 
-$ i1.isoverlapping_start(i2)
+$ i1.isintersecting_start(i2)
 True
 
-$ i1.isoverlapping_end(i2)
+$ i1.isintersecting_end(i2)
 False
 
-$ i1.overlap_length(i2)
+$ i1.intersection_length(i2)
 250
 
 $ i1.name
@@ -117,15 +117,15 @@ In the following table, `self` and `other` represent `BaseInterval`-descendant c
 | `self.isabutting_end(other)`              | Test if `self` is abutting the end of `other`.                |
 | `self.isabutting_start(other)`            | Alias for `isabutting_beg()`.                                 |
 | `self.isabutting_stop(other)`             | Alias for `isabutting_stop()`.                                |
-| `self.isdisjoint(other)`                  | Test if `self` and `other` are non-overlapping.               |
+| `self.isdisjoint(other)`                  | Test if `self` and `other` are non-intersecting.               |
 | `self.isempty()`                          | Test if `self` is a zero-lengthed interval.                   |
 | `self.isfinite()`                         | Test if `self` is a finite interval.                          |
 | `self.isnull()`                           | Test if `self` has `nan`-valued start or end.                 |
-| `self.isoverlapping(other)`               | Test if `self` overlaps `other`.                              |
-| `self.isoverlapping_beg(other)`           | Test if `self` overlaps the start of `other`.                 |
-| `self.isoverlapping_end(other)`           | Test if `self` overlaps the end of `other`.                   |
-| `self.isoverlapping_start(other)`         | Alias for `isoverlapping_beg()`.                              |
-| `self.isoverlapping_stop(other)`          | Alias for `isoverlapping_end()`.                              |
+| `self.isintersecting(other)`              | Test if `self` intersects `other`.                              |
+| `self.isintersecting_beg(other)`          | Test if `self` intersects the start of `other`.                 |
+| `self.isintersecting_end(other)`          | Test if `self` intersects the end of `other`.                   |
+| `self.isintersecting_start(other)`        | Alias for `isintersecting_beg()`.                             |
+| `self.isintersecting_stop(other)`         | Alias for `isintersecting_end()`.                             |
 | `self.issingleton()`                      | Test if `self` is 1 unit long.                                |
 | `self.issubinterval(other)`               | Alias for `issubset()`.                                       |
 | `self.issubset(other)`                    | Test if `self` is contained within `other`.                   |
@@ -136,13 +136,13 @@ In the following table, `self` and `other` represent `BaseInterval`-descendant c
 | `self.namespace`                          | The namespace of `self` (optional).                           |
 | `self.null()`                             | Delete from `self` the values in the `name`, `start`, and `end` bound variables. |
 | `self.outer_distance(other)`              | Return the outer distance between `self` and `other`.         |
-| `self.overlap_fraction(other)`            | Return the overlap fraction as relative to length of `self`.  |
-| `self.overlap_length(other)`              | Return the length of overlap betwen `self` and `other`.       |
+| `self.intersection_fraction(other)`            | Return the intersection fraction as relative to length of `self`.  |
+| `self.intersection_length(other)`              | Return the length of intersection betwen `self` and `other`.       |
 | `self.start`                              | Alias for `beg`.                                              |
 | `self.stop`                               | Alias for `end`.                                              |
 | `self.symmetric_difference(other)`        | Return 2-tuple representing the symmetric difference (XOR) between `self` and `other`. |
 | `self.symmetric_difference_update(other)` | Raises `NotImplementedError`.                                 |
-| `self.to_slice()`                         | Return a `slice` object containing the Pythonic range of overlapping items, or `slice(-1, -1)` if none.  |
+| `self.to_slice()`                         | Return a `slice` object containing the Pythonic range of intersecting items, or `slice(-1, -1)` if none.  |
 | `self.to_string()`                        | Return string representatio of `self`. Same as `str(self)`.   |
 | `self.union(other)`                       | Return an Interval object representing the union of `self` and `other`. |
 | `self.union_update(other)`                | Update `self` with the result of `union()`.                   |
@@ -175,7 +175,7 @@ $ ilist.find_index_beg(Interval("chr1",170,300))
 $ ilist.find_index_end(Interval("chr1",170,300))
 3
 
-$ for interval in ilist.find_overlaps(Interval("chr1",140,300)):
+$ for interval in ilist.find_intersecting(Interval("chr1",140,300)):
 >     print(interval)
 chr1:125-145
 chr1:150-350
@@ -204,17 +204,17 @@ In the following table, `self` represents an `IntervalList` instance, `interval`
 | `self.find_index_nearest(interval)`         | Return the nearest (inclusive) index for an `interval`, returns the left-most index when members are equidistant to `interval`. |
 | `self.find_index_start(interval)`           | Alias for `find_index_beg()`. |
 | `self.find_index_stop(interval)`            | Alias for `find_index_end()`. |
-| `self.find_overlap_fraction(iterable)`      | Returns the fraction of overlap an `iterable` of `interval`s has with those of `self`. |
-| `self.find_overlap_index_beg(interval)`     | Return the (0-based inclusive) index of the left-most overlapping interval in `self` for a given `interval`, or -1 if none. |
-| `self.find_overlap_index_end(interval)`     | Return the (0-based exclusive) index of the right-most overlapping interval in `self` for a given `interval`, or -1 if none. |
-| `self.find_overlap_index_nearest(interval)` | Return the (0-based inclusive) index of the nearest overlapping interval in `self` for a given `interval`, or -1 if none. Returns the left-most index when members are equidistant to `interval`. |
-| `self.find_overlap_index_range(iterable)`   | Homage to `range()`. Returns generator object yielding the indices for intervals in `self` overlapping those in `iterable`. |
-| `self.find_overlap_index_slice(iterable)`   | Perform an overlap search with one or more query interval objects in `iterable` and return a `slice` object containing the Pythonic range of overlapping items, or `slice(-1, -1)` if none. |
-| `self.find_overlap_index_start(interval)`   | Alias for `find_overlap_index_beg()`. |
-| `self.find_overlap_index_stop(interval)`    | Alias for `find_overlap_index_end()`. |
-| `self.find_overlap_length(iterable)`        | Returns the length of intersects an `iterable` of interval objects have with `self`. |
-| `self.find_overlap_pairs(iterable)`         | Preform an overlap search of `self` with one or more interval objects in `iterable` and return a generator object producing a 2-tuple for each interval in `iterable` and its overlapping member in `self`. |
-| `self.find_overlaps(iterable)`              | Perform an overlap search of `self` with an `iterable` of interval objects and return an generator object producing members of `self` that overlap. |
+| `self.find_intersection_fraction(iterable)`      | Returns the fraction of intersection an `iterable` of `interval`s has with those of `self`. |
+| `self.find_intersection_index_beg(interval)`     | Return the (0-based inclusive) index of the left-most intersecting interval in `self` for a given `interval`, or -1 if none. |
+| `self.find_intersection_index_end(interval)`     | Return the (0-based exclusive) index of the right-most intersecting interval in `self` for a given `interval`, or -1 if none. |
+| `self.find_intersection_index_nearest(interval)` | Return the (0-based inclusive) index of the nearest intersecting interval in `self` for a given `interval`, or -1 if none. Returns the left-most index when members are equidistant to `interval`. |
+| `self.find_intersection_index_range(iterable)`   | Homage to `range()`. Returns generator object yielding the indices for intervals in `self` intersecting those in `iterable`. |
+| `self.find_intersection_index_slice(iterable)`   | Perform an intersect search with one or more query interval objects in `iterable` and return a `slice` object containing the Pythonic range of intersecting items, or `slice(-1, -1)` if none. |
+| `self.find_intersection_index_start(interval)`   | Alias for `find_intersection_index_beg()`. |
+| `self.find_intersection_index_stop(interval)`    | Alias for `find_intersection_index_end()`. |
+| `self.find_intersection_length(iterable)`        | Returns the length of intersects an `iterable` of interval objects have with `self`. |
+| `self.find_intersection_pairs(iterable)`         | Preform an intersect search of `self` with one or more interval objects in `iterable` and return a generator object producing a 2-tuple for each interval in `iterable` and its intersecting member in `self`. |
+| `self.find_intersecting(iterable)`              | Perform an intersect search of `self` with an `iterable` of interval objects and return an generator object producing members of `self` that intersect. |
 | `self.index(interval)`                      | Alias of `find_index()`. |
 | `self.insert(index, interval)`              | Insert `interval` into `self` before `index`. |
 | `self.insort(interval)`                     | Insert an `interval` into its sorted position, with identical intervals inserted to the right of existing ones. |
@@ -256,7 +256,7 @@ True
 The constructed `IntervalList` instance assumes all method arguments will be of the same class/interface as that given at construction. Using the `setter` keyword argument can be used to temporarily override the constructor's `setter` argument and allow objects of different class/interface:
 
 ```python
-$ for ipair in ilist.find_overlaps(Interval("chr1",1001000,1005000), setter=lambda i: i):
+$ for ipair in ilist.find_intersecting(Interval("chr1",1001000,1005000), setter=lambda i: i):
 >    print(ipair.trg, ipair.qry)
 chr1:1000000-1500000 chr2:1100000-1600000
 ```

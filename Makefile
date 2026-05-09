@@ -2,14 +2,12 @@
 PREFIX     ?= /usr/local
 INSTALL_PATH ?= $(PREFIX)/lib/$(PYTHON_VERSION)/site-packages
 
-CURR_DIR   := $(shell pwd)
+CURR_PATH  := $(shell pwd)
 
-PACKAGE    := intervals
-LICENSE    := LICENSE
-SRC_DIR    := $(CURR_DIR)/src
-BUILD_DIR  := $(CURR_DIR)/build
-TEST_DIR   := $(CURR_DIR)/test
-LIB_DIR    := $(BUILD_DIR)/lib
+SRC_PATH   := $(CURR_PATH)/src
+BUILD_PATH := $(CURR_PATH)/build
+TEST_PATH  := $(CURR_PATH)/test
+LIB_PATH   := $(BUILD_PATH)/lib
 
 ECHO       := $(shell which echo 2>/dev/null)
 PYTHON     := $(shell which python 2>/dev/null)
@@ -19,10 +17,18 @@ AWK        := $(shell which awk 2>/dev/null)
 CAT        := $(shell which cat 2>/dev/null)
 CP         := $(shell which cp 2>/dev/null)
 CP_R        = $(CP) -R
+GIT        := $(shell which git 2>/dev/null)
 RM         := $(shell which rm 2>/dev/null)
 RM_R        = $(RM) -R
 INSTALL_REG = $(INSTALL) -p -m 644
 MKDIR_P     = $(MKDIR) -p
+
+PACKAGE    := intervals
+LIBRARY    := intervals
+VERSION    := $(shell $(GIT) describe --long --tags --always)
+CONTACT    := https:\/\/github.com\/bredeson\/intervals\/issues
+LICENSE    := LICENSE
+
 
 ifeq ($(shell uname),Linux)
 INSTALL_REG += -D
@@ -41,9 +47,9 @@ endif
 PYTHON_VERSION := $(shell $(PYTHON) --version 2>&1 | $(AWK) '{if (/Python/) {split($$2,v,".");print "python"v[1]"."v[2]}}')
 
 
-SOURCE_FILES = $(wildcard $(SRC_DIR)/$(PACKAGE)/*.py)
-BUILD_TARGETS = $(patsubst $(SRC_DIR)/%,$(LIB_DIR)/%,$(SOURCE_FILES))
-INSTALL_TARGETS = $(patsubst $(SRC_DIR)/%,$(INSTALL_PATH)/%,$(SOURCE_FILES))
+SOURCE_FILES = $(wildcard $(SRC_PATH)/$(LIBRARY)/*.py)
+BUILD_TARGETS = $(patsubst $(SRC_PATH)/%,$(LIB_PATH)/%,$(SOURCE_FILES))
+INSTALL_TARGETS = $(patsubst $(SRC_PATH)/%,$(INSTALL_PATH)/%,$(SOURCE_FILES))
 
 
 .SUFFIXES:
@@ -57,18 +63,18 @@ all: build
 
 build: build-intervals
 
-build-intervals: $(LIB_DIR)/$(PACKAGE) $(BUILD_TARGETS)
+build-intervals: $(LIB_PATH)/$(LIBRARY) $(BUILD_TARGETS)
 
-$(LIB_DIR)/$(PACKAGE): $(LIB_DIR)
+$(LIB_PATH)/$(LIBRARY): $(LIB_PATH)
 	@$(MKDIR_P) $@
 
-$(LIB_DIR):
+$(LIB_PATH):
 	@$(MKDIR_P) $@
 
-$(LIB_DIR)/%: $(SRC_DIR)/%
+$(LIB_PATH)/%: $(SRC_PATH)/%
 	@$(AWK) '{print "#",$$0}' $(LICENSE) | $(CAT) - $< >$@
 
-$(INSTALL_PATH)/$(PACKAGE): $(INSTALL_PATH)
+$(INSTALL_PATH)/$(LIBRARY): $(INSTALL_PATH)
 	@$(MKDIR_P) $@
 
 $(INSTALL_PATH):
@@ -76,10 +82,9 @@ $(INSTALL_PATH):
 
 
 
-
 check: test
-test: $(BUILD_TARGETS)
-	PYTHONPATH="$(LIB_DIR)" $(PYTHON) -m unittest discover test -v
+test: $(LIB_PATH)/$(LIBRARY) $(BUILD_TARGETS)
+	PYTHONPATH="$(LIB_PATH)" $(PYTHON) -m unittest discover test -v
 
 
 
@@ -91,12 +96,12 @@ activate:
 
 install: build test install-intervals
 
-install-intervals: $(INSTALL_PATH) $(INSTALL_PATH)/$(PACKAGE) $(INSTALL_TARGETS)
+install-intervals: $(INSTALL_PATH) $(INSTALL_PATH)/$(LIBRARY) $(INSTALL_TARGETS)
 
-$(INSTALL_PATH)/$(PACKAGE)/%.py: $(LIB_DIR)/$(PACKAGE)/%.py
+$(INSTALL_PATH)/$(LIBRARY)/%.py: $(LIB_PATH)/$(LIBRARY)/%.py
 	$(INSTALL_REG) $< $@
 
 
 
 clean:
-	-$(RM_R) $(BUILD_DIR)
+	-$(RM_R) $(BUILD_PATH)

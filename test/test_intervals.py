@@ -970,8 +970,43 @@ class TestCase001_BaseInterval(TestCase):
         self.assertTrue(hasattr(self.interval, 'intersection_update'))
 
     def test_intersection_update_1(self):
-        with self.assertRaises(NotImplementedError):
-            self.interval0.intersection_update(self.interval0)
+        self.interval0.intersection_update(self.interval2)
+        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertEqual(self.interval0, self.interval2)
+
+    def test_intersection_update_2(self):
+        self.interval0.intersection_update(self.interval3)
+        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertEqual(self.interval0, self.interval3)
+
+    def test_intersection_update_3(self):
+        self.interval0.intersection_update(self.interval6)
+        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertEqual(self.interval0, self.interval6)
+
+    def test_intersection_update_4(self):
+        self.interval0.intersection_update(self.interval1)
+        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertEqual(self.interval0.beg, 50)
+        self.assertEqual(self.interval0.end, 75)
+
+    def test_intersection_update_5(self):
+        self.interval0.intersection_update(self.interval7)
+        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertEqual(self.interval0.beg,  75)
+        self.assertEqual(self.interval0.end, 100)
+        
+    def test_intersection_update_6(self):
+        self.interval0.intersection_update(self.interval5)
+        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertFalse(self.interval0.isnull())
+        self.assertEqual(len(self.interval0), 0)
+
+    def test_intersection_update_7(self):
+        self.interval1.intersection_update(self.interval7)
+        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertFalse(self.interval0.isnull())
+        self.assertEqual(len(self.interval0), 50)
 
     def test_isdisjoint_0(self):
         self.assertTrue(hasattr(self.interval, 'isdisjoint'))
@@ -1045,128 +1080,128 @@ class TestCase001_BaseInterval(TestCase):
             self.interval7.outer_distance(self.interval5, True), -125
         )
         
-    def test_overlap_fraction_0(self):
-        self.assertTrue(hasattr(self.interval, 'overlap_fraction'))
+    def test_intersection_fraction_0(self):
+        self.assertTrue(hasattr(self.interval, 'intersection_fraction'))
 
-    def test_overlap_fraction_1(self):
+    def test_intersection_fraction_1(self):
         self.assertEqual(
-            self.interval0.overlap_fraction(self.interval2), 0.10
+            self.interval0.intersection_fraction(self.interval2), 0.10
         )
 
-    def test_overlap_fraction_2(self):
+    def test_intersection_fraction_2(self):
         self.assertEqual(
-            self.interval2.overlap_fraction(self.interval0), 1.0
+            self.interval2.intersection_fraction(self.interval0), 1.0
         )
 
-    def test_overlap_fraction_3(self):
+    def test_intersection_fraction_3(self):
         self.assertEqual(
-            self.interval0.overlap_fraction(self.interval3), 0.5
-        )
-        
-    def test_overlap_fraction_4(self):
-        self.assertEqual(
-            self.interval0.overlap_fraction(self.interval6), 0.5
+            self.interval0.intersection_fraction(self.interval3), 0.5
         )
         
-    def test_overlap_fraction_5(self):
+    def test_intersection_fraction_4(self):
         self.assertEqual(
-            self.interval0.overlap_fraction(self.interval5), 0.0
-        )
-
-    def test_overlap_fraction_6(self):
-        self.assertEqual(
-            self.interval5.overlap_fraction(self.interval3), 0.0
-        )
-
-    def test_overlap_length_0(self):
-        self.assertTrue(hasattr(self.interval, 'overlap_length'))
-
-    def test_overlap_length_1(self):
-        self.assertEqual(
-            self.interval0.overlap_length(self.interval2), 5
-        )
-
-    def test_overlap_length_2(self):
-        self.assertEqual(
-            self.interval2.overlap_length(self.interval0), 5
-        )
-
-    def test_overlap_length_3(self):
-        self.assertEqual(
-            self.interval0.overlap_length(self.interval3), 25
+            self.interval0.intersection_fraction(self.interval6), 0.5
         )
         
-    def test_overlap_length_4(self):
+    def test_intersection_fraction_5(self):
         self.assertEqual(
-            self.interval0.overlap_length(self.interval6), 25
-        )
-        
-    def test_overlap_length_5(self):
-        self.assertEqual(
-            self.interval0.overlap_length(self.interval5), 0
+            self.interval0.intersection_fraction(self.interval5), 0.0
         )
 
-    def test_overlap_length_6(self):
+    def test_intersection_fraction_6(self):
         self.assertEqual(
-            self.interval5.overlap_length(self.interval3), 0
+            self.interval5.intersection_fraction(self.interval3), 0.0
+        )
+
+    def test_intersection_length_0(self):
+        self.assertTrue(hasattr(self.interval, 'intersection_length'))
+
+    def test_intersection_length_1(self):
+        self.assertEqual(
+            self.interval0.intersection_length(self.interval2), 5
+        )
+
+    def test_intersection_length_2(self):
+        self.assertEqual(
+            self.interval2.intersection_length(self.interval0), 5
+        )
+
+    def test_intersection_length_3(self):
+        self.assertEqual(
+            self.interval0.intersection_length(self.interval3), 25
         )
         
-    def test_isoverlapping_0(self):
-        self.assertTrue(hasattr(self.interval, 'isoverlapping'))
-
-    def test_isoverlapping_1(self):
-        self.assertTrue(self.interval0.isoverlapping(self.interval2))
-
-    def test_isoverlapping_2(self):
-        self.assertTrue(self.interval0.isoverlapping(self.interval3))
-
-    def test_isoverlapping_3(self):
-        self.assertTrue(self.interval0.isoverlapping(self.interval6))
-
-    def test_isoverlapping_4(self):
-        self.assertTrue(self.interval0.isoverlapping(self.interval1))
-
-    def test_isoverlapping_5(self):
-        self.assertTrue(self.interval0.isoverlapping(self.interval7))
-
-    def test_isoverlapping_6(self):
-        self.assertTrue(self.interval0.isoverlapping(self.interval5))
-
-    def test_isoverlapping_7(self):
-        self.assertTrue(self.interval3.isoverlapping(self.interval7))
-
-    def test_isoverlapping_8(self):
-        self.assertFalse(self.interval5.isoverlapping(self.interval2))
-
-    def test_isoverlapping_beg_0(self):
-        self.assertTrue(hasattr(self.interval, 'isoverlapping_beg'))
-
-    def test_isoverlapping_beg_1(self):
-        self.assertTrue(self.interval1.isoverlapping_beg(self.interval0))
-
-    def test_isoverlapping_beg_2(self):
-        self.assertTrue(self.interval3.isoverlapping_beg(self.interval0))
-
-    def test_isoverlapping_beg_3(self):
-        self.assertFalse(self.interval2.isoverlapping_beg(self.interval0))
-
-    def test_isoverlapping_beg_4(self):
-        self.assertTrue(self.interval5.isoverlapping_beg(self.interval0))
+    def test_intersection_length_4(self):
+        self.assertEqual(
+            self.interval0.intersection_length(self.interval6), 25
+        )
         
-    def test_isoverlapping_end_0(self):
-        self.assertTrue(hasattr(self.interval, 'isoverlapping_end'))
+    def test_intersection_length_5(self):
+        self.assertEqual(
+            self.interval0.intersection_length(self.interval5), 0
+        )
 
-    def test_isoverlapping_end_1(self):
-        self.assertTrue(self.interval1.isoverlapping_end(self.interval5))
+    def test_intersection_length_6(self):
+        self.assertEqual(
+            self.interval5.intersection_length(self.interval3), 0
+        )
+        
+    def test_isintersecting_0(self):
+        self.assertTrue(hasattr(self.interval, 'isintersecting'))
 
-    def test_isoverlapping_end_2(self):
-        self.assertTrue(self.interval7.isoverlapping_end(self.interval0))
+    def test_isintersecting_1(self):
+        self.assertTrue(self.interval0.isintersecting(self.interval2))
 
-    def test_isoverlapping_end_3(self):
-        self.assertFalse(self.interval2.isoverlapping_end(self.interval0))    
+    def test_isintersecting_2(self):
+        self.assertTrue(self.interval0.isintersecting(self.interval3))
 
-    def test_isoverlapping_end_4(self):
-        self.assertTrue(self.interval7.isoverlapping_end(self.interval1))
+    def test_isintersecting_3(self):
+        self.assertTrue(self.interval0.isintersecting(self.interval6))
+
+    def test_isintersecting_4(self):
+        self.assertTrue(self.interval0.isintersecting(self.interval1))
+
+    def test_isintersecting_5(self):
+        self.assertTrue(self.interval0.isintersecting(self.interval7))
+
+    def test_isintersecting_6(self):
+        self.assertTrue(self.interval0.isintersecting(self.interval5))
+
+    def test_isintersecting_7(self):
+        self.assertTrue(self.interval3.isintersecting(self.interval7))
+
+    def test_isintersecting_8(self):
+        self.assertFalse(self.interval5.isintersecting(self.interval2))
+
+    def test_isintersecting_beg_0(self):
+        self.assertTrue(hasattr(self.interval, 'isintersecting_beg'))
+
+    def test_isintersecting_beg_1(self):
+        self.assertTrue(self.interval1.isintersecting_beg(self.interval0))
+
+    def test_isintersecting_beg_2(self):
+        self.assertTrue(self.interval3.isintersecting_beg(self.interval0))
+
+    def test_isintersecting_beg_3(self):
+        self.assertFalse(self.interval2.isintersecting_beg(self.interval0))
+
+    def test_isintersecting_beg_4(self):
+        self.assertTrue(self.interval5.isintersecting_beg(self.interval0))
+        
+    def test_isintersecting_end_0(self):
+        self.assertTrue(hasattr(self.interval, 'isintersecting_end'))
+
+    def test_isintersecting_end_1(self):
+        self.assertTrue(self.interval1.isintersecting_end(self.interval5))
+
+    def test_isintersecting_end_2(self):
+        self.assertTrue(self.interval7.isintersecting_end(self.interval0))
+
+    def test_isintersecting_end_3(self):
+        self.assertFalse(self.interval2.isintersecting_end(self.interval0))    
+
+    def test_isintersecting_end_4(self):
+        self.assertTrue(self.interval7.isintersecting_end(self.interval1))
         
     def test_symmetric_difference_0(self):
         self.assertTrue(hasattr(self.interval, 'symmetric_difference'))
@@ -1441,23 +1476,29 @@ class TestCase002_LeftClosedInterval(TestCase001_BaseInterval):
         self.assertIsInstance(i, self.interval.__class__)
         self.assertTrue(i.isnull())
 
+    def test_intersection_update_6(self):
+        self.interval0.intersection_update(self.interval5)
+        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertTrue(self.interval0.isnull())
+        self.assertEqual(len(self.interval0), 0)
+        
     def test_isdisjoint_2(self):
         self.assertTrue(self.interval5.isdisjoint(self.interval3))
 
     def test_isdisjoint_3(self):
         self.assertTrue(self.interval3.isdisjoint(self.interval5))
 
-    def test_isoverlapping_6(self):
-        self.assertFalse(self.interval0.isoverlapping(self.interval5))
+    def test_isintersecting_6(self):
+        self.assertFalse(self.interval0.isintersecting(self.interval5))
 
-    def test_isoverlapping_7(self):
-        self.assertFalse(self.interval3.isoverlapping(self.interval7))
+    def test_isintersecting_7(self):
+        self.assertFalse(self.interval3.isintersecting(self.interval7))
 
-    def test_isoverlapping_beg_4(self):
-        self.assertFalse(self.interval5.isoverlapping_beg(self.interval0))
+    def test_isintersecting_beg_4(self):
+        self.assertFalse(self.interval5.isintersecting_beg(self.interval0))
 
-    def test_isoverlapping_end_4(self):
-        self.assertFalse(self.interval7.isoverlapping_end(self.interval1))
+    def test_isintersecting_end_4(self):
+        self.assertFalse(self.interval7.isintersecting_end(self.interval1))
 
     def test_or_6(self):
         # i3:           50 *======o 75
@@ -1839,24 +1880,24 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
             self.interval4.outer_distance(self.interval0, True), inf
         )
 
-    def test_overlap_fraction_7(self):
+    def test_intersection_fraction_7(self):
         self.assertEqual(
-            self.interval0.overlap_fraction(self.interval4), 0.0
+            self.interval0.intersection_fraction(self.interval4), 0.0
         )
 
-    def test_overlap_length_7(self):
+    def test_intersection_length_7(self):
         self.assertEqual(
-            self.interval0.overlap_length(self.interval4), 0
+            self.interval0.intersection_length(self.interval4), 0
         )
 
-    def test_isoverlapping_9(self):
-        self.assertFalse(self.interval0.isoverlapping(self.interval4))
+    def test_isintersecting_9(self):
+        self.assertFalse(self.interval0.isintersecting(self.interval4))
 
-    def test_isoverlapping_beg_5(self):
-        self.assertFalse(self.interval1.isoverlapping_beg(self.interval4))
+    def test_isintersecting_beg_5(self):
+        self.assertFalse(self.interval1.isintersecting_beg(self.interval4))
 
-    def test_isoverlapping_end_5(self):
-        self.assertFalse(self.interval7.isoverlapping_end(self.interval4))
+    def test_isintersecting_end_5(self):
+        self.assertFalse(self.interval7.isintersecting_end(self.interval4))
 
     def test_symmetric_difference_1(self):
         # i5:  0 *========o 50
@@ -1966,17 +2007,17 @@ class TestCase004_Interval(TestCase):
     def test_isdisjoint_3(self):
         self.assertTrue(self.interval3.isdisjoint(self.interval5))
 
-    def test_isoverlapping_6(self):
-        self.assertFalse(self.interval0.isoverlapping(self.interval5))
+    def test_isintersecting_6(self):
+        self.assertFalse(self.interval0.isintersecting(self.interval5))
 
-    def test_isoverlapping_7(self):
-        self.assertFalse(self.interval3.isoverlapping(self.interval7))
+    def test_isintersecting_7(self):
+        self.assertFalse(self.interval3.isintersecting(self.interval7))
 
-    def test_isoverlapping_beg_4(self):
-        self.assertFalse(self.interval5.isoverlapping_beg(self.interval0))
+    def test_isintersecting_beg_4(self):
+        self.assertFalse(self.interval5.isintersecting_beg(self.interval0))
 
-    def test_isoverlapping_end_4(self):
-        self.assertFalse(self.interval7.isoverlapping_end(self.interval1))
+    def test_isintersecting_end_4(self):
+        self.assertFalse(self.interval7.isintersecting_end(self.interval1))
 
     def test_or_6(self):
         # i3:           50 *======o 75
@@ -3184,376 +3225,376 @@ class TestCase008_IntervalList(TestCase):
         index = self.intervalList2.find_index_nearest(Interval("Chr",50,51))
         self.assertEqual(index, 2)
 
-    def test_find_overlap_index_beg_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_overlap_index_beg'))
+    def test_find_intersection_index_beg_0(self):
+        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_beg'))
 
-    def test_find_overlap_index_beg_1(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 0, 1))
+    def test_find_intersection_index_beg_1(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 0, 1))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_beg_2(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 1, 2))
+    def test_find_intersection_index_beg_2(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 1, 2))
         self.assertEqual(index, 0)
         
-    def test_find_overlap_index_beg_3(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 4, 5))
+    def test_find_intersection_index_beg_3(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 4, 5))
         self.assertEqual(index, 0)
 
-    def test_find_overlap_index_beg_4(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 5, 6))
+    def test_find_intersection_index_beg_4(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 5, 6))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_beg_5(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 9, 10))
+    def test_find_intersection_index_beg_5(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 9, 10))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_beg_6(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 10, 11))
+    def test_find_intersection_index_beg_6(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 10, 11))
         self.assertEqual(index, 1)
 
-    def test_find_overlap_index_beg_7(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 19, 20))
+    def test_find_intersection_index_beg_7(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 19, 20))
         self.assertEqual(index, 1)
         
-    def test_find_overlap_index_beg_8(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 20, 21))
+    def test_find_intersection_index_beg_8(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 20, 21))
         self.assertEqual(index, 1)
         
-    def test_find_overlap_index_beg_9(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 24, 25))
+    def test_find_intersection_index_beg_9(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 24, 25))
         self.assertEqual(index, 1)
 
-    def test_find_overlap_index_beg_10(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 25, 26))
+    def test_find_intersection_index_beg_10(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 25, 26))
         self.assertEqual(index, 2)
 
-    def test_find_overlap_index_beg_11(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 34, 35))
+    def test_find_intersection_index_beg_11(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 34, 35))
         self.assertEqual(index, 2)
 
-    def test_find_overlap_index_beg_12(self):
-        index = self.intervalList2.find_overlap_index_beg(Interval("Chr", 35, 36))
+    def test_find_intersection_index_beg_12(self):
+        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 35, 36))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_beg_13(self):
+    def test_find_intersection_index_beg_13(self):
         ilist = IntervalList([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval7   # 100-110
         ])
-        index = ilist.find_overlap_index_beg(self.interval5)  # 20-35
+        index = ilist.find_intersection_index_beg(self.interval5)  # 20-35
         self.assertEqual(index, 0)
 
-    def test_find_overlap_index_beg_14(self):
+    def test_find_intersection_index_beg_14(self):
         ilist = IntervalList([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval7   # 100-110
         ])
-        index = ilist.find_overlap_index_beg(self.interval6)  # 45-95
+        index = ilist.find_intersection_index_beg(self.interval6)  # 45-95
         self.assertEqual(index, 0)
 
-    def test_find_overlap_index_beg_15(self):
-        index = self.intervalList3.find_overlap_index_beg(Interval("Chr",95,100))
+    def test_find_intersection_index_beg_15(self):
+        index = self.intervalList3.find_intersection_index_beg(Interval("Chr",95,100))
         self.assertEqual(index, 4)
         
-    def test_find_overlap_index_end_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_overlap_index_end'))
+    def test_find_intersection_index_end_0(self):
+        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_end'))
 
-    def test_find_overlap_index_end_1(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 0, 1))
+    def test_find_intersection_index_end_1(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 0, 1))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_end_2(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 1, 2))
+    def test_find_intersection_index_end_2(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 1, 2))
         self.assertEqual(index, 1)
         
-    def test_find_overlap_index_end_3(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 4, 5))
+    def test_find_intersection_index_end_3(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 4, 5))
         self.assertEqual(index, 1)
 
-    def test_find_overlap_index_end_4(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 5, 6))
+    def test_find_intersection_index_end_4(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 5, 6))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_end_5(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 9, 10))
+    def test_find_intersection_index_end_5(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 9, 10))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_end_6(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 10, 11))
+    def test_find_intersection_index_end_6(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 10, 11))
         self.assertEqual(index, 2)
 
-    def test_find_overlap_index_end_7(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 19, 20))
+    def test_find_intersection_index_end_7(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 19, 20))
         self.assertEqual(index, 2)
         
-    def test_find_overlap_index_end_8(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 20, 21))
+    def test_find_intersection_index_end_8(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 20, 21))
         self.assertEqual(index, 3)
         
-    def test_find_overlap_index_end_9(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 24, 25))
+    def test_find_intersection_index_end_9(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 24, 25))
         self.assertEqual(index, 3)
 
-    def test_find_overlap_index_end_10(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 25, 26))
+    def test_find_intersection_index_end_10(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 25, 26))
         self.assertEqual(index, 3)
 
-    def test_find_overlap_index_end_11(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 34, 35))
+    def test_find_intersection_index_end_11(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 34, 35))
         self.assertEqual(index, 3)
 
-    def test_find_overlap_index_end_12(self):
-        index = self.intervalList2.find_overlap_index_end(Interval("Chr", 35, 36))
+    def test_find_intersection_index_end_12(self):
+        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 35, 36))
         self.assertEqual(index, -1)        
         
-    def test_find_overlap_index_nearest_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_overlap_index_nearest'))
+    def test_find_intersection_index_nearest_0(self):
+        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_nearest'))
 
-    def test_find_overlap_index_nearest_1(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",0,1))
+    def test_find_intersection_index_nearest_1(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",0,1))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_nearest_2(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",1,2))
+    def test_find_intersection_index_nearest_2(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",1,2))
         self.assertEqual(index, 0)
 
-    def test_find_overlap_index_nearest_3(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",4,5))
+    def test_find_intersection_index_nearest_3(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",4,5))
         self.assertEqual(index, 0)
 
-    def test_find_overlap_index_nearest_4(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",5,6))
+    def test_find_intersection_index_nearest_4(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",5,6))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_nearest_5(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",6,7))
+    def test_find_intersection_index_nearest_5(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",6,7))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_nearest_6(self):
+    def test_find_intersection_index_nearest_6(self):
         # equidinstant features return left-most index
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",7,8))
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",7,8))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_nearest_7(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",8,9))
+    def test_find_intersection_index_nearest_7(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",8,9))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_nearest_8(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",9,10))
+    def test_find_intersection_index_nearest_8(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",9,10))
         self.assertEqual(index, -1)
 
-    def test_find_overlap_index_nearest_9(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",10,11))
+    def test_find_intersection_index_nearest_9(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",10,11))
         self.assertEqual(index, 1)
 
-    def test_find_overlap_index_nearest_10(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",19,20))
+    def test_find_intersection_index_nearest_10(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",19,20))
         self.assertEqual(index, 1)
 
-    def test_find_overlap_index_nearest_11(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",20,21))
+    def test_find_intersection_index_nearest_11(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",20,21))
         self.assertEqual(index, 1)
         
-    def test_find_overlap_index_nearest_12(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",24,25))
+    def test_find_intersection_index_nearest_12(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",24,25))
         self.assertEqual(index, 2)
         
-    def test_find_overlap_index_nearest_13(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",25,26))
+    def test_find_intersection_index_nearest_13(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",25,26))
         self.assertEqual(index, 2)
 
-    def test_find_overlap_index_nearest_14(self):
-        index = self.intervalList2.find_overlap_index_nearest(Interval("Chr",50,51))
+    def test_find_intersection_index_nearest_14(self):
+        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",50,51))
         self.assertEqual(index, -1)
         
-    def test_find_overlap_index_range_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_overlap_index_range'))
+    def test_find_intersection_index_range_0(self):
+        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_range'))
 
-    def test_find_overlap_index_range_1(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 0, 1)))
+    def test_find_intersection_index_range_1(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 1)))
         self.assertEqual(indices, [])
 
-    def test_find_overlap_index_range_2(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 0, 2)))
+    def test_find_intersection_index_range_2(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 2)))
         self.assertEqual(indices, [0])
 
-    def test_find_overlap_index_range_3(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 2, 8)))
+    def test_find_intersection_index_range_3(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 2, 8)))
         self.assertEqual(indices, [0])
 
-    def test_find_overlap_index_range_4(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 0, 20)))
+    def test_find_intersection_index_range_4(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 20)))
         self.assertEqual(indices, [0, 1])
 
-    def test_find_overlap_index_range_5(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 0, 22)))
+    def test_find_intersection_index_range_5(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 22)))
         self.assertEqual(indices, [0, 1, 2])
 
-    def test_find_overlap_index_range_6(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 15, 22)))
+    def test_find_intersection_index_range_6(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 15, 22)))
         self.assertEqual(indices, [1, 2])
 
-    def test_find_overlap_index_range_7(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 22, 50)))
+    def test_find_intersection_index_range_7(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 22, 50)))
         self.assertEqual(indices, [1, 2])
 
-    def test_find_overlap_index_range_8(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 25, 50)))
+    def test_find_intersection_index_range_8(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 25, 50)))
         self.assertEqual(indices, [2])
 
-    def test_find_overlap_index_range_9(self):
-        indices = list(self.intervalList2.find_overlap_index_range(Interval("Chr", 40, 50)))
+    def test_find_intersection_index_range_9(self):
+        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 40, 50)))
         self.assertEqual(indices, [])
 
-    def test_find_overlap_index_range_10(self):
+    def test_find_intersection_index_range_10(self):
         ilist = IntervalList([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval5,  #  20-35
             self.interval6,  #  45-95
         ])
-        index = list(ilist.find_overlap_index_range(Interval("Chr",25,40)))
+        index = list(ilist.find_intersection_index_range(Interval("Chr",25,40)))
         self.assertEqual(index, [0,2])
 
-    def test_find_overlap_index_range_11(self):
+    def test_find_intersection_index_range_11(self):
         ilist = IntervalList([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval5,  #  20-35
             self.interval6,  #  45-95
         ])
-        index = list(ilist.find_overlap_index_range(self.interval4))  # 25-50
+        index = list(ilist.find_intersection_index_range(self.interval4))  # 25-50
         self.assertEqual(index, [0,2,3])
 
-    def test_find_overlap_index_slice_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_overlap_index_slice'))
+    def test_find_intersection_index_slice_0(self):
+        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_slice'))
 
-    def test_find_overlap_index_slice_1(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 0, 1))
+    def test_find_intersection_index_slice_1(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 1))
         self.assertEqual(indices, slice(-1, -1))
 
-    def test_find_overlap_index_slice_2(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 0, 2))
+    def test_find_intersection_index_slice_2(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 2))
         self.assertEqual(indices, slice(0, 1))
 
-    def test_find_overlap_index_slice_3(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 2, 8))
+    def test_find_intersection_index_slice_3(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 2, 8))
         self.assertEqual(indices, slice(0, 1))
 
-    def test_find_overlap_index_slice_4(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 0, 20))
+    def test_find_intersection_index_slice_4(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 20))
         self.assertEqual(indices, slice(0, 2))
 
-    def test_find_overlap_index_slice_5(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 0, 22))
+    def test_find_intersection_index_slice_5(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 22))
         self.assertEqual(indices, slice(0, 3))
 
-    def test_find_overlap_index_slice_6(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 15, 22))
+    def test_find_intersection_index_slice_6(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 15, 22))
         self.assertEqual(indices, slice(1, 3))
 
-    def test_find_overlap_index_slice_7(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 22, 50))
+    def test_find_intersection_index_slice_7(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 22, 50))
         self.assertEqual(indices, slice(1, 3))
 
-    def test_find_overlap_index_slice_8(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 25, 50))
+    def test_find_intersection_index_slice_8(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 25, 50))
         self.assertEqual(indices, slice(2, 3))
 
-    def test_find_overlap_index_slice_9(self):
-        indices = self.intervalList2.find_overlap_index_slice(Interval("Chr", 40, 50))
+    def test_find_intersection_index_slice_9(self):
+        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 40, 50))
         self.assertEqual(indices, slice(-1, -1))
         
-    def test_find_overlap_index_slice_10(self):
+    def test_find_intersection_index_slice_10(self):
         ilist = IntervalList([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval5,  #  20-35
             self.interval6,  #  45-95
         ])
-        index = ilist.find_overlap_index_slice(Interval("Chr",25,40))
+        index = ilist.find_intersection_index_slice(Interval("Chr",25,40))
         self.assertEqual(index, slice(0, 3))
 
-    def test_find_overlap_index_slice_11(self):
+    def test_find_intersection_index_slice_11(self):
         ilist = IntervalList([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval5,  #  20-35
             self.interval6,  #  45-95
         ])
-        index = ilist.find_overlap_index_slice(self.interval4)  # 25-50
+        index = ilist.find_intersection_index_slice(self.interval4)  # 25-50
         self.assertEqual(index, slice(0, 4))
         
-    def test_find_overlap_length_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_overlap_length'))
+    def test_find_intersection_length_0(self):
+        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_length'))
 
-    def test_find_overlap_length_1(self):
-        length = self.intervalList2.find_overlap_length(Interval("Chr", 0, 5))
+    def test_find_intersection_length_1(self):
+        length = self.intervalList2.find_intersection_length(Interval("Chr", 0, 5))
         self.assertEqual(length, 4)
 
-    def test_find_overlap_length_2(self):
-        length = self.intervalList2.find_overlap_length(Interval("Chr", 2, 4))
+    def test_find_intersection_length_2(self):
+        length = self.intervalList2.find_intersection_length(Interval("Chr", 2, 4))
         self.assertEqual(length, 2)
 
-    def test_find_overlap_length_3(self):
-        length = self.intervalList2.find_overlap_length(Interval("Chr", 0, 20))
+    def test_find_intersection_length_3(self):
+        length = self.intervalList2.find_intersection_length(Interval("Chr", 0, 20))
         self.assertEqual(length, 14)
 
-    def test_find_overlap_length_4(self):
-        length = self.intervalList2.find_overlap_length(Interval("Chr", 10, 50))
+    def test_find_intersection_length_4(self):
+        length = self.intervalList2.find_intersection_length(Interval("Chr", 10, 50))
         self.assertEqual(length, 30)
         
-    def test_find_overlap_fraction_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_overlap_fraction'))
+    def test_find_intersection_fraction_0(self):
+        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_fraction'))
 
-    def test_find_overlap_fraction_1(self):
-        length = self.intervalList2.find_overlap_fraction(Interval("Chr", 0, 5))
+    def test_find_intersection_fraction_1(self):
+        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 0, 5))
         self.assertAlmostEqual(length, 4/34.0, 2)
         
-    def test_find_overlap_fraction_2(self):
-        length = self.intervalList2.find_overlap_fraction(Interval("Chr", 2, 4))
+    def test_find_intersection_fraction_2(self):
+        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 2, 4))
         self.assertAlmostEqual(length, 2/34.0, 2)
 
-    def test_find_overlap_fraction_3(self):
-        length = self.intervalList2.find_overlap_fraction(Interval("Chr", 0, 20))
+    def test_find_intersection_fraction_3(self):
+        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 0, 20))
         self.assertAlmostEqual(length, 14/34.0, 2)
 
-    def test_find_overlap_fraction_4(self):
-        length = self.intervalList2.find_overlap_fraction(Interval("Chr", 10, 50))
+    def test_find_intersection_fraction_4(self):
+        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 10, 50))
         self.assertAlmostEqual(length, 30/34.0, 2)
 
-    def test_find_overlap_fraction_5(self):
-        length = self.intervalList2.find_overlap_fraction(Interval("Chr", 0, 5), query=True)
+    def test_find_intersection_fraction_5(self):
+        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 0, 5), query=True)
         self.assertAlmostEqual(length, 4/5.0, 2)
         
-    def test_find_overlaps_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_overlaps'))
+    def test_find_intersecting_0(self):
+        self.assertTrue(hasattr(self.intervalList2, 'find_intersecting'))
 
-    def test_find_overlaps_1(self):
-        overlaps = list(self.intervalList2.find_overlaps(Interval("Chr", 0, 1)))
-        self.assertEqual(overlaps, [])
+    def test_find_intersecting_1(self):
+        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 0, 1)))
+        self.assertEqual(intersections, [])
 
-    def test_find_overlaps_2(self):
-        overlaps = list(self.intervalList2.find_overlaps(Interval("Chr", 2, 4)))
-        self.assertEqual(overlaps, [self.intervalList2[0]])
+    def test_find_intersecting_2(self):
+        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 2, 4)))
+        self.assertEqual(intersections, [self.intervalList2[0]])
 
-    def test_find_overlaps_3(self):
-        overlaps = list(self.intervalList2.find_overlaps(Interval("Chr", 2, 15)))
-        self.assertEqual(overlaps, [self.intervalList2[0], self.intervalList2[1]])
+    def test_find_intersecting_3(self):
+        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 2, 15)))
+        self.assertEqual(intersections, [self.intervalList2[0], self.intervalList2[1]])
 
-    def test_find_overlaps_4(self):
-        overlaps = list(self.intervalList2.find_overlaps(Interval("Chr", 15, 22)))
-        self.assertEqual(overlaps, [self.intervalList2[1], self.intervalList2[2]])
+    def test_find_intersecting_4(self):
+        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 15, 22)))
+        self.assertEqual(intersections, [self.intervalList2[1], self.intervalList2[2]])
 
-    def test_find_overlaps_5(self):
-        overlaps = list(self.intervalList2.find_overlaps(Interval("Chr", 25, 50)))
-        self.assertEqual(overlaps, [self.intervalList2[2]])
+    def test_find_intersecting_5(self):
+        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 25, 50)))
+        self.assertEqual(intersections, [self.intervalList2[2]])
 
-    def test_find_overlaps_6(self):
-        overlaps = list(self.intervalList2.find_overlaps(Interval("Chr", 40, 50)))
-        self.assertEqual(overlaps, [])
+    def test_find_intersecting_6(self):
+        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 40, 50)))
+        self.assertEqual(intersections, [])
     
 
                 
