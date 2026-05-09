@@ -1,26 +1,55 @@
-# intervals
-Pure Python implementation of NCLS data structures for interval operations
+# Name
+`intervals` - Pure Python implementation of data structures for interval operations
 
-## Installation
+# Description
+
+The `intervals` module implements classes for performing arithmetic, `set`-like, and search operations on one or collections of one-dimensionale interval(s). 
+
+### Terminology
+
+- **namespace**: Optional, depending on class. Namespace can represent axes (*e.g.*, `X`), contig names (*e.g.*, `Chr1`), etc. Interval methods operate only between instances in same namespace. The default namespace is `None`.
+
+- **null**: an interval without both start and stop coordinates. Null coordinates are implemented as `nan` values and null namespace as `None`.
+
+- **empty**: an interval that is null or with distance (length) between beginning and end coordinates less-than or equal-to zero units long.
+
+
+# Installation
+
+Currently, only installation on Unix-/Linux-like systems from source using `make` is supported:
 
 ```bash
-git clone https://github.com/bredeson/intervals.git
-cd intervals
-make install PREFIX=/full/path/to/installbase
+$ git clone https://github.com/bredeson/intervals.git
+$ cd intervals
+$ make install PREFIX=/full/path/to/install/prefix
 ```
 
-## Terminology
+# Documentation
 
-- **namespace**: Optional depending on class. Namespace can be represent axis (*i.e.*, `"X"`) or contig name. Intervals only function in the same namespace.
+To see the full documentation for the `intervals` API, there are two ways of getting `man`-like help pages:
 
-- **null**: an interval without both start and stop coordinates. Null coordinates are implemented with `nan` values and null namespace as `None`.
+1. On the command line:
+    ```bash
+    $ cd intervals
+    $ pydoc ./src/intervals/intervals.py
+    $ pydoc ./src/intervals/collections.py
+    ```
 
-- **empty**: an interval that is null or that contains start and stop coordinates with distance (length) less-than or equal-to zero units long.
+2. In the Python REPL:
+    ```python
+    $ from intervals import Interval, IntervalList
+    
+    # for a full `man`-like help page:
+    $ help(Interval)
+    $ help(IntervalList)
+    
+    # for a specific method:
+    $ help(Interval.isoverlapping)
+    ```
 
+# Examples
 
-## Usage
-
-### Manipulating `Interval()`s 
+## `Interval` objects
 
 ```python
 $ from intervals import Interval
@@ -66,7 +95,9 @@ $ i1 in i2
 False
 ```
 
-#### Table of `Interval()` attributes
+### `Interval` variables and methods
+
+In the following table, `self` and `other` represent `BaseInterval`-descendant class instances.
 
 | Attribute                                 | Description                                                  |
 | ----------------------------------------- | ------------------------------------------------------------ |
@@ -119,9 +150,9 @@ False
 
 
 
+## Interval collections: 
 
-
-### Searching `IntervalList()` objects
+### `IntervalList`
 
 ```python
 $ from intervals import Interval, IntervalList
@@ -152,9 +183,9 @@ chr1:150-350
 
 
 
-#### Table of `IntervalList()` attributes
+#### `IntervalList` variables and methods
 
-`self` is an `IntervalList`, `interval` is a `BaseInterval`-inheriting object, and `iterable` is an iterable containing `interval`s. 
+In the following table, `self` represents an `IntervalList` instance, `interval` a `BaseInterval`-descendant class instance, and `iterable` is an iterable object containing zero or more query `interval`s.
 
 | Attribute  | Description |
 |---------------------------------------------|------------------------------|
@@ -204,26 +235,7 @@ chr1:150-350
 | `self.updateleft(iterable)`                 | Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the left of existing ones. |
 
 
+### `IntervalSet`
 
-## Documentation
+Inspired by and implemented as a [Nested Containment List](https://doi.org/10.1093/bioinformatics/btl647). 
 
-To see the full documentation for the `intervals` API, there are two ways of getting `man`-like help page:
-
-1. On the command line:
-    ```bash
-    $ cd intervals
-    $ pydoc ./src/intervals/intervals.py
-    $ pydoc ./src/intervals/collections.py
-    ```
-
-2. In the Python REPL:
-    ```python
-    $ from intervals import Interval, IntervalList
-    
-    # for a full `man`-like help page:
-    $ help(Interval)
-    $ help(IntervalList)
-    
-    # for a specific method:
-    $ help(Interval.isoverlapping)
-    ```
