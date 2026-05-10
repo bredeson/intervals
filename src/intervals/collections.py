@@ -11,10 +11,11 @@ Performance Notes:
 import sys
 
 from collections import deque as _deque
-from .constants import NULL_NAMESPACE as _NULL_NS
+from .constants import NULL_NAMESPACE as _NULL_NAME
 from .constants import NULL_BEG as _NULL_BEG
 from .constants import NULL_END as _NULL_END
-from .constants import inf as _INF
+from .constants import POS_INF as _POS_INF
+from .constants import NEG_INF as _NEG_INF
 from .intervals import BaseInterval, Interval
 from math import isnan as _isnull
 from math import isinf as _isinf
@@ -352,7 +353,7 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     @property
     def namespace(self):
-        return _NULL_NS \
+        return _NULL_NAME \
             if   self.isnull() \
             else self._get_node(0).interval.namespace
 
@@ -766,7 +767,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter)
-        distance = _INF
+        distance = _POS_INF
         if not (0 <= lower < self._length):
             lower = 0
         if not (0 <= upper < self._length):
@@ -915,7 +916,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         if not intervals:
             return slice(-1, -1)
         if isiterable(intervals):
-            interval = Interval(None, +1 * _INF, -1 * _INF)
+            interval = Interval(_NULL_NAME, _POS_INF, _NEG_INF)
             for node in map(lambda i: self._set(i, setter), intervals):
                 if interval.beg > node.interval.beg:
                     interval.beg = node.interval.beg
@@ -1693,7 +1694,7 @@ class IntervalSet(BaseIntervalCollection):
 
     @property
     def namespace(self):
-        return _NULL_NS \
+        return _NULL_NAME \
             if   self.isempty() \
             else self._toplist[0].interval.namespace
         
@@ -2570,7 +2571,7 @@ class IntervalSet(BaseIntervalCollection):
     #     Wy = _deque()
     #     Lx = len(X)
     #     Ly = len(Y)
-    #     sentinel = _Node(Interval(self.namespace, _INF, _INF))
+    #     sentinel = _Node(Interval(self.namespace, _POS_INF, _NEG_INF))
     #     while ((ix < Lx) or (iy < Ly)):
     #         x = X[ix] if ix < Lx else sentinel
     #         y = Y[iy] if iy < Ly else sentinel

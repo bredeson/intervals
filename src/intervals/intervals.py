@@ -17,26 +17,26 @@ from math import isinf as _isinf
 from math import isfinite as _isfinite
 from copy import copy as _copy
 from copy import deepcopy as _deepcopy
-from .constants import NULL_NAMESPACE as _NULL_NS
+from .constants import NULL_NAMESPACE as _NULL_NAME
 from .constants import NULL_BEG as _NULL_BEG
 from .constants import NULL_END as _NULL_END
-from .constants import inf as _POS_INF
+from .constants import POS_INF as _POS_INF
+from .constants import NEG_INF as _NEG_INF
 
 
-_NEG_INF = -_POS_INF
 
 _BAD_OPERAND_TYPE = (
     "unsupported operand type(s) for {0:s}: "
-    "'{1.__class__.__name__:s}' and '{2.__class__.__name__:s}'"
+    "'{1.__class__.__name__}' and '{2.__class__.__name__}'"
 ).format
 
 _BAD_OPERAND_NAME = (
     "mismatched operand namespaces for {0:s}: "
-    "'{1.namespace:s}' and '{2.namespace:s}'"
+    "'{1.namespace}' and '{2.namespace}'"
 ).format
 
 _ILL_DEFINED = (
-    "Result is ill-defined, use {0:s}() instead"
+    "Result is ill-defined, use {0}() instead"
 ).format
 
 
@@ -89,7 +89,7 @@ class BaseInterval(object):
     __slots__ = ('namespace','_beg','_end')
     
     # Constructor, descriptor, and introspection methods:
-    def __init__(self, beg=_NULL_BEG, end=_NULL_END, namespace=_NULL_NS):
+    def __init__(self, beg=_NULL_BEG, end=_NULL_END, namespace=_NULL_NAME):
         self.namespace = namespace
         self.beg = beg  # sets self._beg
         self.end = end  # sets self._end
@@ -266,7 +266,7 @@ class BaseInterval(object):
         >>> print(interval)
         None:nan-nan
         """
-        self.namespace = _NULL_NS
+        self.namespace = _NULL_NAME
         self.beg = _NULL_BEG
         self.end = _NULL_END
 
@@ -1534,7 +1534,7 @@ class ClosedInterval(BaseInterval):
     # must also define __slots__ = ()
     __slots__ = ()
     
-    def __init__(self, beg=_NULL_BEG, end=_NULL_END, namespace=_NULL_NS):
+    def __init__(self, beg=_NULL_BEG, end=_NULL_END, namespace=_NULL_NAME):
         """
         >>> Interval("Chr1", 15, 37) -> Interval
         """
@@ -1582,7 +1582,7 @@ class Interval(LeftClosedInterval):
     # must also define __slots__ = ()
     __slots__ = ()
 
-    def __init__(self, name=_NULL_NS, beg=_NULL_BEG, end=_NULL_END):
+    def __init__(self, name=_NULL_NAME, beg=_NULL_BEG, end=_NULL_END):
         """
         >>> Interval("Chr1", 15, 37) -> Interval
         """
@@ -1708,7 +1708,7 @@ class Interval(LeftClosedInterval):
 class ClosedPoint(ClosedInterval):
     __slots__ = ()
     
-    def __init__(self, name=_NULL_NS, pos=_NULL_BEG):
+    def __init__(self, name=_NULL_NAME, pos=_NULL_BEG):
         """
         >>> Point("Chr1", 37) -> Point
         """
@@ -1796,7 +1796,7 @@ class ClosedPoint(ClosedInterval):
 class Point(Interval):
     __slots__ = ()
     
-    def __init__(self, name=_NULL_NS, pos=_NULL_BEG):
+    def __init__(self, name=_NULL_NAME, pos=_NULL_BEG):
         """
         >>> Point("Chr1", 37) -> Point
         """

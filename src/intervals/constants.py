@@ -1,6 +1,7 @@
 
-from math import nan, inf
+from math import nan as NULL_BEG
+from math import inf as POS_INF
 
 NULL_NAMESPACE = None
-NULL_BEG = nan
-NULL_END = nan
+NULL_END = NULL_BEG
+NEG_INF = -POS_INF
