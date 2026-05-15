@@ -12,20 +12,25 @@ import sys
 
 from collections import deque as _deque
 from .constants import NULL_NAMESPACE as _NULL_NAME
-from .constants import NULL_BEG as _NULL_BEG
-from .constants import NULL_END as _NULL_END
+from .constants import NULL_POSITION as _NULL_POS
 from .constants import POS_INF as _POS_INF
 from .constants import NEG_INF as _NEG_INF
-from .intervals import BaseInterval, Interval
+from .intervals import BaseInterval
+from .intervals import _IntervalSetInterface, _IntervalIdentityInterface
+from .errors import _BAD_METHOD_NAMESPACE, _NO_METHOD, _NOT_IN
 from math import isnan as _isnull
 from math import isinf as _isinf
 
+__all__ = (
+    'DuplicateKeyError',
+    'BaseIntervalCollection',
+    'IntervalList',
+    'IntervalSet'
+)
 
-__all__ = ('IntervalList','IntervalSet','DuplicateKeyError')
 
-
-def remit(x):
-    return x
+def _caller(level):
+    return sys._getframe(level).f_code.co_name
 
 
 def _interval_pos(interval):
@@ -44,13 +49,15 @@ def _node_pos_nested(node):
     return (node.interval.isempty(), node.interval.beg, -node.interval.end)
 
 
+def remit(x):
+    return x
+
+
 def isiterable(item):
-    return \
-        hasattr(item, '__iter__') or \
-        hasattr(item, '__next__')
+    return hasattr(item, '__iter__') or hasattr(item, '__next__')
 
 
-def _listify(item, sort=False):
+def _iter(item, sort=False):
     if not isiterable(item):
         item = [item]
     if sort:
@@ -58,12 +65,12 @@ def _listify(item, sort=False):
     return item
 
 
-def _reprify(item, sep=', ', indent=False):
+def _repr(item, sep=', ', indent=False):
     if isiterable(item):
         if indent:
             sep += " "
         return '[%s]' % sep.join((
-            _reprify(i, sep, indent) for i in item
+            _repr(i, sep, indent) for i in item
         ))
     else:
         return repr(item)
@@ -92,8 +99,7 @@ class _Node(object):
 
     def __init__(self, interval, instance=None, max=0, sublist=-1):
         """
-        Create a _Node for an object instance. The instance must
-        return an Interval object when 
+        Create a _Node for an object instance.
         """
         self.instance = interval if instance is None else instance
         self.interval = interval
@@ -120,7 +126,7 @@ class _Node(object):
     def __hash__(self):
         # would be preferable to hash(self.instance), but
         # instance hashabilty is not guarenteed.
-        return hash(self.interval)
+        return id(self.instance)
         
 
     def __repr__(self):
@@ -133,50 +139,187 @@ class _Node(object):
 
 
 
-class BaseIntervalCollection(object):
+class BaseIntervalCollection(
+        _IntervalSetInterface,
+        _IntervalIdentityInterface):
     # Copied and extended this pattern from collections.abc.Collection
-    
     def __init__(self, setter=remit):
         super().__init__()
         self._setter = setter
         self._length = 0
 
 
-    def __contains__(self, value):
-        raise NotImplementedError('%s.__contains__()' % self.__class__.__name__)
+    @property
+    def namespace(self):
+        raise NotImplementedError(_NO_METHOD(self,'namespace'))
+
+    
+    @namespace.setter
+    def namespace(self, namespace):
+        raise NotImplementedError(_NO_METHOD(self,'namespace'))    
+
+    
+    @property
+    def beg(self):
+        raise NotImplementedError(_NO_METHOD(self,'beg'))
+
+    
+    @property
+    def start(self):
+        """
+        self.start -> value
+
+        Alias for the `beg` attribute.
+        
+        >>> interval.start = 350
+        >>> print(interval.start)
+        350
+        """
+        return self.beg
 
 
-    def __iter__(self):
-        raise NotImplementedError('%s.__iter__()' % self.__class__.__name__)
+    @property
+    def mid(self):
+        raise NotImplementedError(_NO_METHOD(self,'mid'))
 
 
-    def __len__(self):
-        raise NotImplementedError('%s.__len__()' % self.__class__.__name__)
+    @property
+    def end(self):
+        raise NotImplementedError(_NO_METHOD(self,'end'))
+
+    
+    @property
+    def stop(self):
+        """
+        self.stop -> value
+        
+        Alias for `end` attribute.
+        
+        >>> interval.stop = 500
+        >>> print(interval.stop)
+        500
+        """
+        return self.end
+
+    
+    def clear(self):
+        raise NotImplementedError(_NO_METHOD(self,'clear'))
+
+    
+    def copy(self):
+        return self.__class__(self, setter=self._setter)
+
+    
+    def empty(self):
+        raise NotImplementedError(_NO_METHOD(self,'empty'))
+
+    
+    def null(self):
+        raise NotImplementedError(_NO_METHOD(self,'null'))
+
+    
+    def pop(self):
+        raise NotImplementedError(_NO_METHOD(self,'pop'))
+
+    
+    def remove(self, interval):
+        raise NotImplementedError(_NO_METHOD(self,'remove'))
+
+    
+    def to_slice(self):
+        """
+        self.to_slice() -> slice
+
+        Return the interval as a slice object for use with lists, 
+        strings, or other list-like objects. Returns `slice(-1, -1)`
+        if null.
+        
+        >>> string = 'abcdefghijklmnopqrstuvwxyz'
+        >>> interval = Interval("Chr", 2, 10)
+        >>> print(string[interval.to_slice()])
+        cdefghij
+        """
+        return slice(self.beg, self.end) if self else slice(-1, -1)
+
+
+    def to_string(self):
+        return str(self)
     
 
-    def _set(self, interval, setter=None):
+    def __bool__(self):
+        """
+        bool(self) -> bool
+
+        Test if an Interval is non-empty.
+        
+        >>> bool(Interval("Chr", 350, 475))
+        True
+        >>> bool(Interval())
+        False
+        """
+        return not (self.isempty() or self.isnull())
+    
+
+    def __contains__(self, interval):
+        raise NotImplementedError(_NO_METHOD(self,'__contains__'))
+
+
+    def __eq__(self):
+        raise NotImplementedError(_NO_METHOD(self,'__eq__'))
+    
+    
+    def __hash__(self):
+        """
+        hash(self) -> int
+
+        Return a runtime-unique id for the Interval object.
+        
+        >>> hash(Interval("Chr", 350, 475))
+        4465105936
+        """
+        return id(self)
+
+    
+    def __iter__(self):
+        raise NotImplementedError(_NO_METHOD(self,'__iter__'))
+
+    
+    def __len__(self):
+        raise NotImplementedError(_NO_METHOD(self,'__len__'))    
+
+    
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__, str(self))    
+    
+
+    def __str__(self):
+        return '[%s]' % ', '.join(self)
+    
+    
+    def _set(self, interval, setter=None, strict=True):
         """PRIVATE
         
         Init a _Node object from an input user object. If interval is
         a _Node, pass it through.
         """
         if isinstance(interval, _Node):
-            return interval
-        setter = setter or self._setter or remit
-        # if setter is None:
-        #     if isinstance(interval, BaseInterval):
-        #         setter = remit
-        #     else:
-        #         setter = self._setter
-        return _Node(setter(interval), interval)
+            node = interval
+        else:
+            setter = setter or self._setter or remit
+            node = _Node(setter(interval), interval)
+        if strict and \
+           self.namespace is not _NULL_NAME and \
+           self.namespace != node.interval.namespace:
+            raise ValueError(_BAD_METHOD_NAMESPACE(_caller(2),self,interval))
+        return node
 
 
-    def _set_node(self, index, item):
+    def _set_node(self, index, node):
         """PRIVATE
 
         Set a _Node object containing user data at the given index
         """
-        raise NotImplementedError('%s._set_node()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'_set_node'))
     
 
     def _get(self, node):
@@ -192,7 +335,7 @@ class BaseIntervalCollection(object):
 
         Return the underlying _Node object at the given index
         """
-        raise NotImplementedError('%s._get_node()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'_get_node'))
 
 
     def _iter_nodes(self, lower=0, upper=-1):
@@ -200,7 +343,7 @@ class BaseIntervalCollection(object):
         
         Iterate over the underlying _Node objects
         """
-        raise NotImplementedError('%s._iter_nodes()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'_iter_nodes'))
     
 
     def _copy_nodes(self):
@@ -210,33 +353,6 @@ class BaseIntervalCollection(object):
         _Node objects.
         """
         return map(_Node.copy, self._iter_nodes())
-
-
-    @property
-    def namespace(self):
-        raise NotImplementedError('%s.namespace' % self.__class__.__name__)
-
-
-    @property
-    def beg(self):
-        raise NotImplementedError('%s.beg' % self.__class__.__name__)
-
-
-    @property
-    def end(self):
-        raise NotImplementedError('%s.end' % self.__class__.__name__)
-
-
-    def isnull(self):
-        return _isnull(self.beg) or _isnull(self.end)
-
-
-    def isempty(self):
-        raise NotImplementedError('%s.isempty()' % self.__class__.__name__)
-
-
-    def isfinite(self):
-        return not (_isinf(self.beg) or _isinf(self.end))
 
     
     
@@ -286,11 +402,11 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     
     def __add__(self, intervals):
-        return self.__class__(
-            list(self) + _listify(intervals),
-            setter=self._setter
-        )
+        copy = self.copy()
+        copy.extend(intervals)
+        return copy
 
+    
     def __bool__(self):
         return bool(self._length)
 
@@ -300,7 +416,7 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     
     def __copy__(self):
-        return self.__class__(iter(self), setter=self._setter)
+        return self.copy()
 
     
     def __delitem__(self, index):
@@ -331,13 +447,14 @@ class IntervalList(BaseIntervalCollection, _deque):
     def __len__(self):
         return self._length
 
-    
+
     def __mul__(self, value):
         return self.__class__(list(self) * value, setter=self._setter)
 
     
     def __reversed__(self):
-        return (self[~i] for i in range(len(self)))
+        raise NotImplementedError(_NO_METHOD(self,'__reversed__'))
+        # return (self[~i] for i in range(len(self)))
 
 
     def __rmul__(self, value):
@@ -360,7 +477,7 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     @property
     def beg(self):
-        return _NULL_BEG \
+        return _NULL_POS \
             if   self.isnull() \
             else self._get_node(0).interval.beg
 
@@ -372,7 +489,7 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     @property
     def end(self):
-        return _NULL_END \
+        return _NULL_POS \
             if   self.isnull() \
             else self._get_node(-1).interval.end
 
@@ -428,7 +545,9 @@ class IntervalList(BaseIntervalCollection, _deque):
         
     def copy(self):
         """Create a copy of the IntervalList."""
-        return self.__class__(self, setter=self._setter)
+        copy = self.__class__(setter=self._setter)
+        copy.extend(self)  # self is already sorted, so avoid a sort
+        return copy
         
 
     def count(self, interval, setter=None):
@@ -460,7 +579,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         prev = None
         if self:
             prev = self._get_node(-1)
-        for interval in _listify(intervals):
+        for interval in _iter(intervals):
             node = self._set(interval, setter)
             if prev and node.interval.end < prev.max:
                 node.max = prev.max
@@ -481,7 +600,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        intervals = _listify(intervals)
+        intervals = _iter(intervals)
         _deque.extendleft(self, map(lambda i: self._set(i, setter), intervals))
 
         index = 0
@@ -512,10 +631,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         if 0 <= index < self._length:
             return index
         else:
-            raise ValueError("'%s' is not in %s" % (
-                repr(interval),
-                self.__class__.__name__
-            ))
+            raise ValueError(_NOT_IN(self, repr(interval)))
 
         
     def insert(self, index, interval, setter=None):
@@ -652,11 +768,9 @@ class IntervalList(BaseIntervalCollection, _deque):
         if 0 <= index < self._length:
             self.__delitem__(index)
         else:
-            raise ValueError(
-                "'%s' is not in %s" % (repr(interval), self.__class__.__name__)
-            )
+            raise ValueError(_NOT_IN(self, repr(interval)))
 
-
+        
     def find_index_beg(self, interval, lower=0, upper=-1, setter=None):
         """
         Return the start (inclusive) index for a query interval. 
@@ -673,7 +787,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
+        node = self._set(interval, setter, False)
         if not (0 <= lower < self._length):
             lower = 0
         if not (0 <= upper < self._length):
@@ -702,7 +816,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
+        node = self._set(interval, setter, False)
         if not (0 <= lower < self._length):
             lower = 0
         if not (0 <= upper < self._length):
@@ -733,7 +847,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
+        node = self._set(interval, setter, False)
         if not (0 <= lower < self._length):
             lower = 0
         if not (0 <= upper < self._length):
@@ -766,7 +880,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
+        node = self._set(interval, setter, False)
         distance = _POS_INF
         if not (0 <= lower < self._length):
             lower = 0
@@ -816,7 +930,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
+        node = self._set(interval, setter, False)
         index = self.find_index_beg(node.interval, lower, upper, remit)
         return index \
             if 0 <= index < len(self) and \
@@ -839,7 +953,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
+        node = self._set(interval, setter, False)
         index = self.find_index_end(node.interval, lower, upper, remit)
         return index \
             if 0 < index <= len(self) and \
@@ -863,7 +977,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
+        node = self._set(interval, setter, False)
         index = self.find_index_nearest(node.interval, lower, upper, remit)
         return index \
             if 0 <= index < len(self) and \
@@ -887,7 +1001,8 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        nodes = map(lambda i: self._set(i, setter), _listify(intervals))
+        nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
+        
         upper = 0
         for node in _filter_nested(nodes, sort=_node_pos_nested):
             index = self.find_index_beg(node.interval, lower=upper, setter=remit)
@@ -916,19 +1031,27 @@ class IntervalList(BaseIntervalCollection, _deque):
         if not intervals:
             return slice(-1, -1)
         if isiterable(intervals):
-            interval = Interval(_NULL_NAME, _POS_INF, _NEG_INF)
-            for node in map(lambda i: self._set(i, setter), intervals):
+            interval = BaseInterval(_POS_INF, _NEG_INF)
+            for node in map(lambda i: self._set(i, setter, False), intervals):
+                if interval.namespace is _NULL_NAME:
+                    interval.namespace = node.interval.namespace
+                if interval.namespace != node.interval.namespace:
+                    raise ValueError(_BAD_METHOD_NAMESPACE(
+                        _caller(1), interval, node.interval
+                    ))
                 if interval.beg > node.interval.beg:
                     interval.beg = node.interval.beg
                 if interval.end < node.interval.end:
                     interval.end = node.interval.end
-                interval.namespace = node.interval.namespace
         else:
-            interval = self._set(intervals, setter).interval
+            interval = self._set(intervals, setter, False).interval
             
         lower = self.find_intersection_index_beg(interval, setter=remit)
         upper = self.find_intersection_index_end(interval, setter=remit)
-                
+
+        if lower < 0 or upper < lower:
+            lower = -1
+            upper = -1
         return slice(lower, upper)
 
     
@@ -944,7 +1067,8 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        nodes = map(lambda i: self._set(i, setter), _listify(intervals))
+        nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
+
         upper = 0
         intersection_length = 0
         for node in _filter_nested(nodes, sort=_node_pos_nested):
@@ -971,12 +1095,12 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        setter = setter or self._setter
+        nodes = map(lambda i: self._set(i, setter, False), _iter(intervals)) \
+            if   query \
+            else self._iter_nodes()
+            
         numerator = self.find_intersection_length(intervals, setter=setter)
-        if query:
-            denominator = sum(map(lambda i: len(setter(i)), _listify(intervals)))
-        else:
-            denominator = sum(map(lambda i: len(setter(i)), self))
+        denominator = sum(map(lambda n: len(n.interval), nodes))
         return numerator / float(max(1, denominator))
 
 
@@ -994,7 +1118,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        nodes = map(lambda n: self._set(n, setter), _listify(intervals))
+        nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
 
         # if pairwise:
         nodes = sorted(nodes, key=_node_pos)
@@ -1064,7 +1188,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         padding_sep = ',\n' + ' ' * (padding_len + 1)
         return "%s(%s)" % (
             self.__class__.__name__,
-            _reprify(self, sep=padding_sep, indent=True)
+            _repr(self, sep=padding_sep, indent=True)
         )
 
 
@@ -1077,7 +1201,7 @@ class _Sublist(BaseIntervalCollection, _deque):
 
     
     def __str__(self):
-        return _reprify(self)
+        return _repr(self)
 
 
     def _set(self, node, setter=None):
@@ -1367,7 +1491,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         upper = 0
-        for node in _filter_nested(_listify(nodes), sort=_node_pos_nested):
+        for node in _filter_nested(_iter(nodes), sort=_node_pos_nested):
             index = self.find_index_beg(node, lower=upper)
             while 0 <= index < self.length and \
                   node.interval.isintersecting(self[index].interval):
@@ -1391,7 +1515,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         """
         lower = -1
         upper = -1
-        for node in _filter_nested(_listify(nodes), sort=_node_pos_nested):
+        for node in _filter_nested(_iter(nodes), sort=_node_pos_nested):
             index = self.find_index_beg(node, lower=upper)
             while 0 <= index < self.length and \
                   node.interval.isintersecting(self[index].interval):
@@ -1626,7 +1750,7 @@ class IntervalSet(BaseIntervalCollection):
 
         nr = not pairwise
         visited  = set()
-        for node in _listify(nodes):
+        for node in _iter(nodes):
             # Search toplist for top-level overlap; if no intersects,
             # then we are certain there are no sub-intervals with
             # intersects
@@ -1682,14 +1806,14 @@ class IntervalSet(BaseIntervalCollection):
         padding_sub = ',\n' + ' ' * (padding_len + 11)
         return "%s(header=%s,\n%ssubheader=%s)" % (
             self.__class__.__name__,
-            _reprify(self._toplist, sep=padding_hdr, indent=True),
+            _repr(self._toplist, sep=padding_hdr, indent=True),
             padding_sep,
-            _reprify(self._sublist, sep=padding_sub, indent=True)
+            _repr(self._sublist, sep=padding_sub, indent=True)
         )        
 
 
     def __str__(self):
-        return _reprify(self)
+        return _repr(self)
 
 
     @property
@@ -1701,7 +1825,7 @@ class IntervalSet(BaseIntervalCollection):
     
     @property
     def beg(self):
-        return _NULL_BEG \
+        return _NULL_POS \
             if   self.isempty() \
             else self._toplist[0].interval.beg
 
@@ -1712,7 +1836,7 @@ class IntervalSet(BaseIntervalCollection):
 
     @property
     def end(self):
-        return _NULL_END \
+        return _NULL_POS \
             if   self.isempty() \
             else self._toplist[-1].interval.end
 
@@ -2038,7 +2162,7 @@ class IntervalSet(BaseIntervalCollection):
         of IntervalSet. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        raise NotImplementedError('%s.intersection_length()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'intersection_length'))
 
     
     def intersection_fraction(self, intervals, setter=None):
@@ -2055,7 +2179,7 @@ class IntervalSet(BaseIntervalCollection):
         of IntervalSet. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        raise NotImplementedError('%s.intersection_fraction()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'intersection_fraction'))
 
     
     def intersecting_pairs(self, intervals, setter=None):
@@ -2073,7 +2197,7 @@ class IntervalSet(BaseIntervalCollection):
         argument and outputs a single Interval-descendant object.
         """
         nodes = sorted(
-            map(lambda i: self._set(i, setter), _listify(intervals)),
+            map(lambda i: self._set(i, setter), _iter(intervals)),
             key=_node_pos
         )
         for i,o in self._find_nodes(nodes, True, remit):
@@ -2095,14 +2219,14 @@ class IntervalSet(BaseIntervalCollection):
         argument and outputs a single Interval-descendant object.
         """
         nodes = _filter_nested(
-            map(lambda n: self._set(n, setter), _listify(intervals)),
+            map(lambda n: self._set(n, setter), _iter(intervals)),
             sort=_node_pos_nested
         )
         return (n.instance for n in self._find_nodes(nodes, False))
     
     
     def subintervals(self, intervals, setter=None):
-        raise NotImplementedError('%s.subintervals()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'subintervals'))
         
 
     # Intersection set methods:
@@ -2143,7 +2267,7 @@ class IntervalSet(BaseIntervalCollection):
 
 
     def __rsub__(self, other):
-        raise NotImplementedError('%s.__rsub__()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'__rsub__'))
     
     
     def __rxor__(self, other):
@@ -2162,13 +2286,13 @@ class IntervalSet(BaseIntervalCollection):
         if isinstance(other, BaseIntervalCollection):
             return other
         else:
-            return self.__class__(_listify(other), setter or remit)
+            return self.__class__(_iter(other), setter or remit)
 
     
     def _isintersecting(self, other, setter=remit):
         if not isinstance(other, BaseIntervalCollection):
             return self._isintersecting(
-                self.__class__(_listify(other), setter=setter)
+                self.__class__(_iter(other), setter=setter)
             )
         elif self.namespace == other.namespace:
             lower, upper = (self, other) if self < other else (other, self)
@@ -2383,7 +2507,7 @@ class IntervalSet(BaseIntervalCollection):
         of IntervalSet. The callable must accept one (and only one)
         argument and output a single Interval-descendant object.
         """
-        raise NotImplementedError('%s.difference()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'difference'))
 
     
     def difference_update(self, other, pairwise=True, setter=None):
@@ -2519,7 +2643,7 @@ class IntervalSet(BaseIntervalCollection):
         of IntervalSet. The callable must accept one (and only one)
         argument and output a single Interval-descendant object.
         """
-        raise NotImplementedError('%s.symmetric_difference()' % self.__class__.__name__)
+        raise NotImplementedError(_NO_METHOD(self,'symmetric_difference'))
 
     
     def symmetric_difference_update(self, other, pairwise=True, setter=None):

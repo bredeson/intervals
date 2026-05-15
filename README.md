@@ -26,25 +26,24 @@ $ make install PREFIX=/full/path/to/install/prefix
 
 # Documentation
 
-To see the full documentation for the `intervals` API, there are two ways of getting `man`-like help pages:
+After proper installation, there are two ways of getting the complete documentation for the `intervals` API. Read `man`-like help pages by doing either of the following:
 
 1. On the command line:
     ```bash
-    $ cd intervals
-    $ pydoc ./src/intervals/intervals.py
-    $ pydoc ./src/intervals/collections.py
+    $ pydoc intervals.intervals
+    $ pydoc intervals.collections
     ```
 
 2. In the Python REPL:
     ```python
-    $ from intervals import Interval, IntervalList
+    >>> from intervals import Interval, IntervalList
     
     # for a full `man`-like help page:
-    $ help(Interval)
-    $ help(IntervalList)
+    >>> help(Interval)
+    >>> help(IntervalList)
     
     # for a specific method:
-    $ help(Interval.isintersecting)
+    >>> help(Interval.isintersecting)
     ```
 
 # Examples
@@ -52,52 +51,52 @@ To see the full documentation for the `intervals` API, there are two ways of get
 ## `Interval` objects
 
 ```python
-$ from intervals import Interval
+>>> from intervals import Interval
 
-$ i1 = Interval("chr1", 100, 1000)
-$ i2 = Interval("chr1", 750, 2000)
+>>> i1 = Interval("chr1", 100, 1000)
+>>> i2 = Interval("chr1", 750, 2000)
 
-$ i1 & i2
+>>> i1 & i2
 Interval(chr1:750-1000)
 
-$ i1 | i2
+>>> i1 | i2
 Interval(chr1:100-2000)
 
-$ i1 ^ i2
+>>> i1 ^ i2
 (Interval(chr1:100-750), Interval(chr1:1000-2000))
 
-$ i1.isintersecting(i2)
+>>> i1.isintersecting(i2)
 True
 
-$ i1.isintersecting_start(i2)
+>>> i1.isintersecting_start(i2)
 True
 
-$ i1.isintersecting_end(i2)
+>>> i1.isintersecting_end(i2)
 False
 
-$ i1.intersection_length(i2)
+>>> i1.intersection_length(i2)
 250
 
-$ i1.name
+>>> i1.name
 'chr1'
 
-$ i1.start
+>>> i1.start
 100
 
-$ i2.end = 1000
-$ i1.issuperset(i2)
+>>> i2.end = 1000
+>>> i1.issuperset(i2)
 True
 
-$ i2 in i1
+>>> i2 in i1
 True
 
-$ i1 in i2
+>>> i1 in i2
 False
 ```
 
-### `Interval` variables and methods
+### `BaseInterval` variables and methods
 
-In the following table, `self` and `other` represent `BaseInterval`-descendant class instances.
+In the following table, `self` and `other` represent an instance of `BaseInterval` or one of its subclasses.
 
 | Attribute                                 | Description                                                  |
 | ----------------------------------------- | ------------------------------------------------------------ |
@@ -155,28 +154,29 @@ In the following table, `self` and `other` represent `BaseInterval`-descendant c
 ### `IntervalList`
 
 ```python
-$ from intervals import Interval, IntervalList
+>>> from intervals import Interval, IntervalList
 
-$ ilist = IntervalList([Interval("chr1",0,100),Interval("chr1",150,350)])
+>>> ilist = IntervalList([Interval("chr1",0,100),Interval("chr1",150,350)])
 
-$ ilist.append(Interval("chr1",500,750))
+>>> ilist.append(Interval("chr1",500,750))
 
-$ ilist.insort(Interval("chr1",125,145))
+>>> ilist.insort(Interval("chr1",125,145))
 
-$ ilist
+>>> ilist
 IntervalList([Interval(chr1:0-100),
               Interval(chr1:125-145),
               Interval(chr1:150-350),
               Interval(chr1:500-750)])
 	      
-$ ilist.find_index_beg(Interval("chr1",170,300))
+>>> ilist.find_index_beg(Interval("chr1",170,300))
 2
 
-$ ilist.find_index_end(Interval("chr1",170,300))
+>>> ilist.find_index_end(Interval("chr1",170,300))
 3
 
-$ for interval in ilist.find_intersecting(Interval("chr1",140,300)):
->     print(interval)
+>>> for interval in ilist.find_intersecting(Interval("chr1",140,300)):
+...     print(interval)
+...
 chr1:125-145
 chr1:150-350
 ```
@@ -185,7 +185,7 @@ chr1:150-350
 
 #### `IntervalList` variables and methods
 
-In the following table, `self` represents an `IntervalList` instance, `interval` a `BaseInterval`-descendant class instance, and `iterable` is an iterable object containing zero or more `interval` objects as queries for searching. 
+In the following table, `self` represents an `IntervalList` instance, `interval` an instance of `BaseInterval` or one of its subclasses, and `iterable` is an iterable object containing zero or more interval objects as queries for searching.
 
 | Attribute  | Description |
 |---------------------------------------------|------------------------------|
@@ -237,27 +237,30 @@ In the following table, `self` represents an `IntervalList` instance, `interval`
 The `IntervalList` constructor and its methods taking `interval` or `iterable` arguments as input provide a `setter` keyword argument, which accepts a function used to extract/construct from the input object a `BaseInterval`-descendant class instance for setting the `IntervalList`. This is useful when the inputs are not of the same object class/interface as the members of `IntervalList`. The `setter` argument function must accept one (and only one) positional input argument and output a single `BaseInterval`-descendant object.
 
 ```python
-$ class IntervalPair(object):
->     def __init__(self, trg, qry):
->         self.trg = trg
->         self.qry = qry
+>>> class IntervalPair(object):
+...     def __init__(self, trg, qry):
+...         self.trg = trg
+...         self.qry = qry
+...
 
-$ pair = IntervalPair(
->     trg=Interval("chr1",1000000, 1500000),
->     qry=Interval("chr2",1100000, 1600000)
-> )
+>>> pair = IntervalPair(
+...     trg=Interval("chr1",1000000, 1500000),
+...     qry=Interval("chr2",1100000, 1600000)
+... )
+...
 
-$ ilist = IntervalList([pair], setter=lambda p: p.trg)
+>>> ilist = IntervalList([pair], setter=lambda p: p.trg)
 
-$ pair in ilist
+>>> pair in ilist
 True
 ```
 
 The constructed `IntervalList` instance assumes all method arguments will be of the same class/interface as that given at construction. Using the `setter` keyword argument can be used to temporarily override the constructor's `setter` argument and allow objects of different class/interface:
 
 ```python
-$ for ipair in ilist.find_intersecting(Interval("chr1",1001000,1005000), setter=lambda i: i):
->    print(ipair.trg, ipair.qry)
+>>> for ipair in ilist.find_intersecting(Interval("chr1",1001000,1005000), setter=lambda i: i):
+...     print(ipair.trg, ipair.qry)
+...
 chr1:1000000-1500000 chr2:1100000-1600000
 ```
 

@@ -6,34 +6,359 @@ from unittest import TestCase
 from intervals import (
     BaseInterval,
     ClosedInterval,
+    ClosedPoint,
     LeftClosedInterval,
+    LeftClosedPoint,
     Interval,
+    Point,
     IntervalList,
 )
 from intervals.collections import _Node
 from collections import deque
 from math import isnan, nan, isinf, inf
+from copy import copy
 
 
-class TestCase001_BaseInterval(TestCase):
+class TestCase000_BaseInterval(TestCase):
+    constructor = BaseInterval
+        
+    def test__init__0(self):
+        i = self.constructor()
+        self.assertIsInstance(i, self.constructor)
+        self.assertIsNone(i.namespace)
+        self.assertTrue(isnan(i.beg))
+        self.assertTrue(isnan(i.end))
+            
+    def test__init__1(self):
+        i = self.constructor(namespace="chr")
+        self.assertIsInstance(i, self.constructor)
+        self.assertEqual(i.namespace, "chr")
+        self.assertTrue(isnan(i.beg))
+        self.assertTrue(isnan(i.end))        
+
+    def test__init__2(self):
+        i = self.constructor(25, 125, namespace="chr")
+        self.assertIsInstance(i, self.constructor)
+        self.assertEqual(i.namespace, "chr")
+        self.assertEqual(i.beg, 25)
+        self.assertEqual(i.end, 125)
+    
+    def test_namespace_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'namespace'))
+    
+    def test_beg_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'beg'))
+        self.assertTrue(hasattr(self.constructor(), 'start'))
+
+    def test_mid_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'mid'))
+
+    def test_end_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'end'))
+        self.assertTrue(hasattr(self.constructor(), 'stop'))
+
+    def test_isnull_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'isnull'))
+
+    def test_isempty_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'isempty'))
+
+    def test_copy_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'copy'))
+
+    def test_to_slice_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'to_slice'))
+
+    def test__abs__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__abs__'))
+
+    def test__add__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__add__'))
+
+    def test__and__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__and__'))
+
+    def test__bool__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__bool__'))
+
+    def test__ceil__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__ceil__'))
+
+    def test__contains__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__contains__'))
+
+    def test__eq__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__eq__'))
+
+    def test__floor__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__floor__'))
+
+    def test__floordiv__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__floordiv__'))
+
+    def test__ge__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__ge__'))
+
+    def test__gt__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__gt__'))
+
+    def test__hash__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__hash__'))
+
+    def test__iadd__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__iadd__'))
+
+    def test__imul__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__imul__'))
+
+    def test__isub__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__isub__'))
+
+    def test__le__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__le__'))
+
+    def test__len__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__len__'))
+
+    def test__lt__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__lt__'))
+
+    def test__lshift__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__lshift__'))
+
+    def test__mul__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__mul__'))
+
+    def test__ne__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__ne__'))
+
+    def test__or__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__or__'))
+
+    def test_radd_0(self):
+        self.assertTrue(hasattr(self.constructor(), '__radd__'))
+
+    def test_rfloordiv_0(self):
+        self.assertTrue(hasattr(self.constructor(), '__rfloordiv__'))
+        
+    def test__rlshift__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__rlshift__'))
+
+    def test_rmul_0(self):
+        self.assertTrue(hasattr(self.constructor(), '__rmul__'))
+
+    def test__rshift__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__rshift__'))
+
+    def test__rsub__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__rsub__'))
+
+    def test__rtruediv__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__rtruediv__'))
+
+    def test__sub__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__sub__'))
+
+    def test__truediv__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__truediv__'))
+
+    def test__xor__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__xor__'))
+
+    def test_isabutting_beg_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'isabutting_beg'))
+
+    def test_isabutting_end_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'isabutting_end'))
+
+    def test_issuperinterval_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'issuperinterval'))
+
+    def test_difference_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'difference'))
+
+    def test_difference_update_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'difference_update'))
+
+    def test_inner_distance_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'inner_distance'))
+
+    def test_intersection_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'intersection'))
+
+    def test_intersection_update_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'intersection_update'))
+
+    def test_isdisjoint_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'isdisjoint'))
+
+    def test_issubset_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'issubset'))
+        # just an alias of issubinterval()
+
+    def test_issuperset_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'issuperset'))
+        # just an alias of issuperinterval()
+
+    def test_jaccard_distance_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'jaccard_distance'))
+
+    def test_outer_distance_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'outer_distance'))
+
+    def test_intersection_fraction_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'intersection_fraction'))
+
+    def test_intersection_length_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'intersection_length'))
+
+    def test_isintersecting_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'isintersecting'))
+
+    def test_isintersecting_beg_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'isintersecting_beg'))
+
+    def test_isintersecting_end_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'isintersecting_end'))
+
+    def test_symmetric_difference_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'symmetric_difference'))
+
+    def test_symmetric_difference_update_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'symmetric_difference_update'))
+
+    def test_to_slice_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'to_slice'))
+
+    def test_to_string_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'to_string'))
+
+    def test__str__0(self):
+        self.assertTrue(hasattr(self.constructor(), '__str__'))
+
+    def test_union_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'union'))
+
+    def test_issubinterval_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'issubinterval'))
+
+
+        
+class TestCase001_ClosedInterval(TestCase000_BaseInterval):
+    constructor = ClosedInterval
+
+        
+
+class TestCase002_LeftClosedInterval(TestCase000_BaseInterval):
+    constructor = LeftClosedInterval
+
+        
+
+class TestCase004_Interval(TestCase000_BaseInterval):
+    constructor = Interval
+            
+    def test__init__1(self):
+        i = self.constructor("chr")
+        self.assertIsInstance(i, self.constructor)
+        self.assertEqual(i.namespace, "chr")
+        self.assertTrue(isnan(i.beg))
+        self.assertTrue(isnan(i.end))        
+
+    def test__init__2(self):
+        i = self.constructor("chr", 25, 125)
+        self.assertIsInstance(i, self.constructor)
+        self.assertEqual(i.namespace, "chr")
+        self.assertEqual(i.beg, 25)
+        self.assertEqual(i.end, 125)
+
+    def test_name_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'name'))
+
+    def test_name_1(self):
+        self.assertTrue(hasattr(self.constructor(), 'name'))        
+
+    def test_name_getter_1(self):
+        self.assertIsNone(self.constructor().name)
+
+    def test_name_getter_2(self):
+        self.assertEqual(self.constructor("chr1").name, "chr1")
+        
+    def test_name_setter_1(self):
+        i = self.constructor()
+        self.assertIsNone(i.name)
+        self.assertIsNone(i.namespace)
+        i.name = "chr"
+        self.assertEqual(i.name, "chr")
+        self.assertEqual(i.namespace, "chr")
+
+        
+        
+class TestCase005_ClosedPoint(TestCase000_BaseInterval):
+    constructor = ClosedPoint
+
+    def test__init__1(self):
+        i = self.constructor(namespace="chr")
+        self.assertIsInstance(i, self.constructor)
+        self.assertEqual(i.namespace, "chr")
+        self.assertTrue(isnan(i.beg))
+        self.assertTrue(isnan(i.end))        
+
+    def test__init__2(self):
+        i = self.constructor(125, namespace="chr")
+        self.assertIsInstance(i, self.constructor)
+        self.assertEqual(i.namespace, "chr")
+        self.assertEqual(i.beg, 125)
+        self.assertEqual(i.end, 125)
+
+    def test_pos_0(self):
+        self.assertTrue(hasattr(self.constructor(),'pos'))
+
+    
+        
+        
+class TestCase006_LeftClosedPoint(TestCase005_ClosedPoint):
+    constructor = LeftClosedPoint
+        
+
+        
+class TestCase008_Point(TestCase005_ClosedPoint):
+    constructor = Point
+
+    def test__init__1(self):
+        i = self.constructor("chr")
+        self.assertIsInstance(i, self.constructor)
+        self.assertEqual(i.namespace, "chr")
+        self.assertTrue(isnan(i.beg))
+        self.assertTrue(isnan(i.end))        
+
+    def test__init__2(self):
+        i = self.constructor("chr", 125)
+        self.assertIsInstance(i, self.constructor)
+        self.assertEqual(i.namespace, "chr")
+        self.assertEqual(i.beg, 125)
+        self.assertEqual(i.end, 126)
+
+        
+        
+class TestCase009_BaseInterval(TestCase):
+    constructor = BaseInterval
+    
     def setUp(self):
-        self.interval   = BaseInterval(50, 100)
-        self.interval0  = BaseInterval(50, 100)
-        self.interval1  = BaseInterval(25,  75)
-        self.interval2  = BaseInterval(70,  75)
-        self.interval3  = BaseInterval(50,  75)
-        self.interval4  = BaseInterval( 0, 100)
-        self.interval5  = BaseInterval( 0,  50)
-        self.interval6  = BaseInterval(75, 100)
-        self.interval7  = BaseInterval(75, 125)
-        self.interval8  = BaseInterval()
-        self.interval9  = BaseInterval(75, 100, namespace="other")
-        self.interval10 = BaseInterval(100, 110)
-        self.interval11 = BaseInterval(50, 90)
-        self.interval12 = BaseInterval(0, 1000)
+        self.interval0  = self.constructor(50, 100)
+        self.interval1  = self.constructor(25,  75)
+        self.interval2  = self.constructor(70,  75)
+        self.interval3  = self.constructor(50,  75)
+        self.interval4  = self.constructor( 0, 100)
+        self.interval5  = self.constructor( 0,  50)
+        self.interval6  = self.constructor(75, 100)
+        self.interval7  = self.constructor(75, 125)
+        self.interval8  = self.constructor()
+        self.interval9  = self.constructor(75, 100, namespace="other")
+        self.interval10 = self.constructor(100, 110)
+        self.interval11 = self.constructor(50, 90)
+        self.interval12 = self.constructor(0, 1000)
         
     def tearDown(self):
-        del(self.interval)
         del(self.interval0)
         del(self.interval1)
         del(self.interval2)
@@ -43,123 +368,102 @@ class TestCase001_BaseInterval(TestCase):
         del(self.interval6)
         del(self.interval7)
         del(self.interval8)
-
-    def test_namespace_getter_0(self):
-        self.assertTrue(hasattr(self.interval, 'namespace'))
+        del(self.interval9)
+        del(self.interval10)
+        del(self.interval11)
+        del(self.interval12)
 
     def test_namespace_getter_1(self):
-        self.assertIsNone(self.interval.namespace)
+        self.assertIsNone(self.interval0.namespace)
 
-    def test_namespace_setter_0(self):
-        self.assertTrue(hasattr(self.interval, 'namespace'))
+    def test_namespace_getter_2(self):
+        self.assertEqual(self.interval9.namespace, "other")
 
     def test_namespace_setter_1(self):
-        self.assertIsNone(self.interval.namespace)
-        self.interval.namespace = 3
-        self.assertEqual(self.interval.namespace, 3)
-        
-    def test_beg_getter_0(self):
-        self.assertTrue(hasattr(self.interval, 'beg'))
-        self.assertTrue(hasattr(self.interval, 'start'))
-        
+        self.assertIsNone(self.interval0.namespace)
+        self.interval0.namespace = 3
+        self.assertEqual(self.interval0.namespace, 3)
+                
     def test_beg_getter_1(self):
-        self.assertIsNotNone(self.interval.beg)
-        self.assertIsInstance(self.interval.beg, int)
-        self.assertEqual(self.interval.beg, 50)
-        self.assertEqual(self.interval.start, 50)
-
-    def test_beg_setter_0(self):
-        self.assertTrue(hasattr(self.interval, 'beg'))
-        self.assertTrue(hasattr(self.interval, 'start'))
+        self.assertIsNotNone(self.interval0.beg)
+        self.assertIsInstance(self.interval0.beg, int)
+        self.assertEqual(self.interval0.beg, 50)
+        self.assertEqual(self.interval0.start, 50)
 
     def test_beg_setter_1(self):
-        self.assertEqual(self.interval.beg, 50)
-        self.assertEqual(self.interval.start, 50)
-        self.interval.beg = 75
-        self.assertEqual(self.interval.beg, 75)
-        self.assertEqual(self.interval.start, 75)
+        self.assertEqual(self.interval0.beg, 50)
+        self.assertEqual(self.interval0.start, 50)
+        self.interval0.beg = 75
+        self.assertEqual(self.interval0.beg, 75)
+        self.assertEqual(self.interval0.start, 75)
 
     def test_beg_setter_2(self):
         try:
-            self.interval.beg = nan
+            self.interval0.beg = nan
         except ValueError:
             pass
-        self.assertTrue(isnan(self.interval.beg))
+        self.assertTrue(isnan(self.interval0.beg))
             
     def test_beg_setter_3(self):
         try:
-            self.interval.beg = inf
+            self.interval0.beg = inf
         except OverflowError:
             pass
-        self.assertTrue(isinf(self.interval.beg))
+        self.assertTrue(isinf(self.interval0.beg))
 
     def test_beg_setter_4(self):
         try:
-            self.interval.beg = -inf
+            self.interval0.beg = -inf
         except OverflowError:
             pass
-        self.assertTrue(isinf(self.interval.beg))
+        self.assertTrue(isinf(self.interval0.beg))
             
-    def test_mid_0(self):
-        self.assertTrue(hasattr(self.interval, 'mid'))
-
     def test_mid_1(self):
         self.assertEqual(self.interval6.mid, 87.5)
         
-    def test_end_getter_0(self):
-        self.assertTrue(hasattr(self.interval, 'end'))
-        self.assertTrue(hasattr(self.interval, 'stop'))
-
     def test_end_getter_1(self):
-        self.assertIsNotNone(self.interval.end)
-        self.assertIsInstance(self.interval.end, int)
-        self.assertEqual(self.interval.end, 100)
-        self.assertEqual(self.interval.stop, 100)
-
-    def test_end_setter_0(self):
-        self.assertTrue(hasattr(self.interval, 'end'))
-        self.assertTrue(hasattr(self.interval, 'stop'))
+        self.assertIsNotNone(self.interval0.end)
+        self.assertIsInstance(self.interval0.end, int)
+        self.assertEqual(self.interval0.end, 100)
+        self.assertEqual(self.interval0.stop, 100)
 
     def test_end_setter_1(self):
-        self.assertEqual(self.interval.end, 100)
-        self.assertEqual(self.interval.stop, 100)
-        self.interval.end = 175
-        self.assertEqual(self.interval.end, 175)
-        self.assertEqual(self.interval.stop, 175)
+        self.assertEqual(self.interval0.end, 100)
+        self.assertEqual(self.interval0.stop, 100)
+        self.interval0.end = 175
+        self.assertEqual(self.interval0.end, 175)
+        self.assertEqual(self.interval0.stop, 175)
 
     def test_end_setter_2(self):
         try:
-            self.interval.end = nan
+            self.interval0.end = nan
         except ValueError:
             pass
-        self.assertTrue(isnan(self.interval.end))
+        self.assertTrue(isnan(self.interval0.end))
 
     def test_end_setter_3(self):
         try:
-            self.interval.end = inf
+            self.interval0.end = inf
         except OverflowError:
             pass
-        self.assertTrue(isinf(self.interval.end))
+        self.assertTrue(isinf(self.interval0.end))
         
     def test_end_setter_4(self):
         try:
-            self.interval.end = -inf
+            self.interval0.end = -inf
         except OverflowError:
             pass
-        self.assertTrue(isinf(self.interval.end))
+        self.assertTrue(isinf(self.interval0.end))
         
-    def test_isnull_0(self):
-        self.assertTrue(hasattr(self.interval, 'isnull'))
-
     def test_isnull_1(self):
-        i = self.interval.__class__()
+        i = self.constructor()
         self.assertIsNone(i.namespace)
         self.assertTrue(isnan(i.beg))
         self.assertTrue(isnan(i.end))
         self.assertTrue(i.isnull())
 
     def test_isnull_2(self):
-        i = self.interval.__class__()
+        i = self.constructor()
         i.end = 19
         self.assertIsNone(i.namespace)
         self.assertTrue(isnan(i.beg))
@@ -167,57 +471,48 @@ class TestCase001_BaseInterval(TestCase):
         self.assertTrue(i.isnull())
 
     def test_isnull_3(self):
-        i = self.interval.__class__()
+        i = self.constructor()
         i.beg = 19
         self.assertIsNone(i.namespace)
         self.assertFalse(isnan(i.beg))
         self.assertTrue(isnan(i.end))
         self.assertTrue(i.isnull())        
 
-    def test_isempty_0(self):
-        self.assertTrue(hasattr(self.interval, 'isempty'))
-
     def test_isempty_1(self):
-        self.assertFalse(self.interval.isempty())
-        self.interval.beg, self.interval.end \
-            = self.interval.end, self.interval.beg
-        self.assertTrue(self.interval.isempty())
+        self.assertFalse(self.interval0.isempty())
+        self.interval0.beg, self.interval0.end \
+            = self.interval0.end, self.interval0.beg
+        self.assertTrue(self.interval0.isempty())
 
     def test_isempty_2(self):
-        self.interval.beg = nan
-        self.assertTrue(isnan(self.interval.beg))
-        self.assertFalse(isnan(self.interval.end))
-        self.assertTrue(self.interval.isempty())
+        self.interval0.beg = nan
+        self.assertTrue(isnan(self.interval0.beg))
+        self.assertFalse(isnan(self.interval0.end))
+        self.assertTrue(self.interval0.isempty())
 
     def test_isempty_3(self):
-        self.interval.end = nan
-        self.assertFalse(isnan(self.interval.beg))
-        self.assertTrue(isnan(self.interval.end))
-        self.assertTrue(self.interval.isempty())
+        self.interval0.end = nan
+        self.assertFalse(isnan(self.interval0.beg))
+        self.assertTrue(isnan(self.interval0.end))
+        self.assertTrue(self.interval0.isempty())
         
-    def test_copy_0(self):
-        self.assertTrue(hasattr(self.interval, 'copy'))
-
     def test_copy_1(self):
         i = self.interval0.copy()
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
         self.assertNotEqual(hash(i), hash(self.interval0))
 
     def test_copy_2(self):
         i = self.interval0.copy(deep=True)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
         self.assertNotEqual(hash(i), hash(self.interval0))
         
-    def test_to_slice_0(self):
-        self.assertTrue(hasattr(self.interval, 'to_slice'))
-
     def test_to_slice_1(self):
-        s = self.interval.to_slice()
+        s = self.interval0.to_slice()
         self.assertIsInstance(s, slice)
-        self.assertEqual(s.start, self.interval.beg)
-        self.assertEqual(s.stop, self.interval.end)
+        self.assertEqual(s.start, self.interval0.beg)
+        self.assertEqual(s.stop, self.interval0.end)
 
     def test_to_slice_2(self):  ###
         s = self.interval8.to_slice()
@@ -225,659 +520,560 @@ class TestCase001_BaseInterval(TestCase):
         self.assertEqual(s.start, -1)
         self.assertEqual(s.stop, -1)
         
-    def test_abs_0(self):
-        self.assertTrue(hasattr(self.interval, '__abs__'))
-
-    def test_abs_1(self):
-        i = self.interval.__class__( -15, -5)
+    def test__abs__1(self):
+        i = self.constructor( -15, -5)
         self.assertEqual(i.beg, -15)
         self.assertEqual(i.end, -5)
         i = abs(i)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 5)
         self.assertEqual(i.end, 15)
 
-    def test_abs_2(self):  ###
+    def test__abs__2(self):  ###
         i = abs(self.interval8)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertIs(i.namespace, self.interval8.namespace)
         self.assertTrue(isnan(i.beg))
         self.assertTrue(isnan(i.end))
         
-    def test_add_0(self):
-        self.assertTrue(hasattr(self.interval, '__add__'))
-
-    def test_add_1(self):
-        i = self.interval + 25
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__add__1(self):
+        i = self.interval0 + 25
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval7)
 
-    def test_add_2(self):
+    def test__add__2(self):
         i = self.interval0 + self.interval1
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  75)
         self.assertEqual(i.end, 175)
 
-    def test_add_3(self):  ###
+    def test__add__3(self):  ###
         i = self.interval8 + 100
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isempty())
 
-    def test_add_4(self):
+    def test__add__4(self):
         with self.assertRaises(ValueError):
             self.interval0 + self.interval9
-        
-    def test_and_0(self):
-        self.assertTrue(hasattr(self.interval, '__and__'))
 
-    def test_and_1(self):
+    def test__and__1(self):
         i = self.interval0 & self.interval1
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval3)
 
-    def test_and_2(self):
+    def test__and__2(self):
         i = self.interval0 & self.interval2
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval2)
 
-    def test_and_3(self):
+    def test__and__3(self):
         i = self.interval0 & self.interval5
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertFalse(i.isnull())
         self.assertEqual(len(i), 0)
 
-    def test_and_4(self):  ###
+    def test__and__4(self):  ###
         i = self.interval8 & self.interval0
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
 
-    def test_and_5(self):  ###
+    def test__and__5(self):  ###
         i = self.interval0 & self.interval8
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
 
-    def test_and_6(self):
+    def test__and__6(self):
         i = self.interval3 & self.interval9
-        self.assertIsInstance(i, self.interval3.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
         
-    def test_bool_0(self):
-        self.assertTrue(hasattr(self.interval, '__bool__'))
+    def test__bool__1(self):
+        self.assertTrue(bool(self.interval0))
 
-    def test_bool_1(self):
-        self.assertTrue(bool(self.interval))
-
-    def test_bool_2(self):  ###
+    def test__bool__2(self):  ###
         self.assertFalse(bool(self.interval8))
         
-    def test_ceil_0(self):
-        self.assertTrue(hasattr(self.interval, '__ceil__'))
-
-    def test_ceil_1(self):
+    def test__ceil__1(self):
         import math
-        i = self.interval.__class__( 3.50, 7.75)
+        i = self.constructor( 3.50, 7.75)
         self.assertEqual(i.beg, 3.50)
         self.assertEqual(i.end, 7.75)
         i = math.ceil(i)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 4.0)
         self.assertEqual(i.end, 8.0)
 
-    def test_ceil_2(self):  ###
+    def test__ceil__2(self):  ###
         import math
         i = math.ceil(self.interval8)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isempty())
         
-    def test_in_0(self):
-        self.assertTrue(hasattr(self.interval, '__contains__'))
-
-    def test_in_1(self):
+    def test__contains__1(self):
         self.assertIn(self.interval2, self.interval1)
 
-    def test_in_2(self):  ###
+    def test__contains__2(self):  ###
         self.assertNotIn(self.interval0, self.interval8)
         
-    def test_eq_0(self):
-        self.assertTrue(hasattr(self.interval, '__eq__'))
-
-    def test_eq_1(self):
+    def test__eq__1(self):
         self.assertEqual(self.interval1, self.interval1)
 
-    def test_eq_2(self):
-        self.assertEqual(self.interval0, self.interval)
-        self.assertNotEqual(hash(self.interval0), hash(self.interval))
+    def test__eq__2(self):
+        self.assertEqual(self.interval0, self.interval0)
+        self.assertNotEqual(hash(self.interval0), hash(copy(self.interval0)))
 
-    def test_eq_3(self):
+    def test__eq__3(self):
         i = self.interval1.copy()
         i.beg, i.end = i.end, i.beg
         self.assertNotEqual(i, self.interval1)
 
-    def test_eq_4(self):  ###
+    def test__eq__4(self):  ###
         # None == None -> True
         # nan == nan -> False
         # True and False -> False always
-        i = self.interval.__class__()
+        i = self.constructor()
         self.assertNotEqual(self.interval8, i)
         self.assertTrue(self.interval8.isempty())
         self.assertTrue(i.isempty())
 
-    def test_eq_5(self):
+    def test__eq__5(self):
         self.assertNotEqual(self.interval6, self.interval9)
         
-    def test_floor_0(self):
-        self.assertTrue(hasattr(self.interval, '__floor__'))
-
-    def test_floor_1(self):
+    def test__floor__1(self):
         import math
-        i = self.interval.__class__( 3.50, 7.75)
+        i = self.constructor( 3.50, 7.75)
         self.assertEqual(i.beg, 3.50)
         self.assertEqual(i.end, 7.75)
         i = math.floor(i)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertAlmostEqual(i.beg, 3.0)
         self.assertAlmostEqual(i.end, 7.0)
 
-    def test_floor_2(self):  ###
+    def test__floor__2(self):  ###
         import math
         i = math.floor(self.interval8)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertNotEqual(i, self.interval8)
         self.assertTrue(self.interval8.isempty())
         self.assertTrue(i.isempty())
         
-    def test_floordiv_0(self):
-        self.assertTrue(hasattr(self.interval, '__floordiv__'))
-
-    def test_floordiv_1(self):
+    def test__floordiv__1(self):
         import math
-        i = self.interval.__class__( 3.50, 7.75)
+        i = self.constructor( 3.50, 7.75)
         self.assertEqual(i.beg, 3.50)
         self.assertEqual(i.end, 7.75)
         j = i // 1
-        self.assertIsInstance(j, self.interval.__class__)
+        self.assertIsInstance(j, self.constructor)
         self.assertAlmostEqual(j.beg, 3.0)
         self.assertAlmostEqual(j.end, 7.0)
 
-    def test_ge_0(self):
-        self.assertTrue(hasattr(self.interval, '__ge__'))
-
-    def test_ge_1(self):        
+    def test__ge__1(self):        
         self.assertGreaterEqual(self.interval0, self.interval1)
 
-    def test_ge_2(self):
+    def test__ge__2(self):
         self.assertGreaterEqual(self.interval0, self.interval3)
 
-    def test_ge_3(self):
+    def test__ge__3(self):
         self.assertGreaterEqual(self.interval3, self.interval3)    
 
-    def test_gt_0(self):
-        self.assertTrue(hasattr(self.interval, '__gt__'))
-
-    def test_gt_1(self):
+    def test__gt__1(self):
         self.assertGreater(self.interval0, self.interval1)
 
-    def test_gt_2(self):
+    def test__gt__2(self):
         self.assertGreater(self.interval0, self.interval3)
 
-    def test_gt_3(self):
+    def test__gt__3(self):
         self.assertFalse(self.interval9 > self.interval5)
         self.assertFalse(self.interval6 > self.interval9)
 
-    def test_hash_0(self):
-        self.assertTrue(hasattr(self.interval, '__hash__'))
-
-    def test_hash_1(self):
+    def test__hash__1(self):
         self.assertEqual(hash(self.interval0), hash(self.interval0))
         self.assertIs(self.interval0, self.interval0)
 
-    def test_hash_2(self):
-        self.assertNotEqual(hash(self.interval0), hash(self.interval))
-        self.assertIsNot(self.interval0, self.interval)
+    def test__hash__2(self):
+        self.assertNotEqual(hash(self.interval0), hash(copy(self.interval0)))
+        self.assertIsNot(self.interval0, copy(self.interval0))
 
-    def test_iadd_0(self):
-        self.assertTrue(hasattr(self.interval, '__iadd__'))
-
-    def test_iadd_1(self):
+    def test__iadd__1(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 += 10
         self.assertEqual(self.interval0.beg,  60)
         self.assertEqual(self.interval0.end, 110)
 
-    def test_iadd_2(self):
+    def test__iadd__2(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 += self.interval1
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg,  75)
         self.assertEqual(self.interval0.end, 175)
 
-    def test_iadd_3(self):
+    def test__iadd__3(self):
         with self.assertRaises(ValueError):
-            self.interval += self.interval9
+            self.interval0 += self.interval9
         
-    def test_imul_0(self):
-        self.assertTrue(hasattr(self.interval, '__imul__'))
-
-    def test_imul_1(self):
+    def test__imul__1(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 *= 5
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg, 250)
         self.assertEqual(self.interval0.end, 500)
 
-    def test_imul_2(self):
+    def test__imul__2(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 *= self.interval3
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg, 2500)
         self.assertEqual(self.interval0.end, 7500)
 
-    def test_imul_3(self):
+    def test__imul__3(self):
         with self.assertRaises(ValueError):
-            self.interval *= self.interval9
+            self.interval0 *= self.interval9
         
-    def test_isub_0(self):
-        self.assertTrue(hasattr(self.interval, '__isub__'))
-
-    def test_isub_1(self):
+    def test__isub__1(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 -= 50
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg,  0)
         self.assertEqual(self.interval0.end, 50)
 
-    def test_isub_2(self):
+    def test__isub__2(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 -= self.interval3
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg,  0)
         self.assertEqual(self.interval0.end, 25)
 
-    def test_isub_3(self):
+    def test__isub__3(self):
         with self.assertRaises(ValueError):
-            self.interval -= self.interval9
+            self.interval0 -= self.interval9
 
-    def test_le_0(self):
-        self.assertTrue(hasattr(self.interval, '__le__'))
-
-    def test_le_1(self):
+    def test__le__1(self):
         self.assertLessEqual(self.interval1, self.interval0)
 
-    def test_le_2(self):
+    def test__le__2(self):
         self.assertLessEqual(self.interval3, self.interval0)
 
-    def test_le_3(self):
-        self.assertLessEqual(self.interval0, self.interval)
+    def test__le__3(self):
+        self.assertLessEqual(self.interval0, self.interval0)
 
-    def test_len_0(self):
-        self.assertTrue(hasattr(self.interval, '__len__'))
-
-    def test_len_1(self):
+    def test__len__1(self):
         self.assertEqual(len(self.interval0), 50)
         self.assertEqual(len(self.interval1), 50)
         self.assertEqual(len(self.interval2),  5)
         self.assertEqual(len(self.interval3), 25)
 
-    def test_lt_0(self):
-        self.assertTrue(hasattr(self.interval, '__lt__'))
-
-    def test_lt_1(self):
+    def test__lt__1(self):
         self.assertLess(self.interval1, self.interval0)
 
-    def test_lt_2(self):
+    def test__lt__2(self):
         self.assertLess(self.interval3, self.interval0)
 
-    def test_lt_3(self):
+    def test__lt__3(self):
         self.assertFalse(self.interval5 < self.interval9)
         self.assertFalse(self.interval9 < self.interval10)
         
-    def test_lshift_0(self):
-        self.assertTrue(hasattr(self.interval, '__lshift__'))
-
-    def test_lshift_1(self):
-        j = self.interval0.__class__( 2, 4)
+    def test__lshift__1(self):
+        j = self.constructor( 2, 4)
         i = j << 1
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 4)
         self.assertEqual(i.end, 8)
 
-    def test_lshift_2(self):
-        j = self.interval0.__class__( 2, 4)
-        i = j << self.interval0.__class__( 1, 2)
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__lshift__2(self):
+        j = self.constructor( 2, 4)
+        i = j << self.constructor( 1, 2)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  4)
         self.assertEqual(i.end, 16)
         
-    def test_mul_0(self):
-        self.assertTrue(hasattr(self.interval, '__mul__'))
-
-    def test_mul_1(self):
+    def test__mul__1(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         i = self.interval0 * 5
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 250)
         self.assertEqual(i.end, 500)
 
-    def test_mul_2(self):
+    def test__mul__2(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
-        i = self.interval0 * self.interval0.__class__( 2, 5)
-        self.assertIsInstance(i, self.interval.__class__)
+        i = self.interval0 * self.constructor( 2, 5)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 100)
         self.assertEqual(i.end, 500)
         
-    def test_ne_0(self):
-        self.assertTrue(hasattr(self.interval, '__ne__'))
-
-    def test_ne_1(self):
+    def test__ne__1(self):
         self.assertNotEqual(self.interval0, self.interval1)
 
-    def test_ne_2(self):
+    def test__ne__2(self):
         self.assertNotEqual(self.interval0, self.interval3)
 
-    def test_ne_3(self):
-        self.assertNotEqual(self.interval0, self.interval0.__class__(0, 100))
+    def test__ne__3(self):
+        self.assertNotEqual(self.interval0, self.constructor(0, 100))
 
-    def test_ne_4(self):
+    def test__ne__4(self):
         self.assertNotEqual(self.interval6, self.interval9)
         
-    def test_or_0(self):
-        self.assertTrue(hasattr(self.interval, '__or__'))
-
-    def test_or_1(self):
+    def test__or__1(self):
         # i0:  50 *================* 100
         # i2:       70 *===* 75        
         i = self.interval0 | self.interval2
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
 
-    def test_or_2(self):
+    def test__or__2(self):
         # i0:  50 *================* 100
         # i3:  50 *============* 75        
         i = self.interval0 | self.interval3
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
 
-    def test_or_3(self):
+    def test__or__3(self):
         # i0:  50 *================* 100
         # i6:          75 *========* 100
         i = self.interval0 | self.interval6
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
         
-    def test_or_4(self):
+    def test__or__4(self):
         # i0:           50 *================* 100
         # i1:  25 *================* 75
         i = self.interval0 | self.interval1
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  25)
         self.assertEqual(i.end, 100)
 
-    def test_or_5(self):
+    def test__or__5(self):
         # i0:  50 *================* 100
         # i7:           75 *================* 125
         i = self.interval0 | self.interval7
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 50)
         self.assertEqual(i.end, 125)
 
-    def test_or_6(self):
+    def test__or__6(self):
         # i3:           50 *======* 75
         # i5: 0 *==========* 50
         i = self.interval3 | self.interval5
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 0)
         self.assertEqual(i.end, 75)
 
-    def test_or_7(self):
+    def test__or__7(self):
         # i3:  50 *======* 75
         # i6:         75 *======* 100
         i = self.interval3 | self.interval6
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 50)
         self.assertEqual(i.end, 100)
         
-    def test_or_8(self):
+    def test__or__8(self):
         # i2:                     70 *====* 75
         # i5:  0 *===============* 50
         i = self.interval2 | self.interval5
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval2)
         self.assertEqual(i[1], self.interval5)
 
-    def test_or_9(self):
+    def test__or__9(self):
         # i5:  0 *===============* 50
         # i2:                     70 *====* 75
         i = self.interval5 | self.interval2
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval5)
         self.assertEqual(i[1], self.interval2)
 
-    def test_or_10(self):
+    def test__or__10(self):
         i = self.interval6 | self.interval9
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval6)
         self.assertEqual(i[1], self.interval9)        
         
-    def test_radd_0(self):
-        self.assertTrue(hasattr(self.interval, '__radd__'))
-
-    def test_radd_1(self):
+    def test__radd__1(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         i = 5 + self.interval0
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  55)
         self.assertEqual(i.end, 105)
 
-    def test_rfloordiv_0(self):
-        self.assertTrue(hasattr(self.interval, '__rfloordiv__'))
-
-    def test_rfloordiv_1(self):
+    def test__rfloordiv__1(self):
         i = 1000000 // self.interval0
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 10000)
         self.assertEqual(i.end, 20000)
         
-    def test_rlshift_0(self):
-        self.assertTrue(hasattr(self.interval, '__rlshift__'))
-
-    def test_rlshift_1(self):
-        i = 1 << self.interval0.__class__(2,4)
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rlshift__1(self):
+        i = 1 << self.constructor(2,4)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  4)
         self.assertEqual(i.end, 16)
         
-    def test_rmul_0(self):
-        self.assertTrue(hasattr(self.interval, '__rmul__'))
-
-    def test_rmul_1(self):
+    def test__rmul__1(self):
         i = 5 * self.interval0
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 250)
         self.assertEqual(i.end, 500)
 
-    def test_rshift_0(self):
-        self.assertTrue(hasattr(self.interval, '__rshift__'))
-
-    def test_rshift_1(self):
-        i = self.interval0.__class__( 2, 16) >> 1
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rshift__1(self):
+        i = self.constructor( 2, 16) >> 1
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 1)
         self.assertEqual(i.end, 8)
 
-    def test_rsub_0(self):
-        self.assertTrue(hasattr(self.interval, '__rsub__'))
-
-    def test_rsub_1(self):
-        i = 10000 - self.interval0.__class__( 1000, 10000)
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rsub__1(self):
+        i = 10000 - self.constructor( 1000, 10000)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 0)
         self.assertEqual(i.end, 9000)
 
-    def test_rtruediv_0(self):
-        self.assertTrue(hasattr(self.interval, '__rtruediv__'))
-
-    def test_rtruediv_1(self):
-        i = 5.0 / self.interval0.__class__( 2.0, 5.0)
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rtruediv__1(self):
+        i = 5.0 / self.constructor( 2.0, 5.0)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 1)
         self.assertEqual(i.end, 2.5)
 
-    def test_sub_0(self):
-        self.assertTrue(hasattr(self.interval, '__sub__'))
-
-    def test_sub_1(self):
+    def test__sub__1(self):
         i = self.interval0 - 50
-        self.assertIsInstance(i, self.interval0.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  0)
         self.assertEqual(i.end, 50)
 
-    def test_sub_2(self):
+    def test__sub__2(self):
         i = self.interval0 - self.interval3
-        self.assertIsInstance(i, self.interval0.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, -25)
         self.assertEqual(i.end, 50)
         
-    def test_truediv_0(self):
-        self.assertTrue(hasattr(self.interval, '__truediv__'))
-
-    def test_truediv_1(self):
+    def test__truediv__1(self):
         i = self.interval1 / 100.0
         self.assertIsInstance(i, self.interval1.__class__)
         self.assertAlmostEqual(i.beg, 0.25)
         self.assertAlmostEqual(i.end, 0.75)
 
-    def test_truediv_2(self):
-        i = self.interval1 / self.interval.__class__(100.0, 100.0)
+    def test__truediv__2(self):
+        i = self.interval1 / self.constructor(100.0, 100.0)
         self.assertIsInstance(i, self.interval1.__class__)
         self.assertAlmostEqual(i.beg, 0.25)
         self.assertAlmostEqual(i.end, 0.75)
 
-    def test_truediv_3(self):
+    def test__truediv__3(self):
         with self.assertRaises(ValueError):
             self.interval6 / self.interval9
         
-    def test_xor_0(self):
-        self.assertTrue(hasattr(self.interval, '__xor__'))
-
-    def test_xor_1(self):
+    def test__xor__1(self):
         # i5:  0 *========o 50
         # i1:      25 *========o 75
         i = self.interval5 ^ self.interval1
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__(  0, 25))
-        self.assertEqual(i[1], self.interval.__class__( 50, 75))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor(  0, 25))
+        self.assertEqual(i[1], self.constructor( 50, 75))
 
-    def test_xor_2(self):
+    def test__xor__2(self):
         # i1:      25 *========o 75
         # i5:  0 *========o 50
         i = self.interval1 ^ self.interval5
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__( 50, 75))
-        self.assertEqual(i[1], self.interval.__class__(  0, 25))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor( 50, 75))
+        self.assertEqual(i[1], self.constructor(  0, 25))
         
-    def test_xor_3(self):
+    def test__xor__3(self):
         # i0:  50 *================o 100
         # i2:       70 *========o 75        
         i = self.interval0 ^ self.interval2
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__( 50,  70))
-        self.assertEqual(i[1], self.interval.__class__( 75, 100))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor( 50,  70))
+        self.assertEqual(i[1], self.constructor( 75, 100))
 
-    def test_xor_4(self):
+    def test__xor__4(self):
         # i0:  50 *================o 100
         # i0:  50 *================o 100
         i = self.interval0 ^ self.interval0
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)        
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertTrue(i[0].isempty())
         self.assertTrue(i[1].isempty())
 
-    def test_xor_5(self):
+    def test__xor__5(self):
         # i5:  0 *========o 50
         # i3:          50 *====o 75        
         i = self.interval5 ^ self.interval3
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval5)
         self.assertEqual(i[1], self.interval3)
 
-    def test_xor_6(self):  
+    def test__xor__6(self):  
         # i3:          50 *====o 75
         # i5:  0 *========o 50        
         i = self.interval3 ^ self.interval5
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval5)
         
-    def test_xor_7(self):
+    def test__xor__7(self):
         # i0:  50 *========o 100
         # i3:  50 *====o 75
         i = self.interval0 ^ self.interval3
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval6)
         self.assertTrue(i[1].isempty())
 
-    def test_xor_8(self):
+    def test__xor__8(self):
         # i1:  25 *==========o 75
         # i3:       50 *=====o 75
         i = self.interval1 ^ self.interval3
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0].beg, 25)
         self.assertEqual(i[0].end, 50)
         self.assertTrue(i[1].isempty())
 
-    def test_xor_9(self):
+    def test__xor__9(self):
         i = self.interval6 ^ self.interval9
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval6)
         self.assertEqual(i[1], self.interval9)
         
-    def test_isabutting_beg_0(self):
-        self.assertTrue(hasattr(self.interval, 'isabutting_beg'))
-
     def test_isabutting_beg_1(self):
         self.assertTrue(self.interval5.isabutting_beg(self.interval3))
 
@@ -890,9 +1086,6 @@ class TestCase001_BaseInterval(TestCase):
     def test_isabutting_beg_4(self):
         self.assertFalse(self.interval3.isabutting_beg(self.interval9))
         
-    def test_isabutting_end_0(self):
-        self.assertTrue(hasattr(self.interval, 'isabutting_end'))
-
     def test_isabutting_end_1(self):
         self.assertTrue(self.interval3.isabutting_end(self.interval5))
 
@@ -905,9 +1098,6 @@ class TestCase001_BaseInterval(TestCase):
     def test_isabutting_end_4(self):
         self.assertFalse(self.interval9.isabutting_end(self.interval3))
         
-    def test_issuperinterval_0(self):
-        self.assertTrue(hasattr(self.interval, 'issuperinterval'))
-
     def test_issuperinterval_1(self):
         self.assertTrue(self.interval0.issuperinterval(self.interval2))
 
@@ -930,36 +1120,33 @@ class TestCase001_BaseInterval(TestCase):
         self.assertFalse(self.interval6.issuperinterval(self.interval0))
 
     def test_issuperinterval_8(self):
-        self.assertTrue(self.interval.issuperinterval(self.interval0, strict=False))
-        self.assertFalse(self.interval.issuperinterval(self.interval0, strict=True))
+        self.assertTrue(self.interval0.issuperinterval(self.interval0, strict=False))
+        self.assertFalse(self.interval0.issuperinterval(self.interval0, strict=True))
 
     def test_issuperinterval_9(self):
         self.assertFalse(self.interval12.issuperinterval(self.interval9))
         
-    def test_difference_0(self):
-        self.assertTrue(hasattr(self.interval, 'difference'))
-
     def test_difference_1(self):
         i = self.interval0.difference(self.interval6)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval3)
         
     def test_difference_2(self):
         i = self.interval0.difference(self.interval3)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval6)
         
     def test_difference_3(self):
         i = self.interval2.difference(self.interval0)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
 
     def test_difference_4(self):
         i = self.interval0.difference(self.interval2)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0].beg,  50)
         self.assertEqual(i[0].end,  70)
         self.assertEqual(i[1].beg,  75)
@@ -973,15 +1160,9 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval4.difference(self.interval9)
         self.assertEqual(i, self.interval4)
         
-    def test_difference_update_0(self):
-        self.assertTrue(hasattr(self.interval, 'difference_update'))
-
     def test_difference_update_1(self):
         with self.assertRaises(NotImplementedError):
             self.interval0.difference_update(self.interval0)
-
-    def test_inner_distance_0(self):
-        self.assertTrue(hasattr(self.interval, 'inner_distance'))
 
     def test_inner_distance_1(self):
         self.assertEqual(self.interval0.inner_distance(self.interval2), 0)
@@ -1001,105 +1182,96 @@ class TestCase001_BaseInterval(TestCase):
     def test_inner_distance_6(self):
         self.assertTrue(isinf(self.interval6.inner_distance(self.interval9)))
         
-    def test_intersection_0(self):
-        self.assertTrue(hasattr(self.interval, 'intersection'))
-
     def test_intersection_1(self):
         i = self.interval0.intersection(self.interval2)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval2)
 
     def test_intersection_2(self):
         i = self.interval0.intersection(self.interval3)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval3)
 
     def test_intersection_3(self):
         i = self.interval0.intersection(self.interval6)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval6)
 
     def test_intersection_4(self):
         i = self.interval0.intersection(self.interval1)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 50)
         self.assertEqual(i.end, 75)
 
     def test_intersection_5(self):
         i = self.interval0.intersection(self.interval7)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  75)
         self.assertEqual(i.end, 100)
         
     def test_intersection_6(self):
         i = self.interval0.intersection(self.interval5)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertFalse(i.isnull())
         self.assertEqual(len(i), 0)
 
     def test_intersection_7(self):
         i = self.interval1.intersection(self.interval7)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertFalse(i.isnull())
         self.assertEqual(len(i), 0)
 
     def test_intersection_8(self):
         i = self.interval6.intersection(self.interval9)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
         self.assertEqual(len(i), 0)
 
-    def test_intersection_update_0(self):
-        self.assertTrue(hasattr(self.interval, 'intersection_update'))
-
     def test_intersection_update_1(self):
         self.interval0.intersection_update(self.interval2)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0, self.interval2)
 
     def test_intersection_update_2(self):
         self.interval0.intersection_update(self.interval3)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0, self.interval3)
 
     def test_intersection_update_3(self):
         self.interval0.intersection_update(self.interval6)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0, self.interval6)
 
     def test_intersection_update_4(self):
         self.interval0.intersection_update(self.interval1)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg, 50)
         self.assertEqual(self.interval0.end, 75)
 
     def test_intersection_update_5(self):
         self.interval0.intersection_update(self.interval7)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg,  75)
         self.assertEqual(self.interval0.end, 100)
         
     def test_intersection_update_6(self):
         self.interval0.intersection_update(self.interval5)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertFalse(self.interval0.isnull())
         self.assertEqual(len(self.interval0), 0)
 
     def test_intersection_update_7(self):
         self.interval1.intersection_update(self.interval7)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertFalse(self.interval0.isnull())
         self.assertEqual(len(self.interval0), 50)
 
     def test_intersection_update_8(self):
         self.interval6.intersection_update(self.interval9)
-        self.assertIsInstance(self.interval6, self.interval.__class__)
+        self.assertIsInstance(self.interval6, self.constructor)
         self.assertTrue(self.interval6.isnull())
         self.assertEqual(len(self.interval6), 0)
         
-    def test_isdisjoint_0(self):
-        self.assertTrue(hasattr(self.interval, 'isdisjoint'))
-
     def test_isdisjoint_1(self):
         self.assertTrue(self.interval5.isdisjoint(self.interval2))
 
@@ -1121,20 +1293,10 @@ class TestCase001_BaseInterval(TestCase):
     def test_isdisjoint_7(self):
         self.assertTrue(self.interval6.isdisjoint(self.interval9))
         
-    def test_issubset_0(self):
-        self.assertTrue(hasattr(self.interval, 'issubset'))
-        # just an alias of issubinterval()
-
-    def test_issuperset_0(self):
-        self.assertTrue(hasattr(self.interval, 'issuperset'))
-        # just an alias of issuperinterval()
-
-    def test_jaccard_distance_0(self):
-        self.assertTrue(hasattr(self.interval, 'jaccard_distance'))
 
     def test_jaccard_distance_1(self):
         self.assertAlmostEqual(
-            self.interval.jaccard_distance(self.interval), 0.0,
+            self.interval0.jaccard_distance(self.interval0), 0.0,
             places=6
         )
 
@@ -1174,9 +1336,6 @@ class TestCase001_BaseInterval(TestCase):
             places=6
         )
         
-    def test_outer_distance_0(self):
-        self.assertTrue(hasattr(self.interval, 'outer_distance'))
-
     def test_outer_distance_1(self):
         self.assertEqual(
             self.interval0.outer_distance(self.interval2, True), 50
@@ -1222,9 +1381,6 @@ class TestCase001_BaseInterval(TestCase):
             self.interval6.outer_distance(self.interval9, True)
         ))
         
-    def test_intersection_fraction_0(self):
-        self.assertTrue(hasattr(self.interval, 'intersection_fraction'))
-
     def test_intersection_fraction_1(self):
         self.assertAlmostEqual(
             self.interval0.intersection_fraction(self.interval2), 0.10,
@@ -1267,9 +1423,6 @@ class TestCase001_BaseInterval(TestCase):
             places=6
         )
         
-    def test_intersection_length_0(self):
-        self.assertTrue(hasattr(self.interval, 'intersection_length'))
-
     def test_intersection_length_1(self):
         self.assertEqual(
             self.interval0.intersection_length(self.interval2), 5
@@ -1305,9 +1458,6 @@ class TestCase001_BaseInterval(TestCase):
             self.interval6.intersection_length(self.interval9), 0
         )
         
-    def test_isintersecting_0(self):
-        self.assertTrue(hasattr(self.interval, 'isintersecting'))
-
     def test_isintersecting_1(self):
         self.assertTrue(self.interval0.isintersecting(self.interval2))
 
@@ -1335,9 +1485,6 @@ class TestCase001_BaseInterval(TestCase):
     def test_isintersecting_9(self):
         self.assertFalse(self.interval6.isintersecting(self.interval9))
 
-    def test_isintersecting_beg_0(self):
-        self.assertTrue(hasattr(self.interval, 'isintersecting_beg'))
-
     def test_isintersecting_beg_1(self):
         self.assertTrue(self.interval1.isintersecting_beg(self.interval0))
 
@@ -1353,9 +1500,6 @@ class TestCase001_BaseInterval(TestCase):
     def test_isintersecting_beg_5(self):
         self.assertFalse(self.interval11.isintersecting_beg(self.interval9))
         
-    def test_isintersecting_end_0(self):
-        self.assertTrue(hasattr(self.interval, 'isintersecting_end'))
-
     def test_isintersecting_end_1(self):
         self.assertTrue(self.interval1.isintersecting_end(self.interval5))
 
@@ -1371,19 +1515,16 @@ class TestCase001_BaseInterval(TestCase):
     def test_isintersecting_end_5(self):
         self.assertFalse(self.interval9.isintersecting_end(self.interval11))
         
-    def test_symmetric_difference_0(self):
-        self.assertTrue(hasattr(self.interval, 'symmetric_difference'))
-
     def test_symmetric_difference_1(self):
         # i5:  0 *========o 50
         # i1:      25 *========o 75
         i = self.interval5.symmetric_difference(self.interval1)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__(  0, 25))
-        self.assertEqual(i[1], self.interval.__class__( 50, 75))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor(  0, 25))
+        self.assertEqual(i[1], self.constructor( 50, 75))
 
     def test_symmetric_difference_2(self):
         # i1:      25 *========o 75
@@ -1391,10 +1532,10 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval1.symmetric_difference(self.interval5)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__( 50, 75))
-        self.assertEqual(i[1], self.interval.__class__(  0, 25))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor( 50, 75))
+        self.assertEqual(i[1], self.constructor(  0, 25))
         
     def test_symmetric_difference_3(self):
         # i0:  50 *================o 100
@@ -1402,10 +1543,10 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval0.symmetric_difference(self.interval2)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__( 50,  70))
-        self.assertEqual(i[1], self.interval.__class__( 75, 100))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor( 50,  70))
+        self.assertEqual(i[1], self.constructor( 75, 100))
 
     def test_symmetric_difference_4(self):
         # i0:  50 *================o 100
@@ -1413,8 +1554,8 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval0.symmetric_difference(self.interval0)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)        
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertTrue(i[0].isempty())
         self.assertTrue(i[1].isempty())
 
@@ -1424,8 +1565,8 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval5.symmetric_difference(self.interval3)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval5)
         self.assertEqual(i[1], self.interval3)
 
@@ -1435,8 +1576,8 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval3.symmetric_difference(self.interval5)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval5)
         
@@ -1446,8 +1587,8 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval0.symmetric_difference(self.interval3)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval6)
         self.assertTrue(i[1].isempty())
 
@@ -1457,8 +1598,8 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval1.symmetric_difference(self.interval3)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0].beg, 25)
         self.assertEqual(i[0].end, 50)
         self.assertTrue(i[1].isempty())
@@ -1469,29 +1610,20 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval6.symmetric_difference(self.interval9)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval6)
         self.assertEqual(i[1], self.interval9)
-
-    def test_symmetric_difference_update_0(self):
-        self.assertTrue(hasattr(self.interval, 'symmetric_difference_update'))
 
     def test_symmetric_difference_update_1(self):
         with self.assertRaises(NotImplementedError):
             self.interval0.symmetric_difference_update(self.interval0)
 
-    def test_to_slice_0(self):
-        self.assertTrue(hasattr(self.interval, 'to_slice'))
-
     def test_to_slice_1(self):
-        s = self.interval.to_slice()
+        s = self.interval0.to_slice()
         self.assertIsInstance(s, slice)
-        self.assertEqual(s.start, self.interval.beg)
-        self.assertEqual(s.stop, self.interval.end)
-
-    def test_to_string_0(self):
-        self.assertTrue(hasattr(self.interval, 'to_string'))
+        self.assertEqual(s.start, self.interval0.beg)
+        self.assertEqual(s.stop, self.interval0.end)
 
     def test_to_string_1(self):
         s = self.interval0.to_string()
@@ -1499,52 +1631,46 @@ class TestCase001_BaseInterval(TestCase):
         self.assertEqual(s, "[50, 100, namespace=None]")
 
     def test_to_string_2(self):
-        s = BaseInterval(3.5, 10.5).to_string()
+        s = self.constructor(3.5, 10.5).to_string()
         self.assertIsInstance(s, str)
         self.assertEqual(s, "[3.5, 10.5, namespace=None]")
 
-    def test_str_0(self):
-        self.assertTrue(hasattr(self.interval, '__str__'))
-
-    def test_str_1(self):
+    def test__str__1(self):
         s = str(self.interval0)
         self.assertIsInstance(s, str)
         self.assertEqual(s, "[50, 100, namespace=None]")
 
-    def test_str_2(self):
-        s = str(BaseInterval(3.5, 10.5))
+    def test__str__2(self):
+        s = str(self.constructor(3.5, 10.5))
         self.assertIsInstance(s, str)
         self.assertEqual(s, "[3.5, 10.5, namespace=None]")
         
-    def test_union_0(self):
-        self.assertTrue(hasattr(self.interval, 'union'))
-
     def test_union_1(self):
         # i0:  50 *================o 100
         # i2:       70 *===o 75
         i = self.interval0.union(self.interval2)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
 
     def test_union_2(self):
         # i0:  50 *================o 100
         # i3:  50 *============o 75
         i = self.interval0.union(self.interval3)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
 
     def test_union_3(self):
         # i0:  50 *================o 100
         # i6:          75 *========o 100
         i = self.interval0.union(self.interval6)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
         
     def test_union_4(self):
         # i0:           50 *================o 100
         # i1:  25 *================o 75
         i = self.interval0.union(self.interval1)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  25)
         self.assertEqual(i.end, 100)
 
@@ -1552,7 +1678,7 @@ class TestCase001_BaseInterval(TestCase):
         # i0:  50 *================o 100
         # i7:           75 *================o 125
         i = self.interval0.union(self.interval7)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  50)
         self.assertEqual(i.end, 125)
 
@@ -1560,7 +1686,7 @@ class TestCase001_BaseInterval(TestCase):
         # i3:           50 *======* 75
         # i5: 0 *==========* 50
         i = self.interval3.union(self.interval5)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 0)
         self.assertEqual(i.end, 75)
 
@@ -1568,7 +1694,7 @@ class TestCase001_BaseInterval(TestCase):
         # i3:  50 *======o 75
         # i6:         75 *======o 100
         i = self.interval3.union(self.interval6)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 50)
         self.assertEqual(i.end, 100)
         
@@ -1578,8 +1704,8 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval2.union(self.interval5)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval2)
         self.assertEqual(i[1], self.interval5)
 
@@ -1589,8 +1715,8 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval5.union(self.interval2)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval5)
         self.assertEqual(i[1], self.interval2)
 
@@ -1600,13 +1726,10 @@ class TestCase001_BaseInterval(TestCase):
         i = self.interval6.union(self.interval9)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval6)
         self.assertEqual(i[1], self.interval9)
-
-    def test_issubinterval_0(self):
-        self.assertTrue(hasattr(self.interval, 'issubinterval'))
 
     def test_issubinterval_1(self):
         self.assertTrue(self.interval2.issubinterval(self.interval0))
@@ -1633,48 +1756,49 @@ class TestCase001_BaseInterval(TestCase):
         self.assertFalse(self.interval6.issubinterval(self.interval3))
 
     def test_issubinterval_9(self):
-        self.assertTrue(self.interval.issubinterval(self.interval0, strict=False))
-        self.assertFalse(self.interval.issubinterval(self.interval0, strict=True))
+        self.assertTrue(self.interval0.issubinterval(self.interval0, strict=False))
+        self.assertFalse(self.interval0.issubinterval(self.interval0, strict=True))
 
     def test_issubinterval_10(self):
         self.assertFalse(self.interval9.issubinterval(self.interval12))
 
 
-class TestCase002_LeftClosedInterval(TestCase001_BaseInterval):
+class TestCase010_LeftClosedInterval(TestCase009_BaseInterval):
+    constructor = LeftClosedInterval
+    
     def setUp(self):
-        self.interval   = LeftClosedInterval(50, 100)
-        self.interval0  = LeftClosedInterval(50, 100)
-        self.interval1  = LeftClosedInterval(25,  75)
-        self.interval2  = LeftClosedInterval(70,  75)
-        self.interval3  = LeftClosedInterval(50,  75)
-        self.interval4  = LeftClosedInterval( 0, 100)
-        self.interval5  = LeftClosedInterval( 0,  50)
-        self.interval6  = LeftClosedInterval(75, 100)
-        self.interval7  = LeftClosedInterval(75, 125)
-        self.interval8  = LeftClosedInterval()
-        self.interval9  = LeftClosedInterval(75, 100, namespace="other")
-        self.interval10 = LeftClosedInterval(100, 110)
-        self.interval11 = LeftClosedInterval(50, 90)
-        self.interval12 = LeftClosedInterval(0, 1000)
+        self.interval0  = self.constructor(50, 100)
+        self.interval1  = self.constructor(25,  75)
+        self.interval2  = self.constructor(70,  75)
+        self.interval3  = self.constructor(50,  75)
+        self.interval4  = self.constructor( 0, 100)
+        self.interval5  = self.constructor( 0,  50)
+        self.interval6  = self.constructor(75, 100)
+        self.interval7  = self.constructor(75, 125)
+        self.interval8  = self.constructor()
+        self.interval9  = self.constructor(75, 100, namespace="other")
+        self.interval10 = self.constructor(100, 110)
+        self.interval11 = self.constructor(50, 90)
+        self.interval12 = self.constructor(0, 1000)
 
-    def test_and_3(self):
+    def test__and__3(self):
         i = self.interval0 & self.interval5
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
 
     def test_intersection_6(self):
         i = self.interval0.intersection(self.interval5)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())        
         
     def test_intersection_7(self):
         i = self.interval1.intersection(self.interval7)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
 
     def test_intersection_update_6(self):
         self.interval0.intersection_update(self.interval5)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertTrue(self.interval0.isnull())
         self.assertEqual(len(self.interval0), 0)
         
@@ -1696,25 +1820,25 @@ class TestCase002_LeftClosedInterval(TestCase001_BaseInterval):
     def test_isintersecting_end_4(self):
         self.assertFalse(self.interval7.isintersecting_end(self.interval1))
 
-    def test_or_6(self):
+    def test__or__6(self):
         # i3:           50 *======o 75
         # i5: 0 *==========o 50
         i = self.interval3 | self.interval5
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval5)
 
-    def test_or_7(self):
+    def test__or__7(self):
         # i3:  50 *======o 75
         # i6:         75 *======o 100
         i = self.interval3 | self.interval6
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval6)
 
@@ -1724,8 +1848,8 @@ class TestCase002_LeftClosedInterval(TestCase001_BaseInterval):
         i = self.interval3.union(self.interval5)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval5)
 
@@ -1735,32 +1859,32 @@ class TestCase002_LeftClosedInterval(TestCase001_BaseInterval):
         i = self.interval3.union(self.interval6)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval6)
 
         
 
-class TestCase003_ClosedInterval(TestCase001_BaseInterval):
+class TestCase011_ClosedInterval(TestCase009_BaseInterval):
+    constructor = ClosedInterval
+    
     def setUp(self):
-        self.interval   = ClosedInterval(50, 100, "Chr1")
-        self.interval0  = ClosedInterval(50, 100, "Chr1")
-        self.interval1  = ClosedInterval(25,  75, "Chr1")
-        self.interval2  = ClosedInterval(70,  75, "Chr1")
-        self.interval3  = ClosedInterval(50,  75, "Chr1")
-        self.interval4  = ClosedInterval(50, 100, "Chr2")
-        self.interval5  = ClosedInterval( 0,  50, "Chr1")
-        self.interval6  = ClosedInterval(75, 100, "Chr1")
-        self.interval7  = ClosedInterval(75, 125, "Chr1")
-        self.interval8  = ClosedInterval()
-        self.interval9  = ClosedInterval(75, 100, "other")
-        self.interval10 = ClosedInterval(100, 110, "Chr1")
-        self.interval11 = ClosedInterval(50, 90, "Chr1")
-        self.interval12 = ClosedInterval(0, 1000, "Chr1")
+        self.interval0  = self.constructor(50, 100, "Chr1")
+        self.interval1  = self.constructor(25,  75, "Chr1")
+        self.interval2  = self.constructor(70,  75, "Chr1")
+        self.interval3  = self.constructor(50,  75, "Chr1")
+        self.interval4  = self.constructor(50, 100, "Chr2")
+        self.interval5  = self.constructor( 0,  50, "Chr1")
+        self.interval6  = self.constructor(75, 100, "Chr1")
+        self.interval7  = self.constructor(75, 125, "Chr1")
+        self.interval8  = self.constructor()
+        self.interval9  = self.constructor(75, 100, "other")
+        self.interval10 = self.constructor(100, 110, "Chr1")
+        self.interval11 = self.constructor(50, 90, "Chr1")
+        self.interval12 = self.constructor(0, 1000, "Chr1")
 
     def tearDown(self):
-        del(self.interval)
         del(self.interval0)
         del(self.interval1)
         del(self.interval2)
@@ -1770,20 +1894,24 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
         del(self.interval6)
         del(self.interval7)
         del(self.interval8)
+        del(self.interval9)
+        del(self.interval10)
+        del(self.interval11)
+        del(self.interval12)
 
     def test_namespace_getter_0(self):
-        self.assertTrue(hasattr(self.interval, 'namespace'))
+        self.assertTrue(hasattr(self.interval0, 'namespace'))
 
     def test_namespace_getter_1(self):
-        self.assertEqual(self.interval.namespace, "Chr1")
+        self.assertEqual(self.interval0.namespace, "Chr1")
 
     def test_namespace_setter_0(self):
-        self.assertTrue(hasattr(self.interval, 'namespace'))
+        self.assertTrue(hasattr(self.interval0, 'namespace'))
 
     def test_namespace_setter_1(self):
-        self.assertEqual(self.interval.namespace, "Chr1")
-        self.interval.namespace = 3
-        self.assertEqual(self.interval.namespace, 3)
+        self.assertEqual(self.interval0.namespace, "Chr1")
+        self.interval0.namespace = 3
+        self.assertEqual(self.interval0.namespace, 3)
 
     def test_mid_1(self):
         self.assertEqual(self.interval6.mid, 87.5)
@@ -1794,266 +1922,266 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
         self.assertEqual(s, '[50, 100, namespace=Chr1]')
 
     def test_to_string_2(self):
-        s = ClosedInterval(2, 50, 100).to_string()
+        s = self.constructor(2, 50, 100).to_string()
         self.assertIsInstance(s, str)
         self.assertEqual(s, '[2, 50, namespace=100]')
 
-    def test_str_1(self):
+    def test__str__1(self):
         s = str(self.interval0)
         self.assertIsInstance(s, str)
         self.assertEqual(s, '[50, 100, namespace=Chr1]')
 
-    def test_str_2(self):
-        s = str(ClosedInterval(50, 100, 2))
+    def test__str__2(self):
+        s = str(self.constructor(50, 100, 2))
         self.assertIsInstance(s, str)
         self.assertEqual(s, '[50, 100, namespace=2]')
 
     def test_isempty_4(self):
-        self.assertFalse(self.interval.isempty())
-        self.interval.end = self.interval.beg - 1
-        self.assertTrue(self.interval.isempty())
+        self.assertFalse(self.interval0.isempty())
+        self.interval0.end = self.interval0.beg - 1
+        self.assertTrue(self.interval0.isempty())
         
-    def test_abs_1(self):
-        i = self.interval.__class__(-15, -5, "Chr1")
+    def test__abs__1(self):
+        i = self.constructor(-15, -5, "Chr1")
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg, -15)
         self.assertEqual(i.end, -5)
         i = abs(i)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg, 5)
         self.assertEqual(i.end, 15)
         
-    def test_add_3(self):
+    def test__add__3(self):
         with self.assertRaises(ValueError):
             i = self.interval0 + self.interval4
 
-    def test_add_4(self):
+    def test__add__4(self):
         i = self.interval0 + Interval("Chr1", 25, 25)
-        self.assertIsInstance(i, self.interval0.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval7)
 
-    def test_bool_2(self):
-        self.interval.beg = nan
-        self.interval.end = nan
-        self.assertFalse(bool(self.interval))
+    def test__bool__2(self):
+        self.interval0.beg = nan
+        self.interval0.end = nan
+        self.assertFalse(bool(self.interval0))
 
-    def test_eq_4(self):
-        i = self.interval.__class__(50, 100, "Chr1")
+    def test__eq__4(self):
+        i = self.constructor(50, 100, "Chr1")
         self.assertNotEqual(i, self.interval4)
 
-    def test_ceil_1(self):
+    def test__ceil__1(self):
         pass
 
-    def test_floor_1(self):
+    def test__floor__1(self):
         pass
 
-    def test_floordiv_1(self):
+    def test__floordiv__1(self):
         import math
-        i = self.interval.__class__(1000, 2000, "Chr1")
+        i = self.constructor(1000, 2000, "Chr1")
         self.assertEqual(i.beg, 1000)
         self.assertEqual(i.end, 2000)
         j = i // 10
-        self.assertIsInstance(j, self.interval.__class__)
+        self.assertIsInstance(j, self.constructor)
         self.assertEqual(j.beg, 100)
         self.assertEqual(j.end, 200)
         
-    def test_rtruediv_1(self):
-        i = 5.0 / self.interval.__class__(2.0, 5.0, "Chr1")
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rtruediv__1(self):
+        i = 5.0 / self.constructor(2.0, 5.0, "Chr1")
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, "Chr1")
         self.assertEqual(i.beg, 2)
         self.assertEqual(i.end, 1)
 
-    def test_truediv_1(self):
+    def test__truediv__1(self):
         i = self.interval0 / 50
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg, 1)
         self.assertEqual(i.end, 2)
 
-    def test_truediv_2(self):
-        i = self.interval0 / self.interval.__class__(50, 50, "Chr1")
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__truediv__2(self):
+        i = self.interval0 / self.constructor(50, 50, "Chr1")
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 1)
         self.assertEqual(i.end, 2)
         
-    def test_iadd_3(self):
+    def test__iadd__3(self):
         with self.assertRaises(ValueError):
             self.interval0 += self.interval4
 
-    def test_iadd_4(self):
+    def test__iadd__4(self):
         self.interval0 += Interval("Chr1", 25, 25)
         self.assertIsInstance(self.interval0, self.interval1.__class__)
         self.assertEqual(self.interval0, self.interval7)
 
-    def test_imul_3(self):
+    def test__imul__3(self):
         with self.assertRaises(ValueError):
             self.interval0 *= self.interval4
 
-    def test_imul_4(self):
+    def test__imul__4(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 *= Interval("Chr1", 50, 75)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg, 2500)
         self.assertEqual(self.interval0.end, 7500)
 
-    def test_isub_3(self):
+    def test__isub__3(self):
         with self.assertRaises(ValueError):
             self.interval0 -= self.interval4
 
-    def test_isub_4(self):
+    def test__isub__4(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 -= Interval("Chr1", 50, 75)
-        self.assertIsInstance(self.interval0, self.interval.__class__)
+        self.assertIsInstance(self.interval0, self.constructor)
         self.assertEqual(self.interval0.beg,  0)
         self.assertEqual(self.interval0.end, 25)
 
-    def test_lshift_1(self):
-        j = self.interval0.__class__(2, 4, "Chr1")
+    def test__lshift__1(self):
+        j = self.constructor(2, 4, "Chr1")
         i = j << 1
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg, 4)
         self.assertEqual(i.end, 8)
 
-    def test_lshift_2(self):
-        j = self.interval0.__class__(2, 4, "Chr1")
-        i = j << self.interval0.__class__(1, 2, "Chr1")
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__lshift__2(self):
+        j = self.constructor(2, 4, "Chr1")
+        i = j << self.constructor(1, 2, "Chr1")
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg,  4)
         self.assertEqual(i.end, 16)
 
-    def test_lshift_3(self):
+    def test__lshift__3(self):
         with self.assertRaises(ValueError):
             i = self.interval0 << self.interval4
     
-    def test_lshift_4(self):
-        j = self.interval0.__class__(2, 4, "Chr1")
+    def test__lshift__4(self):
+        j = self.constructor(2, 4, "Chr1")
         i = j << Interval("Chr1", 1, 2)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg,  4)
         self.assertEqual(i.end, 16)
 
-    def test_mul_2(self):
+    def test__mul__2(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
-        i = self.interval0 * self.interval0.__class__(2, 5, "Chr1")
-        self.assertIsInstance(i, self.interval.__class__)
+        i = self.interval0 * self.constructor(2, 5, "Chr1")
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg, 100)
         self.assertEqual(i.end, 500)
         
-    def test_mul_3(self):
+    def test__mul__3(self):
         with self.assertRaises(ValueError):
             i = self.interval0 * self.interval4
 
-    def test_mul_4(self):
+    def test__mul__4(self):
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         i = self.interval0 * Interval("Chr1", 2, 5)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg, 100)
         self.assertEqual(i.end, 500)
 
-    def test_rlshift_1(self):
-        i = 1 << self.interval0.__class__(2, 4, "Chr1")
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rlshift__1(self):
+        i = 1 << self.constructor(2, 4, "Chr1")
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg,  4)
         self.assertEqual(i.end, 16)
 
-    def test_rshift_1(self):
-        i = self.interval0.__class__(2, 16, "Chr1") >> 1
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rshift__1(self):
+        i = self.constructor(2, 16, "Chr1") >> 1
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg, 1)
         self.assertEqual(i.end, 8)
 
-    def test_rsub_1(self):
-        i = 10000 - self.interval0.__class__(1000, 10000, "Chr1")
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rsub__1(self):
+        i = 10000 - self.constructor(1000, 10000, "Chr1")
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.namespace, "Chr1")
         self.assertEqual(i.beg, 0)
         self.assertEqual(i.end, 9000)
 
-    def test_rtruediv_1(self):
-        i = 10000 / self.interval0.__class__(10, 20, "Chr1")
-        self.assertIsInstance(i, self.interval.__class__)
+    def test__rtruediv__1(self):
+        i = 10000 / self.constructor(10, 20, "Chr1")
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 500)
         self.assertEqual(i.end, 1000)
         
-    def test_sub_3(self):
+    def test__sub__3(self):
         with self.assertRaises(ValueError):
             i = self.interval0 - self.interval4
 
-    def test_sub_4(self):
+    def test__sub__4(self):
         i = self.interval0 - Interval("Chr1", 50, 75)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, -25)
         self.assertEqual(i.end, 50)
 
-    def test_truediv_3(self):
+    def test__truediv__3(self):
         with self.assertRaises(ValueError):
             i = self.interval0 / self.interval4
 
-    def test_truediv_4(self):
+    def test__truediv__4(self):
         i = self.interval0 / Interval("Chr1", 50, 50)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i.beg, 1)
         self.assertEqual(i.end, 2)
 
-    def test_xor_1(self):
+    def test__xor__1(self):
         # i5:  0 *========o 50
         # i1:      25 *========o 75        
         i = self.interval5 ^ self.interval1
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__( 0, 25, "Chr1"))
-        self.assertEqual(i[1], self.interval.__class__(50, 75, "Chr1"))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor( 0, 25, "Chr1"))
+        self.assertEqual(i[1], self.constructor(50, 75, "Chr1"))
 
-    def test_xor_2(self):
+    def test__xor__2(self):
         # i1:      25 *========o 75
         # i5:  0 *========o 50        
         i = self.interval1 ^ self.interval5
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__(50, 75, "Chr1"))
-        self.assertEqual(i[1], self.interval.__class__( 0, 25, "Chr1"))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor(50, 75, "Chr1"))
+        self.assertEqual(i[1], self.constructor( 0, 25, "Chr1"))
         
-    def test_xor_3(self):
+    def test__xor__3(self):
         # i0:  50 *================o 100
         # i2:       70 *========o 75
         i = self.interval0 ^ self.interval2
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__(50,  70, "Chr1"))
-        self.assertEqual(i[1], self.interval.__class__(75, 100, "Chr1"))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor(50,  70, "Chr1"))
+        self.assertEqual(i[1], self.constructor(75, 100, "Chr1"))
 
-    def test_xor_9(self):
+    def test__xor__9(self):
         # i0:  50 *================o 100 Chr1
         # i4:    (different namespace)   Chr2
         i = self.interval0 ^ self.interval4
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval0)
         self.assertEqual(i[1], self.interval4)
 
     def test_difference_6(self):
         i = self.interval0.difference(self.interval4)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertEqual(i, self.interval0)
 
     def test_inner_distance_5(self):
@@ -2064,7 +2192,7 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
 
     def test_intersection_8(self):
         i = self.interval1.intersection(self.interval4)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
 
     def test_isdisjoint_7(self):
@@ -2111,10 +2239,10 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
         i = self.interval5.symmetric_difference(self.interval1)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__( 0, 25, "Chr1"))
-        self.assertEqual(i[1], self.interval.__class__(50, 75, "Chr1"))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor( 0, 25, "Chr1"))
+        self.assertEqual(i[1], self.constructor(50, 75, "Chr1"))
 
     def test_symmetric_difference_2(self):
         # i1:      25 *========o 75
@@ -2122,10 +2250,10 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
         i = self.interval1.symmetric_difference(self.interval5)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__(50, 75, "Chr1"))
-        self.assertEqual(i[1], self.interval.__class__( 0, 25, "Chr1"))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor(50, 75, "Chr1"))
+        self.assertEqual(i[1], self.constructor( 0, 25, "Chr1"))
         
     def test_symmetric_difference_3(self):
         # i0:  50 *================o 100
@@ -2133,10 +2261,10 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
         i = self.interval0.symmetric_difference(self.interval2)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
-        self.assertEqual(i[0], self.interval.__class__(50,  70, "Chr1"))
-        self.assertEqual(i[1], self.interval.__class__(75, 100, "Chr1"))
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
+        self.assertEqual(i[0], self.constructor(50,  70, "Chr1"))
+        self.assertEqual(i[1], self.constructor(75, 100, "Chr1"))
 
     def test_symmetric_difference_9(self):
         # i0:  50 *================o 100 Chr1
@@ -2144,8 +2272,8 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
         i = self.interval0.symmetric_difference(self.interval4)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval0)
         self.assertEqual(i[1], self.interval4)
 
@@ -2155,8 +2283,8 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
         i = self.interval0 | self.interval4
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval0)
         self.assertEqual(i[1], self.interval4)
 
@@ -2165,50 +2293,46 @@ class TestCase003_ClosedInterval(TestCase001_BaseInterval):
 
 
 
-class TestCase004_Interval(TestCase):
+class TestCase013_Interval(TestCase):
+    constructor = Interval
+    
     def setUp(self):
-        self.interval   = Interval("Chr1", 50, 100)
-        self.interval0  = Interval("Chr1", 50, 100)
-        self.interval1  = Interval("Chr1", 25,  75)
-        self.interval2  = Interval("Chr1", 70,  75)
-        self.interval3  = Interval("Chr1", 50,  75)
-        self.interval4  = Interval("Chr2", 50, 100)
-        self.interval5  = Interval("Chr1",  0,  50)
-        self.interval6  = Interval("Chr1", 75, 100)
-        self.interval7  = Interval("Chr1", 75, 125)
-        self.interval8  = Interval()
-        self.interval9  = Interval("other", 75, 100)
-        self.interval10 = Interval("Chr1",100, 110)
-        self.interval11 = Interval("Chr1", 50, 90)
-        self.interval12 = Interval("Chr1",  0, 1000)
-        
-    def test_to_string_2(self):
-        s = Interval(2, 50, 100).to_string()
-        self.assertIsInstance(s, str)
-        self.assertEqual(s, '2:50-100')
+        self.interval0  = self.constructor("Chr1", 50, 100)
+        self.interval1  = self.constructor("Chr1", 25,  75)
+        self.interval2  = self.constructor("Chr1", 70,  75)
+        self.interval3  = self.constructor("Chr1", 50,  75)
+        self.interval4  = self.constructor("Chr2", 50, 100)
+        self.interval5  = self.constructor("Chr1",  0,  50)
+        self.interval6  = self.constructor("Chr1", 75, 100)
+        self.interval7  = self.constructor("Chr1", 75, 125)
+        self.interval8  = self.constructor()
+        self.interval9  = self.constructor("other", 75, 100)
+        self.interval10 = self.constructor("Chr1",100, 110)
+        self.interval11 = self.constructor("Chr1", 50, 90)
+        self.interval12 = self.constructor("Chr1",  0, 1000)
+
 
     def test_isempty_4(self):
-        self.assertFalse(self.interval.isempty())
-        self.interval.end = self.interval.beg
-        self.assertTrue(self.interval.isempty())
+        self.assertFalse(self.interval0.isempty())
+        self.interval0.end = self.interval0.beg
+        self.assertTrue(self.interval0.isempty())
         
     def test_mid_1(self):
         self.assertEqual(self.interval6.mid, 87)
 
-
-    def test_and_3(self):
+    def test__and__3(self):
         i = self.interval0 & self.interval5
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
 
     def test_intersection_6(self):
         i = self.interval0.intersection(self.interval5)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())        
         
     def test_intersection_7(self):
         i = self.interval1.intersection(self.interval7)
-        self.assertIsInstance(i, self.interval.__class__)
+        self.assertIsInstance(i, self.constructor)
         self.assertTrue(i.isnull())
 
     def test_isdisjoint_2(self):
@@ -2229,25 +2353,25 @@ class TestCase004_Interval(TestCase):
     def test_isintersecting_end_4(self):
         self.assertFalse(self.interval7.isintersecting_end(self.interval1))
 
-    def test_or_6(self):
+    def test__or__6(self):
         # i3:           50 *======o 75
         # i5: 0 *==========o 50
         i = self.interval3 | self.interval5
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval5)
 
-    def test_or_7(self):
+    def test__or__7(self):
         # i3:  50 *======o 75
         # i6:         75 *======o 100
         i = self.interval3 | self.interval6
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval6)
 
@@ -2257,8 +2381,8 @@ class TestCase004_Interval(TestCase):
         i = self.interval3.union(self.interval5)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval5)
 
@@ -2268,34 +2392,72 @@ class TestCase004_Interval(TestCase):
         i = self.interval3.union(self.interval6)
         self.assertIsInstance(i, tuple)
         self.assertEqual(len(i), 2)
-        self.assertIsInstance(i[0], self.interval.__class__)
-        self.assertIsInstance(i[1], self.interval.__class__)
+        self.assertIsInstance(i[0], self.constructor)
+        self.assertIsInstance(i[1], self.constructor)
         self.assertEqual(i[0], self.interval3)
         self.assertEqual(i[1], self.interval6)
 
+    def test_to_string_2(self):
+        s = self.constructor(2, 50, 100).to_string()
+        self.assertIsInstance(s, str)
+        self.assertEqual(s, '2:50-100')
+
+
+        
+class TestCase014_ClosedPoint(TestCase):
+    constructor = ClosedPoint
+    
+    def setUp(self):
+        self.point0 = self.constructor()
+        self.point1 = self.constructor(56)
+
+    def test_pos_getter_0(self):
+        self.assertTrue(isnan(self.point0.pos))
+        self.assertEqual(self.point1.pos, 56)
+        
+    def test_pos_setter_0(self):
+        self.assertEqual(self.point1.pos, 56)
+        self.point1.pos = 23
+        self.assertEqual(self.point1.pos, 23)
+
+
+
+class TestCase014_LeftClosedPoint(TestCase014_ClosedPoint):
+    constructor = LeftClosedPoint
+    
+    def setUp(self):
+        self.point0 = self.constructor()
+        self.point1 = self.constructor(56)    
+
+
+
+# class TestCase014_IntLeftClosedPoint(TestCase014_ClosedPoint):
+#     def setUp(self):
+#         self.point0 = IntLeftClosedPoint()
+#         self.point1 = IntLeftClosedPoint(56)
         
         
-class TestCase005__Node(TestCase):
-    def test_init_0(self):
+class TestCase014__Node(TestCase):
+    def test__init__0(self):
         with self.assertRaisesRegex(
                 TypeError,
                 "missing \d+ required positional argument"):
             _Node()
 
-    def test_init_1(self):
+    def test__init__1(self):
         node = _Node(
             Interval("Chr", 2, 5)
         )
         self.assertIsInstance(node, _Node)
 
-    def test_init_2(self):
+    def test__init__2(self):
         node = _Node(
             Interval("Chr", 2, 5),
             Interval("Chr", 2, 5)
         )
         self.assertIsInstance(node, _Node)
 
-    def test_init_3(self):
+    def test__init__3(self):
         node = _Node(
             Interval("Chr", 2, 5),
             Interval("Chr", 5, 8)
@@ -2303,7 +2465,7 @@ class TestCase005__Node(TestCase):
         self.assertIsInstance(node, _Node)
 
         
-class TestCase006__Node(TestCase):
+class TestCase015__Node(TestCase):
     def setUp(self):
         self.interval0 = Interval("Chr", 2, 5)
         self.interval1 = Interval("Chr", 5, 8)
@@ -2346,187 +2508,213 @@ class TestCase006__Node(TestCase):
         
         
                                   
-class TestCase007_IntervalList(TestCase):
+class TestCase016_IntervalList(TestCase):
     def setUp(self):
-        self.interval0 = Interval("Chr", 2, 5)
-        self.interval1 = Interval("Chr", 0, 100)
-        self.interval2 = Interval("Chr", 100, 110)
-
-    def tearDown(self):
-        del(self.interval0)
-        del(self.interval1)
-        del(self.interval2)
+        self.constructor = IntervalList
         
     def test__add__0(self):
-        self.assertTrue(hasattr(IntervalList, '__add__'))
+        self.assertTrue(hasattr(self.constructor(), '__add__'))
         
     def test__bool__0(self):
-        self.assertTrue(hasattr(IntervalList, '__bool__'))
+        self.assertTrue(hasattr(self.constructor(), '__bool__'))
 
     def test__class__0(self):
-        self.assertTrue(hasattr(IntervalList, '__class__'))
+        self.assertTrue(hasattr(self.constructor(), '__class__'))
 
     def test__contains__0(self):
-        self.assertTrue(hasattr(IntervalList, '__contains__'))
+        self.assertTrue(hasattr(self.constructor(), '__contains__'))
 
     def test__copy__0(self):
-        self.assertTrue(hasattr(IntervalList, '__copy__'))
+        self.assertTrue(hasattr(self.constructor(), '__copy__'))
 
     def test__delitem__0(self):
-        self.assertTrue(hasattr(IntervalList, '__delitem__'))
+        self.assertTrue(hasattr(self.constructor(), '__delitem__'))
 
     def test__eq__0(self):
-        self.assertTrue(hasattr(IntervalList, '__eq__'))
+        self.assertTrue(hasattr(self.constructor(), '__eq__'))
 
     def test__format__0(self):
-        self.assertTrue(hasattr(IntervalList, '__format__'))
+        self.assertTrue(hasattr(self.constructor(), '__format__'))
 
     def test__ge__0(self):
-        self.assertTrue(hasattr(IntervalList, '__ge__'))
+        self.assertTrue(hasattr(self.constructor(), '__ge__'))
 
     def test__getitem__0(self):
-        self.assertTrue(hasattr(IntervalList, '__getitem__'))
+        self.assertTrue(hasattr(self.constructor(), '__getitem__'))
 
     def test__gt__0(self):
-        self.assertTrue(hasattr(IntervalList, '__gt__'))
+        self.assertTrue(hasattr(self.constructor(), '__gt__'))
 
     def test__iadd__0(self):
-        self.assertTrue(hasattr(IntervalList, '__iadd__'))
+        self.assertTrue(hasattr(self.constructor(), '__iadd__'))
 
     def test__imul__0(self):
-        self.assertTrue(hasattr(IntervalList, '__imul__'))
+        self.assertTrue(hasattr(self.constructor(), '__imul__'))
 
     def test__init__0(self):
-        self.assertTrue(hasattr(IntervalList, '__init__'))
+        self.assertTrue(hasattr(self.constructor(), '__init__'))
         
     def test__init__1(self):
-        ilist = IntervalList()
-        self.assertIsInstance(ilist, IntervalList)
+        ilist = self.constructor()
+        self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 0)
         self.assertEqual(len(ilist), deque.__len__(ilist))
 
     def test__init__1(self):
         mysetter = lambda i: i
-        ilist = IntervalList(setter=mysetter)
-        self.assertIsInstance(ilist, IntervalList)
+        ilist = self.constructor(setter=mysetter)
+        self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 0)
         self.assertEqual(len(ilist), deque.__len__(ilist))
         self.assertIs(ilist._setter, mysetter)
         
     def test__iter__0(self):
-        self.assertTrue(hasattr(IntervalList, '__iter__'))
+        self.assertTrue(hasattr(self.constructor(), '__iter__'))
 
     def test__le__0(self):
-        self.assertTrue(hasattr(IntervalList, '__le__'))
+        self.assertTrue(hasattr(self.constructor(), '__le__'))
 
     def test__len__0(self):
-        self.assertTrue(hasattr(IntervalList, '__len__'))
+        self.assertTrue(hasattr(self.constructor(), '__len__'))
 
     def test__lt__0(self):
-        self.assertTrue(hasattr(IntervalList, '__lt__'))
+        self.assertTrue(hasattr(self.constructor(), '__lt__'))
 
     def test__mul__0(self):
-        self.assertTrue(hasattr(IntervalList, '__mul__'))
+        self.assertTrue(hasattr(self.constructor(), '__mul__'))
 
     def test__ne__0(self):
-        self.assertTrue(hasattr(IntervalList, '__ne__'))
+        self.assertTrue(hasattr(self.constructor(), '__ne__'))
 
     def test__repr__0(self):
-        self.assertTrue(hasattr(IntervalList, '__repr__'))
+        self.assertTrue(hasattr(self.constructor(), '__repr__'))
 
     def test__reversed__0(self):
-        self.assertTrue(hasattr(IntervalList, '__reversed__'))
+        self.assertTrue(hasattr(self.constructor(), '__reversed__'))
 
     def test__rmul__0(self):
-        self.assertTrue(hasattr(IntervalList, '__rmul__'))
+        self.assertTrue(hasattr(self.constructor(), '__rmul__'))
 
     def test__setitem__(self):
-        self.assertTrue(hasattr(IntervalList, '__setitem__'))
+        self.assertTrue(hasattr(self.constructor(), '__setitem__'))
 
     def test__str__0(self):
-        self.assertTrue(hasattr(IntervalList, '__str__'))
+        self.assertTrue(hasattr(self.constructor(), '__str__'))
         
     def test_append_0(self):
-        self.assertTrue(hasattr(IntervalList, 'append'))
+        self.assertTrue(hasattr(self.constructor(), 'append'))
 
     def test_appendleft_0(self):
-        self.assertTrue(hasattr(IntervalList, 'appendleft'))        
+        self.assertTrue(hasattr(self.constructor(), 'appendleft'))        
 
     def test_beg_0(self):
-        self.assertTrue(hasattr(IntervalList, 'beg'))
+        self.assertTrue(hasattr(self.constructor(), 'beg'))
         
     def test_clear_0(self):
-        self.assertTrue(hasattr(IntervalList, 'clear'))
+        self.assertTrue(hasattr(self.constructor(), 'clear'))
             
     def test_copy_0(self):
-        self.assertTrue(hasattr(IntervalList, 'copy'))
+        self.assertTrue(hasattr(self.constructor(), 'copy'))
 
     def test_count_0(self):
-        self.assertTrue(hasattr(IntervalList, 'count'))
+        self.assertTrue(hasattr(self.constructor(), 'count'))
 
     def test_end_0(self):
-        self.assertTrue(hasattr(IntervalList, 'end'))
+        self.assertTrue(hasattr(self.constructor(), 'end'))
         
     def test_extend_0(self):
-        self.assertTrue(hasattr(IntervalList, 'extend'))
+        self.assertTrue(hasattr(self.constructor(), 'extend'))
 
     def test_extendleft_0(self):
-        self.assertTrue(hasattr(IntervalList, 'extendleft'))
+        self.assertTrue(hasattr(self.constructor(), 'extendleft'))
 
     def test_index_0(self):
-        self.assertTrue(hasattr(IntervalList, 'index'))
+        self.assertTrue(hasattr(self.constructor(), 'index'))
 
     def test_insert_0(self):
-        self.assertTrue(hasattr(IntervalList, 'insert'))
+        self.assertTrue(hasattr(self.constructor(), 'insert'))
 
     def test_insort_0(self):
-        self.assertTrue(hasattr(IntervalList, 'insort'))
+        self.assertTrue(hasattr(self.constructor(), 'insort'))
 
     def test_insortleft_0(self):
-        self.assertTrue(hasattr(IntervalList, 'insortleft'))
+        self.assertTrue(hasattr(self.constructor(), 'insortleft'))
 
     def test_isempty_0(self):
-        self.assertTrue(hasattr(IntervalList, 'isempty'))
+        self.assertTrue(hasattr(self.constructor(), 'isempty'))
 
     def test_isfinite_0(self):
-        self.assertTrue(hasattr(IntervalList, 'isfinite'))
+        self.assertTrue(hasattr(self.constructor(), 'isfinite'))
 
     def test_isnull_0(self):
-        self.assertTrue(hasattr(IntervalList, 'isnull'))
+        self.assertTrue(hasattr(self.constructor(), 'isnull'))
 
     def test_namespace_0(self):
-        self.assertTrue(hasattr(IntervalList, 'namespace'))
+        self.assertTrue(hasattr(self.constructor(), 'namespace'))
 
     def test_pop_0(self):
-        self.assertTrue(hasattr(IntervalList, 'pop'))
+        self.assertTrue(hasattr(self.constructor(), 'pop'))
 
     def test_popleft_0(self):
-        self.assertTrue(hasattr(IntervalList, 'popleft'))
+        self.assertTrue(hasattr(self.constructor(), 'popleft'))
 
     def test_remove_0(self):
-        self.assertTrue(hasattr(IntervalList, 'remove'))
+        self.assertTrue(hasattr(self.constructor(), 'remove'))
 
     def test_reverse_0(self):
-        self.assertTrue(hasattr(IntervalList, 'reverse'))
+        self.assertTrue(hasattr(self.constructor(), 'reverse'))
 
     def test_rotate_0(self):
-        self.assertTrue(hasattr(IntervalList, 'rotate'))
+        self.assertTrue(hasattr(self.constructor(), 'rotate'))
 
     def test_start_0(self):
-        self.assertTrue(hasattr(IntervalList, 'start'))
+        self.assertTrue(hasattr(self.constructor(), 'start'))
 
     def test_stop_0(self):
-        self.assertTrue(hasattr(IntervalList, 'stop'))
+        self.assertTrue(hasattr(self.constructor(), 'stop'))
 
     def test_update_0(self):
-        self.assertTrue(hasattr(IntervalList, 'update'))
+        self.assertTrue(hasattr(self.constructor(), 'update'))
 
     def test_updateleft_0(self):
-        self.assertTrue(hasattr(IntervalList, 'updateleft'))
+        self.assertTrue(hasattr(self.constructor(), 'updateleft'))
+
+    def test_find_index_beg_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_index_beg'))
+        
+    def test_find_index_end_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_index_end'))
+        
+    def test_find_index_nearest_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_index_nearest'))
+        
+    def test_find_intersection_index_beg_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_beg'))
+    
+    def test_find_intersection_index_end_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_end'))
+
+    def test_find_intersection_index_nearest_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_nearest'))
+        
+    def test_find_intersection_index_range_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_range'))
+        
+    def test_find_intersection_index_slice_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_slice'))
+        
+    def test_find_intersection_length_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_length'))
+        
+    def test_find_intersection_fraction_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_fraction'))
+
+    def test_find_intersecting_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersecting'))
 
 
         
-class TestCase008_IntervalList(TestCase):
+class TestCase017_IntervalList(TestCase):
     def setUp(self):
         self.interval0  = Interval("Chr", 0, 4)
         self.interval10 = Interval("Chr",0, 50)
@@ -2569,8 +2757,11 @@ class TestCase008_IntervalList(TestCase):
         del(self.interval7)
         del(self.interval8)
         del(self.interval9)
+        del(self.interval10)
+        del(self.interval11)
+        del(self.interval12)
         del(self.intervalList2)
-
+        
     def test__init__0(self):
         ilist = IntervalList([self.interval0])
         self.assertIsInstance(ilist, IntervalList)
@@ -2948,7 +3139,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
         
-    def test_update_0(self):
+    def test_update_1(self):
         num_items = len(self.intervalList2)
         answer = [
             self.interval1,
@@ -2966,7 +3157,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertIs(self.intervalList2[0], self.interval1)
         self.assertIs(self.intervalList2[1], self.interval2)
 
-    def test_updateleft_0(self):
+    def test_updateleft_1(self):
         num_items = len(self.intervalList2)
         answer = [
             self.interval0,
@@ -2984,7 +3175,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertIs(self.intervalList2[1], self.interval2)
         self.assertIs(self.intervalList2[2], self.interval1)
         
-    def test_popleft_0(self):
+    def test_popleft_1(self):
         num_items = len(self.intervalList2)
         self.assertEqual(num_items, deque.__len__(self.intervalList2))
         item1 = self.intervalList2[0]
@@ -2993,7 +3184,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
         self.assertIs(item1, item2)
 
-    def test_popleft_1(self):
+    def test_popleft_2(self):
         expected_max = [25, 35]
         item = self.intervalList2.popleft()
 
@@ -3003,7 +3194,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
 
-    def test_popleft_2(self):
+    def test_popleft_3(self):
         expected_max = [5, 15, 50, 100, 100, 110]
         item = self.intervalList3.popleft()
 
@@ -3013,7 +3204,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
 
-    def test_popleft_3(self):
+    def test_popleft_4(self):
         expected_max = [50, 50, 50, 50, 100, 100, 110]
         ilist = IntervalList([
             self.interval10,
@@ -3038,7 +3229,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
         
-    def test_pop_0(self):
+    def test_pop_1(self):
         num_items = len(self.intervalList2)
         self.assertEqual(num_items, deque.__len__(self.intervalList2))
         item1 = self.intervalList2[-1]
@@ -3047,7 +3238,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
         self.assertIs(item1, item2)
 
-    def test_pop_1(self):
+    def test_pop_2(self):
         expected_max = [4, 5, 15, 50, 100, 100]
         item = self.intervalList3.pop()
 
@@ -3057,7 +3248,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
 
-    def test_pop_2(self):
+    def test_pop_3(self):
         expected_max = [5, 25]
         item = self.intervalList2.pop()
 
@@ -3067,7 +3258,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
         
-    def test_pop_3(self):
+    def test_pop_4(self):
         expected_max = [50, 50, 100, 100]
         ilist = IntervalList([
             self.interval10,
@@ -3090,7 +3281,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
     
-    def test_rotate_0(self):
+    def test_rotate_1(self):
         self.intervalList2 = IntervalList([
             self.interval3, self.interval4, self.interval5
         ])
@@ -3105,7 +3296,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertIs(self.intervalList2[-2], item3)
         self.assertIs(self.intervalList2[-1], item1)
         
-    def test_rotate_1(self):
+    def test_rotate_2(self):
         self.intervalList2 = IntervalList([
             self.interval3, self.interval4, self.interval5
         ])
@@ -3120,7 +3311,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertIs(self.intervalList2[1], item1)
         self.assertIs(self.intervalList2[-1], item2)        
 
-    def test_remove_0(self):
+    def test_remove_1(self):
         num_items = len(self.intervalList3)
         answer = [
             self.interval0,
@@ -3136,7 +3327,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
         self.assertEqual(list(self.intervalList3), answer)
 
-    def test_remove_1(self):
+    def test_remove_2(self):
         num_items = len(self.intervalList3)
         answer = [
             self.interval1,
@@ -3152,7 +3343,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
         self.assertEqual(list(self.intervalList3), answer)
 
-    def test_remove_2(self):
+    def test_remove_3(self):
         num_items = len(self.intervalList3)
         answer = [
             self.interval0,
@@ -3168,7 +3359,7 @@ class TestCase008_IntervalList(TestCase):
         self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
         self.assertEqual(list(self.intervalList3), answer)        
         
-    def test_remove_3(self):
+    def test_remove_4(self):
         expected_max = [4, 5, 15, 50, 100, 100, 110]
         observed_max = [
             self.intervalList3._get_node(i).max \
@@ -3185,7 +3376,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
 
-    def test_remove_4(self):
+    def test_remove_5(self):
         expected_max = [4, 5, 15, 50, 100, 100, 110]
         observed_max = [
             self.intervalList3._get_node(i).max \
@@ -3202,7 +3393,7 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
 
-    def test_remove_5(self):
+    def test_remove_6(self):
         expected_max = [97, 100, 100]
         ilist = IntervalList([
             self.interval12,  # 35-97
@@ -3224,9 +3415,6 @@ class TestCase008_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
         
-    def test_find_index_beg_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_index_beg'))
-
     def test_find_index_beg_1(self):
         index = self.intervalList2.find_index_beg(Interval("Chr", 0, 1))
         self.assertEqual(index, 0)
@@ -3303,9 +3491,6 @@ class TestCase008_IntervalList(TestCase):
         index = self.intervalList3.find_index_beg(Interval("Chr",95,100))
         self.assertEqual(index, 4)
         
-    def test_find_index_end_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_index_end'))
-
     def test_find_index_end_1(self):
         index = self.intervalList2.find_index_end(Interval("Chr", 0, 1))
         self.assertEqual(index, 0)
@@ -3382,10 +3567,6 @@ class TestCase008_IntervalList(TestCase):
         index = ilist.find_index_end(Interval("Chr",49,101))
         self.assertEqual(index, 4)
         
-        
-    def test_find_index_nearest_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_index_nearest'))
-
     def test_find_index_nearest_1(self):
         index = self.intervalList2.find_index_nearest(Interval("Chr",0,1))
         self.assertEqual(index, 0)
@@ -3434,9 +3615,6 @@ class TestCase008_IntervalList(TestCase):
     def test_find_index_nearest_12(self):
         index = self.intervalList2.find_index_nearest(Interval("Chr",50,51))
         self.assertEqual(index, 2)
-
-    def test_find_intersection_index_beg_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_beg'))
 
     def test_find_intersection_index_beg_1(self):
         index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 0, 1))
@@ -3508,9 +3686,6 @@ class TestCase008_IntervalList(TestCase):
         index = self.intervalList3.find_intersection_index_beg(Interval("Chr",95,100))
         self.assertEqual(index, 4)
         
-    def test_find_intersection_index_end_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_end'))
-
     def test_find_intersection_index_end_1(self):
         index = self.intervalList2.find_intersection_index_end(Interval("Chr", 0, 1))
         self.assertEqual(index, -1)
@@ -3559,9 +3734,6 @@ class TestCase008_IntervalList(TestCase):
         index = self.intervalList2.find_intersection_index_end(Interval("Chr", 35, 36))
         self.assertEqual(index, -1)        
         
-    def test_find_intersection_index_nearest_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_nearest'))
-
     def test_find_intersection_index_nearest_1(self):
         index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",0,1))
         self.assertEqual(index, -1)
@@ -3619,9 +3791,6 @@ class TestCase008_IntervalList(TestCase):
         index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",50,51))
         self.assertEqual(index, -1)
         
-    def test_find_intersection_index_range_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_range'))
-
     def test_find_intersection_index_range_1(self):
         indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 1)))
         self.assertEqual(indices, [])
@@ -3677,9 +3846,6 @@ class TestCase008_IntervalList(TestCase):
         ])
         index = list(ilist.find_intersection_index_range(self.interval4))  # 25-50
         self.assertEqual(index, [0,2,3])
-
-    def test_find_intersection_index_slice_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_index_slice'))
 
     def test_find_intersection_index_slice_1(self):
         indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 1))
@@ -3737,9 +3903,6 @@ class TestCase008_IntervalList(TestCase):
         index = ilist.find_intersection_index_slice(self.interval4)  # 25-50
         self.assertEqual(index, slice(0, 4))
         
-    def test_find_intersection_length_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_length'))
-
     def test_find_intersection_length_1(self):
         length = self.intervalList2.find_intersection_length(Interval("Chr", 0, 5))
         self.assertEqual(length, 4)
@@ -3756,9 +3919,6 @@ class TestCase008_IntervalList(TestCase):
         length = self.intervalList2.find_intersection_length(Interval("Chr", 10, 50))
         self.assertEqual(length, 30)
         
-    def test_find_intersection_fraction_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_intersection_fraction'))
-
     def test_find_intersection_fraction_1(self):
         length = self.intervalList2.find_intersection_fraction(Interval("Chr", 0, 5))
         self.assertAlmostEqual(length, 4/34.0, 2)
@@ -3779,9 +3939,6 @@ class TestCase008_IntervalList(TestCase):
         length = self.intervalList2.find_intersection_fraction(Interval("Chr", 0, 5), query=True)
         self.assertAlmostEqual(length, 4/5.0, 2)
         
-    def test_find_intersecting_0(self):
-        self.assertTrue(hasattr(self.intervalList2, 'find_intersecting'))
-
     def test_find_intersecting_1(self):
         intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 0, 1)))
         self.assertEqual(intersections, [])
@@ -3805,25 +3962,11 @@ class TestCase008_IntervalList(TestCase):
     def test_find_intersecting_6(self):
         intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 40, 50)))
         self.assertEqual(intersections, [])
-    
-
-                
-class TestCase009_IntervalList(TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
+                    
 
 # TEST IntervalSet.insort() exhaustively!!!
 # TEST IntervalSet.remove() exhaustively!!!
 # TEST IntervalSet: test interval set operations after _remove() and _insert()
-class TestCase010_IntervalSet(TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
 # TODO: need to perform union() boundary checks
 # def test_union_1(self):

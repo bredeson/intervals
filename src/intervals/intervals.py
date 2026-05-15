@@ -18,26 +18,10 @@ from math import isfinite as _isfinite
 from copy import copy as _copy
 from copy import deepcopy as _deepcopy
 from .constants import NULL_NAMESPACE as _NULL_NAME
-from .constants import NULL_BEG as _NULL_BEG
-from .constants import NULL_END as _NULL_END
+from .constants import NULL_POSITION as _NULL_POS
 from .constants import POS_INF as _POS_INF
 from .constants import NEG_INF as _NEG_INF
-
-
-
-_BAD_OPERAND_TYPE = (
-    "unsupported operand type(s) for {0:s}: "
-    "'{1.__class__.__name__}' and '{2.__class__.__name__}'"
-).format
-
-_BAD_OPERAND_NAME = (
-    "mismatched operand namespaces for {0:s}: "
-    "'{1.namespace}' and '{2.namespace}'"
-).format
-
-_ILL_DEFINED = (
-    "Result is ill-defined, use {0}() instead"
-).format
+from .errors import _BAD_OPERAND_TYPE, _BAD_OPERAND_NAMESPACE, _ILL_DEFINED
 
 
 
@@ -50,7 +34,7 @@ def _1s(x):
 
 
 def _nulls(x):
-    return (_NULL_BEG, _NULL_END)
+    return (_NULL_POS, _NULL_POS)
 
 
 def _0div(x):
@@ -71,91 +55,18 @@ def _ceil(x):
 def _floor(x, y):
     return x if _isinf(x) else x // y
 
+
+
+class _IntervalIndexInterface(object):
+    __slots__ = ()
     
-
-class BaseInterval(object):
-    """
-    Base class for 0-indexed generic mathematical intervals. Assumes
-    interval coordinates are fully-open (specifically, left-closed 
-    right-open), same as Pythonic slice notation.
-
-    The `self.namespace` attribute provides an abstraction allowing 
-    this module access to a stable id or name and enable comparions
-    between objects in potentially different namespaces (X, Y, or Z
-    dimensions, sequence names, etc.).
-    """
-    # To maintain memory and speed efficiency, every child object
-    # must also define __slots__ = ()
-    __slots__ = ('namespace','_beg','_end')
-    
-    # Constructor, descriptor, and introspection methods:
-    def __init__(self, beg=_NULL_BEG, end=_NULL_END, namespace=_NULL_NAME):
-        self.namespace = namespace
-        self.beg = beg  # sets self._beg
-        self.end = end  # sets self._end
-
-
-    def __bool__(self):
-        """
-        bool(self) -> bool
-
-        Test if an Interval is non-empty.
-        
-        >>> bool(Interval("Chr", 350, 475))
-        True
-        >>> bool(Interval())
-        False
-        """
-        return not (self.isempty() or self.isnull())
-
-
-    def __hash__(self):
-        """
-        hash(self) -> int
-
-        Return a runtime-unique id for the Interval object.
-        
-        >>> hash(Interval("Chr", 350, 475))
-        4465105936
-        """
-        return id(self)
-        
-
-    def __len__(self):
-        """
-        len(self) -> value
-
-        Return the length of the interval.
-        """
-        return 0 if self.isempty() else (self.end - self.beg)
-
-    
-    def __repr__(self):
-        return "%s(%s)" % (
-            self.__class__.__name__, str(self))
-
-    
-    def __str__(self):
-        """
-        str(self) -> str
-
-        Return a string representation of the Interval object.
-        
-        >>> str(Interval("Chr", 350,475))
-        '[350, 475, namespace=None]'
-        """
-        return "[%s, %s, namespace=%s]" %(
-            str(self.beg), str(self.end), str(self.namespace)
-        )
-
-
     @property
     def beg(self):
         """
-        self.beg -> value
+        self.beg -> int
 
-        The beginning (0-based) coordinate of the Interval.
-        
+        The beginning (0-based) coordinate of the interval.
+
         >>> interval.beg = 350
         >>> print(interval.beg)
         350
@@ -165,212 +76,71 @@ class BaseInterval(object):
 
     @beg.setter
     def beg(self, beg):
-        self._beg = beg
-
-
-    @property
-    def start(self):
-        """
-        self.start -> value
-
-        Alias for the `beg` attribute.
-        
-        >>> interval.start = 350
-        >>> print(interval.start)
-        350
-        """
-        return self.beg
-
-
-    @start.setter
-    def start(self, start):
-        self.beg = start
+        self._beg = _int(beg)
 
 
     @property
     def mid(self):
         """
-        self.mid -> value
+        self.mid -> int
 
         The midpoint of the interval.
-        
-        >>> print(self.mid)
-        412.5
-        """
-        return _NULL_BEG \
-            if   self.isempty() \
-            else float(self.beg + self.end) / 2
 
+        >>> print(self.mid)
+        412
+        """        
+        return self.beg + (self.end - self.beg) // 2
+        
 
     @property
     def end(self):
         """
-        self.end -> value
+        self.end -> int
 
         The ending (1-based) coordinate of the interval.
-        
+
         >>> interval.end = 500
         >>> print(interval.end)
         500
-        """
+        """        
         return self._end
 
 
     @end.setter
     def end(self, end):
-        self._end = end
+        self._end = _int(end)
 
-
-    @property
-    def stop(self):
-        """
-        self.stop -> value
         
-        Alias for `end` attribute.
-        
-        >>> interval.stop = 500
-        >>> print(interval.stop)
-        500
+    def isempty(self):
         """
-        return self.end
+        self.isempty() -> bool
 
-
-    @stop.setter
-    def stop(self, stop):
-        self.end = stop
-        
-
-    def empty(self):
+        Test whether self is a valid interval range. If either
+        self.beg or self.end are nan, this method returns True.
         """
-        self.empty() -> None
+        return not (self.beg < self.end)
 
-        Empty the Interval object.
-        
-        >>> interval = Interval("Chr", 15, 55)
-        >>> interval.empty()
-        >>> print(interval)
-        Chr:0-0
+
+    def issingleton(self):
         """
-        self.beg = 0
-        self.end = 0
+        self.issingleton() -> bool
+
+        Test whether self.end - self.beg == 1
+        """
+        return ((self.end - self.beg) == 1)
+
+
+
+class _IntervalArithmeticInterface(object):
+    __slots__ = ()
     
-        
-    def null(self):
-        """
-        self.null() -> None
-
-        Empty the Interval object.
-        
-        >>> interval = Interval("Chr", 15, 55)
-        >>> interval.null()
-        >>> print(interval)
-        None:nan-nan
-        """
-        self.namespace = _NULL_NAME
-        self.beg = _NULL_BEG
-        self.end = _NULL_END
-
-        
-    def copy(self, deep=False):
-        """
-        self.copy() -> Interval
-        self.copy(deep=True) -> Interval
-
-        If `deep=False`, return a shallow copy of the Interval object.
-        If `deep=True`, return a deep copy of the Interval object.
-
-        >>> interval.copy() is interval
-        False
-        """
-        return _deepcopy(self) if deep else _copy(self)
-        
-
-    def to_slice(self):
-        """
-        self.to_slice() -> slice
-
-        Return the interval as a slice object for use with lists, 
-        strings, or other list-like objects. Returns `slice(-1, -1)`
-        if null.
-        
-        >>> string = 'abcdefghijklmnopqrstuvwxyz'
-        >>> interval = Interval("Chr", 2, 10)
-        >>> print(string[interval.to_slice()])
-        cdefghij
-        """
-        return slice(self.beg, self.end) if self else slice(-1, -1)
-
-
-    # Equality and comparison methods:
-    def __eq__(self, other):
-        """
-        self == other -> bool
-
-        Test for interval equality. Null objects are always not equal.
-        """
-        return ((self.namespace == other.namespace) and
-                (self.beg == other.beg) and
-                (self.end == other.end))
-    
-
-    def __gt__(self, other):
-        """
-        self > other -> bool
-
-        Test if self Interval is greater-than other.
-        """
-        return ((self.namespace == other.namespace) and
-                ((self.beg > other.beg) or
-                 (self.beg == other.beg) and
-                 (self.end > other.end)))
-
-
-    def __ge__(self, other):
-        """
-        self >= other -> bool
-
-        Test if self Interval is greater-than or equal-to other: 
-        """
-        return self == other or self > other
-    
-
-    def __lt__(self, other):
-        """
-        self < other -> bool
-
-        Test if self Interval is less-than other.
-        """
-        return ((self.namespace == other.namespace) and
-                ((self.beg < other.beg) or
-                 (self.beg == other.beg) and
-                 (self.end < other.end)))
-
-
-    def __le__(self, other):
-        """
-        self <= other -> bool
-
-        Test if self Interval is less-than or equal-to other.
-        """
-        return self == other or self < other
-
-
-    def __ne__(self, other):
-        """
-        self != other -> bool
-
-        Test for interval inequality.
-        """
-        return not (self == other)
-    
-
-    # Arithmetic methods
     def __rvalue_get(self, other, op=None, i=_0s):
         if isinstance(other, BaseInterval):
             if other.isnull():
                 return i(other)
             if self.namespace != other.namespace:
-                raise ValueError(_BAD_OPERAND_NAME(op, other, self)) from None
+                raise ValueError(_BAD_OPERAND_NAMESPACE(op, other, self)) \
+                    from None
             beg = other.beg
             end = other.end
         elif isinstance(other, (float, int)):
@@ -385,7 +155,8 @@ class BaseInterval(object):
             if other.isnull():
                 return i(other)
             if self.namespace != other.namespace:
-                raise ValueError(_BAD_OPERAND_NAME(op, self, other)) from None
+                raise ValueError(_BAD_OPERAND_NAMESPACE(op, self, other)) \
+                    from None
             beg = other.beg
             end = other.end
         elif isinstance(other, (float, int)):
@@ -840,9 +611,42 @@ class BaseInterval(object):
         copy.beg = _int(self.beg)
         copy.end = _int(copy.end)
         return copy
-    
 
+
+
+class _IntervalSetInterface(object):
+    __slots__ = ()
+    
     # Interval and set methods
+    def empty(self):
+        """
+        self.empty() -> None
+
+        Empty the Interval object.
+        
+        >>> interval = Interval("Chr", 15, 55)
+        >>> interval.empty()
+        >>> print(interval)
+        Chr:0-0
+        """
+        self.beg = 0
+        self.end = 0
+    
+        
+    def null(self):
+        """
+        self.null() -> None
+
+        Empty the Interval object.
+        
+        >>> interval = Interval("Chr", 15, 55)
+        >>> interval.null()
+        >>> print(interval)
+        None:nan-nan
+        """
+        self.__init__()
+
+        
     def __and__(self, other):
         """
         self & other -> Interval or None
@@ -1247,8 +1051,8 @@ class BaseInterval(object):
             copy.beg = max(self.beg, other.beg)
             copy.end = min(self.end, other.end)
         elif self.namespace == other.namespace:
-            copy.beg = _NULL_BEG
-            copy.end = _NULL_END
+            copy.beg = _NULL_POS
+            copy.end = _NULL_POS
         else:
             copy.null()
         return copy
@@ -1381,14 +1185,12 @@ class BaseInterval(object):
 
         Test whether self.beg == self.end
         """
+        # nan == nan -> False
         return self.beg == self.end
-    
 
-    # Method aliases
+
     clear = null
     
-    to_string = __str__
-
     isabutting_start = isabutting_beg
 
     isabutting_stop = isabutting_end
@@ -1403,13 +1205,305 @@ class BaseInterval(object):
 
     update = union_update
 
+    
+
+class _IntervalIdentityInterface(object):
+    __slots__ = ()
+    
+    def __bool__(self):
+        """
+        bool(self) -> bool
+
+        Test if an Interval is non-empty.
+        
+        >>> bool(Interval("Chr", 350, 475))
+        True
+        >>> bool(Interval())
+        False
+        """
+        return (self.beg < self.end)
+
+
+    def __hash__(self):
+        """
+        hash(self) -> int
+
+        Return a runtime-unique id for the Interval object.
+        
+        >>> hash(Interval("Chr", 350, 475))
+        4465105936
+        """
+        return id(self)
+        
+
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__, str(self))
 
     
+    def __str__(self):
+        """
+        str(self) -> str
+
+        Return a string representation of the Interval object.
+        
+        >>> str(Interval("Chr", 350,475))
+        '[350, 475, namespace=None]'
+        """
+        return "[%s, %s, namespace=%s]" %(
+            str(self.beg), str(self.end), str(self.namespace)
+        )
+
+    
+    def __eq__(self, other):
+        """
+        self == other -> bool
+
+        Test for interval equality. Null objects are always not equal.
+        """
+        return ((self.namespace == other.namespace) and
+                (self.beg == other.beg) and
+                (self.end == other.end))
+    
+
+    def __gt__(self, other):
+        """
+        self > other -> bool
+
+        Test if self Interval is greater-than other.
+        """
+        return ((self.namespace == other.namespace) and
+                ((self.beg > other.beg) or
+                 (self.beg == other.beg) and
+                 (self.end > other.end)))
+
+
+    def __ge__(self, other):
+        """
+        self >= other -> bool
+
+        Test if self Interval is greater-than or equal-to other: 
+        """
+        return self == other or self > other
+    
+
+    def __lt__(self, other):
+        """
+        self < other -> bool
+
+        Test if self Interval is less-than other.
+        """
+        return ((self.namespace == other.namespace) and
+                ((self.beg < other.beg) or
+                 (self.beg == other.beg) and
+                 (self.end < other.end)))
+
+
+    def __le__(self, other):
+        """
+        self <= other -> bool
+
+        Test if self Interval is less-than or equal-to other.
+        """
+        return self == other or self < other
+
+
+    def __ne__(self, other):
+        """
+        self != other -> bool
+
+        Test for interval inequality.
+        """
+        return not (self == other)
+
+
+    def to_string(self):
+        return self.__str__()
+
+
+    
+class BaseInterval(
+        _IntervalSetInterface,
+        _IntervalIdentityInterface,
+        _IntervalArithmeticInterface):
+    """
+    Base class representing generic one-dimensional intervals.
+
+    The `self.namespace` attribute provides an abstraction allowing 
+    this module access to a stable id or name and enable comparions
+    between objects in potentially different namespaces (X, Y, or Z
+    dimensions, sequence names, etc.).
+    """
+    # To maintain memory and speed efficiency, every child object
+    # must also define __slots__ = ()
+    __slots__ = ('namespace','_beg','_end')
+    
+    # Constructor, descriptor, and introspection methods:
+    def __init__(self, beg=_NULL_POS, end=_NULL_POS, namespace=_NULL_NAME):
+        self.namespace = namespace
+        self.beg = beg  # sets self._beg
+        self.end = end  # sets self._end
+
+
+    @property
+    def beg(self):
+        """
+        self.beg -> value
+
+        The beginning coordinate of the Interval.
+        
+        >>> interval.beg = 350
+        >>> print(interval.beg)
+        350
+        """
+        return self._beg
+
+
+    @beg.setter
+    def beg(self, beg):
+        self._beg = beg
+
+
+    @property
+    def start(self):
+        """
+        self.start -> value
+
+        Alias for the `beg` attribute.
+        
+        >>> interval.start = 350
+        >>> print(interval.start)
+        350
+        """
+        return self.beg
+
+
+    @start.setter
+    def start(self, start):
+        self.beg = start
+
+
+    @property
+    def mid(self):
+        """
+        self.mid -> value
+
+        The midpoint of the interval.
+        
+        >>> print(self.mid)
+        412.5
+        """
+        return _NULL_POS \
+            if   self.isempty() \
+            else (self.beg + (self.end - self.beg) / 2.0)
+
+
+    @property
+    def end(self):
+        """
+        self.end -> value
+
+        The ending (1-based) coordinate of the interval.
+        
+        >>> interval.end = 500
+        >>> print(interval.end)
+        500
+        """
+        return self._end
+
+
+    @end.setter
+    def end(self, end):
+        self._end = end
+
+
+    @property
+    def stop(self):
+        """
+        self.stop -> value
+        
+        Alias for `end` attribute.
+        
+        >>> interval.stop = 500
+        >>> print(interval.stop)
+        500
+        """
+        return self.end
+
+
+    @stop.setter
+    def stop(self, stop):
+        self.end = stop
+        
+
+    def __len__(self):
+        """
+        len(self) -> value
+
+        Return the length of the interval.
+        """
+        return 0 if self.isempty() else (self.end - self.beg)
+
+        
+    def copy(self, deep=False):
+        """
+        self.copy() -> Interval
+        self.copy(deep=True) -> Interval
+
+        If `deep=False`, return a shallow copy of the Interval object.
+        If `deep=True`, return a deep copy of the Interval object.
+
+        >>> interval.copy() is interval
+        False
+        """
+        return _deepcopy(self) if deep else _copy(self)
+        
+
+    def to_slice(self):
+        """
+        self.to_slice() -> slice
+
+        Return the interval as a slice object for use with lists, 
+        strings, or other list-like objects. Returns `slice(-1, -1)`
+        if null.
+        
+        >>> string = 'abcdefghijklmnopqrstuvwxyz'
+        >>> interval = Interval("Chr", 2, 10)
+        >>> print(string[interval.to_slice()])
+        cdefghij
+        """
+        return slice(self.beg, self.end) if self else slice(-1, -1)
+   
+
+    
+class ClosedInterval(BaseInterval):
+    """
+    Class representing a generic fully-closed continuous interval; 
+    i.e., start/begin and stop/end coordinates may be floating-point
+    values, and are inclusive in interval intersection.
+
+    The `self.namespace` attribute provides an abstraction allowing 
+    this module access to a stable id or name and enable comparions
+    between objects in potentially different namespaces (X, Y, or Z
+    dimensions, sequence names, etc.).
+    """
+    # To maintain memory and speed efficiency, every child object
+    # must also define __slots__ = ()
+    __slots__ = ()
+    
+    def __init__(self, beg=_NULL_POS, end=_NULL_POS, namespace=_NULL_NAME):
+        """
+        >>> ClosedInterval("Chr1", 15, 37) -> ClosedInterval
+        """
+        super().__init__(beg=beg, end=end, namespace=namespace)
+
+    
+
 class LeftClosedInterval(BaseInterval):
     """
-    Class for 0-indexed generic mathematical intervals. Assumes
-    interval coordinates are half-open (specifically, left-closed 
-    right-open), same as Pythonic slice notation.
+    Class representing a generic left-closed, right-open continuous
+    interval; i.e., start/begin and stop/end coordinates may be
+    floating-point values, with start/begin inclusive in interval
+    intersection and exclusive stop/end.
 
     The `self.namespace` attribute provides an abstraction allowing 
     this module access to a stable id or name and enable comparions
@@ -1525,77 +1619,34 @@ class LeftClosedInterval(BaseInterval):
 
 
 
-class ClosedInterval(BaseInterval):
+class Interval(_IntervalIndexInterface, LeftClosedInterval):
     """
-    Class representing a fully-closed interval, i.e., start/begin 
-    and stop/end coordinates are inclusive (0-based).
+    Class representing a generic left-closed, right-open discrete
+    interval; i.e., start/begin and stop/end coordinates only permit
+    integer values, with start/begin (0-based) inclusive in interval
+    intersection and exclusive stop/end (1-based).
+
+    The `self.namespace` attribute provides an abstraction allowing 
+    this module access to a stable id or name and enable comparions
+    between objects in potentially different namespaces (X, Y, or Z
+    dimensions, sequence names, etc.).
     """
-    # To maintain memory and speed efficiency, every child object
-    # must also define __slots__ = ()
     __slots__ = ()
     
-    def __init__(self, beg=_NULL_BEG, end=_NULL_END, namespace=_NULL_NAME):
+    def __init__(self, name=_NULL_NAME, beg=_NULL_POS, end=_NULL_POS):
         """
-        >>> Interval("Chr1", 15, 37) -> Interval
-        """
-        super().__init__(beg=beg, end=end, namespace=namespace)
-
-
-    @property
-    def name(self):
-        """
-        self.name -> value
-        
-        In an inheriting child class, if the `namespace` attribute is
-        best defined by another attribute (e.g., as `self.contig`, 
-        `self.scaff`, `self.chrom`, etc.) for the purpose of the class,
-        the `self.namespace` attribute will require initializization in
-        the `__init__()` method.
-
-        For example: 
-            def __init__(self, chrom, beg, end):
-                Interval.__init__(self, chrom, beg, end)
-            @property
-            def chrom(self):
-                return self.namespace
-            @chrom.setter
-            def chrom(self, chrom):
-                self.namespace = chrom
-
-        """
-        return self.namespace
-
-
-    @name.setter
-    def name(self, name):
-        self.namespace = name
-
-    
-
-class Interval(LeftClosedInterval):
-    """
-    Class representing a generic left-closed, right-open interval,
-    i.e., start/begin coordinates are inclusive (0-based) and stop/end
-    coordinates are exclusive (or 1-based).
-    """
-    # To maintain memory and speed efficiency, every child object
-    # must also define __slots__ = ()
-    __slots__ = ()
-
-    def __init__(self, name=_NULL_NAME, beg=_NULL_BEG, end=_NULL_END):
-        """
-        >>> Interval("Chr1", 15, 37) -> Interval
+        >>> IndexInterval("Chr1", 15, 37) -> IndexInterval
         """
         super().__init__(namespace=name, beg=beg, end=end)
 
-
+        
     def __str__(self):
         """
         str(self) -> str
 
         Return a string representation of the object.
 
-        >>> str(Interval("Chr", 350,475))
+        >>> str(IndexInterval("Chr", 350,475))
         'Chr:350-475'
         """
         return "%s:%s-%s" % (str(self.namespace), str(self.beg), str(self.end))
@@ -1629,101 +1680,36 @@ class Interval(LeftClosedInterval):
     @name.setter
     def name(self, name):
         self.namespace = name
-        
-    
-    @property
-    def beg(self):
-        """
-        self.beg -> int
-
-        The beginning (0-based) coordinate of the interval.
-
-        >>> interval.beg = 350
-        >>> print(interval.beg)
-        350
-        """
-        return self._beg
-
-
-    @beg.setter
-    def beg(self, beg):
-        self._beg = _int(beg)
-
-
-    @property
-    def mid(self):
-        """
-        self.mid -> int
-
-        The midpoint of the interval.
-
-        >>> print(self.mid)
-        412
-        """        
-        return (self.beg + self.end) // 2
-        
-
-    @property
-    def end(self):
-        return self._end
-
-
-    @end.setter
-    def end(self, end):
-        """
-        self.end -> int
-
-        The ending (1-based) coordinate of the interval.
-
-        >>> interval.end = 500
-        >>> print(interval.end)
-        500
-        """        
-        self._end = _int(end)
-
-        
-    def isempty(self):
-        """
-        self.isempty() -> bool
-
-        Test whether self is a valid interval range. If either
-        self.beg or self.end are nan, this method returns True.
-        """
-        return not (self.beg < self.end)
-
-
-    def issingleton(self):
-        """
-        self.issingleton() -> bool
-
-        Test whether self.end - self.beg == 1
-        """
-        return ((self.end - self.beg) == 1)
-
-
-    to_string = __str__
 
 
 
 class ClosedPoint(ClosedInterval):
     __slots__ = ()
     
-    def __init__(self, name=_NULL_NAME, pos=_NULL_BEG):
+    def __init__(self, pos=_NULL_POS, namespace=_NULL_NAME):
         """
-        >>> Point("Chr1", 37) -> Point
+        >>> ClosedPoint("Chr1", 37) -> ClosedPoint
         """
-        super().__init__(name=name, beg=pos, end=pos)
+        super().__init__(beg=pos, end=pos, namespace=namespace)
 
 
+    def __bool__(self):
+        return not self.isempty()
+        
+
+    def __index__(self):
+        return self.beg
+
+    
     @property
     def beg(self):
         """
-        self.beg -> int
+        self.beg -> value
 
-        The beginning (0-based) coordinate of the interval.
+        The beginning coordinate of the point.
 
-        >>> interval.beg = 350
-        >>> print(interval.beg)
+        >>> point.beg = 350
+        >>> print(point.beg)
         350
         """
         return self._beg
@@ -1737,20 +1723,20 @@ class ClosedPoint(ClosedInterval):
         
     @property
     def end(self):
+        """
+        self.end -> value
+
+        The ending coordinate of the point.
+
+        >>> point.end = 500
+        >>> print(point.end)
+        500
+        """
         return self._end
 
 
     @end.setter
     def end(self, end):
-        """
-        self.end -> int
-
-        The ending (1-based) coordinate of the interval.
-
-        >>> interval.end = 500
-        >>> print(interval.end)
-        500
-        """
         self._beg = end
         self._end = end
     
@@ -1758,11 +1744,11 @@ class ClosedPoint(ClosedInterval):
     @property
     def mid(self):
         """
-        self.mid -> int
+        self.mid -> value
 
-        The midpoint of the interval.
+        The midpoint of the point.
 
-        >>> print(self.mid)
+        >>> print(point.mid)
         412
         """        
         return self.end
@@ -1777,50 +1763,93 @@ class ClosedPoint(ClosedInterval):
     def pos(self, pos):
         self.end = pos
 
+        
+    def isempty(self):
+        return self.isnull()
+        
 
     def issingleton(self):
         """
-        self.issingleton() -> bool
+        self.issingleton() -> True
 
-        Test whether self.end - self.beg == 1
+        A point is always a singleton.
         """
         return True
-
-
-    start = beg
-
-    stop = end
-
     
 
-class Point(Interval):
+
+class LeftClosedPoint(LeftClosedInterval):
     __slots__ = ()
     
-    def __init__(self, name=_NULL_NAME, pos=_NULL_BEG):
+    def __init__(self, pos=_NULL_POS, namespace=_NULL_NAME):
         """
-        >>> Point("Chr1", 37) -> Point
+        >>> LeftClosedPoint("Chr1", 37) -> LeftClosedPoint
         """
-        super().__init__(name=name, beg=pos, end=pos)
+        super().__init__(namespace=namespace)
+        self.pos = pos
+
+        
+    @property
+    def pos(self):
+        return self.end
 
 
-    def __index__(self):
-        return self.beg
-    
+    @pos.setter
+    def pos(self, pos):
+        self.beg = pos
+        self.end = pos
+
+
+
+class Point(_IntervalIndexInterface, LeftClosedPoint):
+    """
+    Class representing a generic left-closed, right-open discrete
+    point; i.e., start/begin and stop/end coordinates only permit
+    integer values, with start/begin (0-based) inclusive in interval
+    intersection and exclusive stop/end (1-based).
+
+    The `self.namespace` attribute provides an abstraction allowing 
+    this module access to a stable id or name and enable comparions
+    between objects in potentially different namespaces (X, Y, or Z
+    dimensions, sequence names, etc.).
+    """    
+    __slots__ = ()
+
+    def __init__(self, name=_NULL_NAME, pos=_NULL_POS):
+        """
+        >>> IndexPoint("Chr1", 37) -> IndexPoint
+        """
+        super().__init__(pos=pos, namespace=name)
+        
+
+    def __str__(self):
+        """
+        str(self) -> str
+
+        Return a string representation of the object.
+
+        >>> str(IndexPoint("Chr", 350,475))
+        'Chr:350-475'
+        """
+        return "%s:%s" % (str(self.namespace), str(self.end))
+
         
     @property
     def beg(self):
         """
         self.beg -> int
 
-        The beginning (0-based) coordinate of the interval.
+        The beginning (0-based) coordinate of the point.
 
-        >>> interval.beg = 350
-        >>> print(interval.beg)
+        >>> point.beg = 350
+        >>> print(point.beg)
         350
+        >>> print(point.end)
+        351
         """
         return self._beg
 
-
+    
     @beg.setter
     def beg(self, beg):
         self._beg = _int(beg)
@@ -1829,71 +1858,67 @@ class Point(Interval):
         
     @property
     def end(self):
-        return self._end
-
-
-    @end.setter
-    def end(self, end):
         """
         self.end -> int
 
-        The ending (1-based) coordinate of the interval.
+        The ending (1-based) coordinate of the point.
 
-        >>> interval.end = 500
-        >>> print(interval.end)
+        >>> point.end = 500
+        >>> print(point.beg)
+        499
+        >>> print(point.end)
         500
-        """
+        """        
+        return self._end
+
+    
+    @end.setter
+    def end(self, end):
         self._beg = _int(end) - 1
         self._end = _int(end)
     
     
     @property
-    def mid(self):
-        """
-        self.mid -> int
-
-        The midpoint of the interval.
-
-        >>> print(self.mid)
-        412
-        """        
-        return self.end
-
-
-    @property
     def pos(self):
-        return self.end
+        return self.beg
 
 
     @pos.setter
     def pos(self, pos):
-        self.end = pos
+        self.beg = pos
 
 
     @property
-    def pos0(self):
-        return self.beg
+    def name(self):
+        """
+        self.name -> value
+        
+        In an inheriting child class, if the `namespace` attribute
+        is best defined by another attribute (e.g., as `self.contig`, 
+        `self.scaff`, `self.chrom`, etc.) for the purpose of the class,
+        the `self.namespace` attribute will require initializization
+        in the `__init__()` method.
+
+        For example: 
+            def __init__(self, chrom, beg, end):
+                Interval.__init__(self, chrom, beg, end)
+            @property
+            def chrom(self):
+                return self.namespace
+            @chrom.setter
+            def chrom(self, chrom):
+                self.namespace = chrom
+
+        """
+        return self.namespace
 
 
-    @pos0.setter
-    def pos0(self, pos0):
-        self.beg = pos0
+    @name.setter
+    def name(self, name):
+        self.namespace = name
+
 
         
-    def issingleton(self):
-        """
-        self.issingleton() -> bool
-
-        Test whether self.end - self.beg == 1
-        """
-        return True
-
-
-    start = beg
-
-    stop = end
-
-
 #       10        20        30        40        50        60        70        80
 #---+----|----+----|----+----|----+----|----+----|----+----|----+----|----+----|
 
