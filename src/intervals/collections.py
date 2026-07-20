@@ -2962,6 +2962,51 @@ class IntervalSet(BaseIntervalCollection):
     to_string = __str__
     
 
+    def __divide(self, bedpe):
+        stack = []
+        for g in range(len(bedpe)):
+            for r in bedpe[g]:
+                stack.append(BED(r.src.chr, r.src.beg, r.src.end))
+    
+        prev_intervals = []
+        stack.sort(reverse=True)
+
+        while stack:
+            curr_interval = stack.pop()
+            if len(curr_interval) < 1:
+                continue
+            elif curr_interval.isintersecting(region):
+                if prev_intervals:
+                    if prev_intervals[-1].beg > curr_interval.beg:
+                        prev_interval = prev_intervals.pop()
+                        stack.append(prev_interval)
+                        stack.append(curr_interval)
+                    elif prev_intervals[-1].issuperinterval(curr_interval):
+                        if ((curr_interval.beg == prev_intervals[-1].beg) and \
+                            (curr_interval.end == prev_intervals[-1].end)):
+                            continue
+                        prev_interval = prev_intervals.pop()
+                        stack.append(BED(prev_interval.chr, curr_interval.end, prev_interval.end))
+                        stack.append(BED(prev_interval.chr, curr_interval.beg, curr_interval.end))
+                        stack.append(BED(prev_interval.chr, prev_interval.beg, curr_interval.beg))
+                        
+                    elif prev_intervals[-1].isintersecting(curr_interval):
+                        prev_interval = prev_intervals.pop()
+                        if prev_interval.end <= curr_interval.end:
+                            stack.append(curr_interval.difference(prev_interval))
+                            stack.append(prev_interval.intersection(curr_interval))
+                            stack.append(prev_interval.difference(curr_interval))
+                        else:
+                            stack.append(prev_interval.difference(curr_interval))
+                            stack.append(prev_interval.intersection(curr_interval))
+                            stack.append(curr_interval.difference(prev_interval))
+            
+                    elif prev_intervals[-1].end <= curr_interval.beg:
+                        prev_intervals.append(curr_interval)
+                else:
+                    prev_intervals.append(curr_interval)
+        return prev_intervals
+    
 #       10        20        30        40        50        60        70        80
 #---+----|----+----|----+----|----+----|----+----|----+----|----+----|----+----|
 
