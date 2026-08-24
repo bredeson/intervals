@@ -15,11 +15,10 @@ from .constants import NULL_NAMESPACE as _NULL_NAME
 from .constants import NULL_POSITION as _NULL_POS
 from .constants import POS_INF as _POS_INF
 from .constants import NEG_INF as _NEG_INF
-from .intervals import BaseInterval
+from .intervals import LeftClosedInterval
 from .intervals import _IntervalSetInterface, _IntervalIdentityInterface
 from .errors import _BAD_METHOD_NAMESPACE, _NO_METHOD, _NOT_IN
-from math import isnan as _isnull
-from math import isinf as _isinf
+
 
 __all__ = (
     'DuplicateKeyError',
@@ -142,11 +141,11 @@ class _Node(object):
 class BaseIntervalCollection(
         _IntervalSetInterface,
         _IntervalIdentityInterface):
+
     # Copied and extended this pattern from collections.abc.Collection
     def __init__(self, setter=remit):
         super().__init__()
         self._setter = setter
-        self._length = 0
 
 
     @property
@@ -289,11 +288,11 @@ class BaseIntervalCollection(
 
     
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, str(self))    
+        return "%s(%s)" % (self.__class__.__name__, str(self))
     
 
     def __str__(self):
-        return '[%s]' % ', '.join(self)
+        return '[%s]' % ', '.join(map(str, self))
     
     
     def _set(self, interval, setter=None, strict=True):
@@ -310,7 +309,7 @@ class BaseIntervalCollection(
         if strict and \
            self.namespace is not _NULL_NAME and \
            self.namespace != node.interval.namespace:
-            raise ValueError(_BAD_METHOD_NAMESPACE(_caller(2),self,interval))
+            raise ValueError(_BAD_METHOD_NAMESPACE(_caller(2),self,node.interval))
         return node
 
 
@@ -354,8 +353,32 @@ class BaseIntervalCollection(
         """
         return map(_Node.copy, self._iter_nodes())
 
-    
-    
+
+    def hull(self, other=None):
+        """
+        self.hull() -> Interval
+        self.hull(other) -> Interval
+
+        Returns the smallest interval closure of self (and, optionally,
+        other).
+        """
+        this = LeftClosedInterval(
+            namespace=self.namespace,
+            beg=self.beg,
+            end=self.end
+        )
+        if this.isempty():
+            this.clear()
+        if other:
+            if other.isempty():
+                other = LeftClosedInterval()
+            if this.namespace == other.namespace:
+                this.beg = min(this.beg, other.beg)
+                this.end = max(this.end, other.end)
+        return this
+
+
+
 class IntervalList(BaseIntervalCollection, _deque):
     def __init__(self, intervals=[], setter=None):
         """
@@ -368,7 +391,6 @@ class IntervalList(BaseIntervalCollection, _deque):
         """
         BaseIntervalCollection.__init__(self, setter or remit)
         _deque.__init__(self)
-        self._length = 0
         if intervals:
             self.extend(sorted(map(self._set, intervals), key=_node_pos))
 
@@ -387,10 +409,10 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def _update_node_max(self, index, stop):
         prev = None
-        if index != 0 and index > -self._length:
+        if index != 0 and index > -len(self):
             prev = self._get_node(index - 1)
             stop = max(stop, prev.max)
-        while index < self._length and \
+        while index < len(self) and \
               self._get_node(index).interval.end <= stop:
             curr = self._get_node(index)
             if prev and curr.interval.end < prev.max:
@@ -408,7 +430,7 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     
     def __bool__(self):
-        return bool(self._length)
+        return bool(len(self))
 
     
     def __contains__(self, interval):
@@ -422,7 +444,6 @@ class IntervalList(BaseIntervalCollection, _deque):
     def __delitem__(self, index):
         node = self._get_node(index)
         _deque.__delitem__(self, index)
-        self._length -= 1
         self._update_node_max(index, node.max)
 
 
@@ -445,7 +466,7 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     
     def __len__(self):
-        return self._length
+        return _deque.__len__(self)
 
 
     def __mul__(self, value):
@@ -488,6 +509,11 @@ class IntervalList(BaseIntervalCollection, _deque):
 
 
     @property
+    def mid(self):
+        return self.beg + (self.end - self.beg) / 2.0
+    
+
+    @property
     def end(self):
         return _NULL_POS \
             if   self.isnull() \
@@ -515,9 +541,8 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter)
-        index = self._length
+        index = len(self)
         _deque.append(self, node)
-        self._length += 1
         self._update_node_max(index, node.max)
 
 
@@ -534,13 +559,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         """
         node = self._set(interval, setter)
         _deque.appendleft(self, node)
-        self._length += 1
         self._update_node_max(0, node.max)
 
 
     def clear(self):
         _deque.clear(self)
-        self._length = 0
 
         
     def copy(self):
@@ -584,7 +607,6 @@ class IntervalList(BaseIntervalCollection, _deque):
             if prev and node.interval.end < prev.max:
                 node.max = prev.max
             _deque.append(self, node)
-            self._length += 1
             prev = node
             
 
@@ -605,19 +627,20 @@ class IntervalList(BaseIntervalCollection, _deque):
 
         index = 0
         length = len(intervals)
-        self._length += length
-        while index <= length and index < self._length:
+        while index <= length and index < len(self):
             node = self._get_node(index)
             if index and node.interval.end < self._get_node(index - 1).max:
                 node.max = self._get_node(index - 1).max
                 if index == length:
                     length += 1
             index += 1
-
+    
             
     def index(self, interval, start=0, stop=-1, setter=None):
         """
-        Return the first index of interval.
+        Return the first index of interval. 
+        
+        Raises ValueError if the interval is not present.
         
         The `setter` keyword argument accepts a callable used to 
         extract/construct from the input object an Interval-descendant
@@ -628,7 +651,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         """
         index = self.find_index(interval,
                                 lower=start, upper=stop, setter=setter)
-        if 0 <= index < self._length:
+        if 0 <= index < len(self):
             return index
         else:
             raise ValueError(_NOT_IN(self, repr(interval)))
@@ -647,7 +670,6 @@ class IntervalList(BaseIntervalCollection, _deque):
         """
         node = self._set(interval, setter)
         _deque.insert(self, index, node)
-        self._length += 1
         self._update_node_max(index, node.max)
 
         
@@ -664,10 +686,10 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter)
-        if not (0 <= lower < self._length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self._length):
-            upper = self._length
+        if not (0 <= upper < len(self)):
+            upper = len(self)
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if node.interval < self._get_node(middle).interval:
@@ -675,6 +697,7 @@ class IntervalList(BaseIntervalCollection, _deque):
             else:
                 lower = middle + 1
         self.insert(lower, interval, setter)
+        return lower
 
         
     def insortleft(self, interval, lower=0, upper=-1, setter=None):
@@ -690,10 +713,10 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter)
-        if not (0 <= lower < self._length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self._length):
-            upper = self._length
+        if not (0 <= upper < len(self)):
+            upper = len(self)
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self._get_node(middle).interval < node.interval:
@@ -701,7 +724,8 @@ class IntervalList(BaseIntervalCollection, _deque):
             else:
                 upper = middle
         self.insert(lower, interval, setter)
-        
+        return lower
+
 
     def update(self, intervals, setter=None):
         """
@@ -739,7 +763,6 @@ class IntervalList(BaseIntervalCollection, _deque):
         """
         Pop one item off the right side of IntervalList and return it.
         """
-        self._length -= 1
         return self._get(_deque.pop(self))
 
 
@@ -748,7 +771,6 @@ class IntervalList(BaseIntervalCollection, _deque):
         Pop one item off the left side of IntervalList and return it.
         """
         node = _deque.popleft(self)
-        self._length -= 1
         self._update_node_max(0, node.max)
         return self._get(node)
     
@@ -765,10 +787,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         index = self.find_index(interval, setter=setter)
-        if 0 <= index < self._length:
+        if 0 <= index < len(self):
             self.__delitem__(index)
         else:
             raise ValueError(_NOT_IN(self, repr(interval)))
+        return index
 
         
     def find_index_beg(self, interval, lower=0, upper=-1, setter=None):
@@ -788,10 +811,10 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter, False)
-        if not (0 <= lower < self._length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self._length):
-            upper = self._length
+        if not (0 <= upper < len(self)):
+            upper = len(self)
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self._get_node(middle).max <= node.interval.beg:
@@ -817,12 +840,12 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter, False)
-        if not (0 <= lower < self._length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self._length):
-            upper = self._length
-        if self._get_node(self._length-1).interval.beg < node.interval.end:
-            return self._length  # - 1  # <=[makes inclusive]
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+        if self._get_node(len(self) - 1).interval.beg < node.interval.end:
+            return len(self)  # - 1  # <=[makes inclusive]
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if node.interval.end <= self._get_node(middle).interval.beg:
@@ -848,10 +871,10 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter, False)
-        if not (0 <= lower < self._length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self._length):
-            upper = self._length
+        if not (0 <= upper < len(self)):
+            upper = len(self)
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self._get_node(middle).interval == node.interval:
@@ -866,7 +889,7 @@ class IntervalList(BaseIntervalCollection, _deque):
     def find_index_nearest(self, interval, lower=0, upper=-1, setter=None):
         """
         Return the nearest (inclusive) index for a query interval. 
-        IntervalList members may not necessarily overlap the input 
+        IntervalList members may not necessarily intersect the input 
         Interval object. Returns the left-most index when members 
         are equidistant to the query interval.
 
@@ -881,11 +904,10 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         node = self._set(interval, setter, False)
-        distance = _POS_INF
-        if not (0 <= lower < self._length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self._length):
-            upper = self._length - 1
+        if not (0 <= upper < len(self)):
+            upper = len(self) - 1
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self._get_node(middle).interval < node.interval:
@@ -893,7 +915,7 @@ class IntervalList(BaseIntervalCollection, _deque):
             else:
                 upper = middle
                 
-        if 0 < lower < self._length:
+        if 0 < lower < len(self):
             Il = self._get_node(lower-1).interval
             Iu = self._get_node(lower).interval
             l = node.interval.beg - Il.end
@@ -1006,7 +1028,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         upper = 0
         for node in _filter_nested(nodes, sort=_node_pos_nested):
             index = self.find_index_beg(node.interval, lower=upper, setter=remit)
-            while index < self._length and \
+            while index < len(self) and \
                   self._get_node(index).interval.beg < node.interval.end:
                 if self._get_node(index).interval.isintersecting(node.interval):
                     yield index
@@ -1031,7 +1053,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         if not intervals:
             return slice(-1, -1)
         if isiterable(intervals):
-            interval = BaseInterval(_POS_INF, _NEG_INF)
+            interval = LeftClosedInterval(_POS_INF, _NEG_INF)
             for node in map(lambda i: self._set(i, setter, False), intervals):
                 if interval.namespace is _NULL_NAME:
                     interval.namespace = node.interval.namespace
@@ -1054,59 +1076,10 @@ class IntervalList(BaseIntervalCollection, _deque):
             upper = -1
         return slice(lower, upper)
 
-    
-    def find_intersection_length(self, intervals, setter=None):
-        """
-        Returns the length of intersects a query interval or 
-        IntervalList object has with this IntervalList object.
-
-        The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
-        class instance for querying the IntervalList. This is useful
-        when the input is not of the same object class as the members
-        of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
-        """
-        nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
-
-        upper = 0
-        intersection_length = 0
-        for node in _filter_nested(nodes, sort=_node_pos_nested):
-            index = self.find_index_beg(node.interval, lower=upper, setter=remit)
-            while index < self._length and \
-                  self._get_node(index).interval.beg < node.interval.end:
-                intersection_length += self._get_node(index).interval.intersection_length(node.interval)
-                index += 1
-            upper = index
-        return intersection_length
-    
-
-    def find_intersection_fraction(self, intervals, query=False, setter=None):
-        """
-        Returns the fraction of overlap a query interval or 
-        IntervalList object has with this IntervalList object. Setting
-        `query=True` calculates the overlap fraction with respect to
-        the query length.
-
-        The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
-        class instance for querying the IntervalList. This is useful
-        when the input is not of the same object class as the members
-        of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
-        """
-        nodes = map(lambda i: self._set(i, setter, False), _iter(intervals)) \
-            if   query \
-            else self._iter_nodes()
-            
-        numerator = self.find_intersection_length(intervals, setter=setter)
-        denominator = sum(map(lambda n: len(n.interval), nodes))
-        return numerator / float(max(1, denominator))
-
 
     def find_intersecting_pairs(self, intervals, setter=None):
         """
-        Preform an overlap search of IntervalList with one or more
+        Perform an overlap search of IntervalList with one or more
         query interval objects and return a generator object producing
         2-tuples of each query interval and its intersecting 
         IntervalList member.
@@ -1119,22 +1092,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         argument and outputs a single Interval-descendant object.
         """
         nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
-
-        # if pairwise:
         nodes = sorted(nodes, key=_node_pos)
-        # else:
-        #     nodes = _filter_nested(nodes, sort=_node_pos_nested)
-
-        #nr = not pairwise
-        #visited = set()
         for node in nodes:
             index = self.find_intersection_index_beg(node.interval, setter=remit)
-            while ((0 <= index < self._length) and
+            while ((0 <= index < len(self)) and
                    (self._get_node(index).interval.isintersecting(node.interval))):
-                # if nr and hash(self._get_node(index).instance) in visited:
-                #     index += 1
-                #     continue
-                # visited.add(hash(self._get_node(index).instance))
                 yield (node.instance, self._get_node(index).instance)
                 index += 1
         
@@ -1165,7 +1127,67 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     isempty = isnull
 
+
+    def intersection_length(self, intervals, setter=None):
+        """
+        self.intersection_length(other) -> value
+
+        Returns the intersection length between two intervals.
+
+        Returns the length of intersects a query interval or 
+        IntervalList object has with the calling IntervalList object.
+
+        The `setter` keyword argument accepts a callable used to 
+        extract/construct from the input object an Interval-descendant
+        class instance for querying the IntervalList. This is useful
+        when the input is not of the same object class as the members
+        of IntervalList. The callable must accept one (and only one)
+        argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
+        >>> ilist.intersection_length(Interval("Chr", 40, 70))
+        20
+        """
+        nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
+
+        upper = 0
+        intersection_length = 0
+        for node in _filter_nested(nodes, sort=_node_pos_nested):
+            index = self.find_index_beg(node.interval, lower=upper, setter=remit)
+            while index < len(self) and \
+                  self._get_node(index).interval.beg < node.interval.end:
+                intersection_length += self._get_node(index).interval.intersection_length(node.interval)
+                index += 1
+            upper = index
+        return intersection_length
+
     
+    def intersection_fraction(self, intervals, query=False, setter=None):
+        """
+        self.intersection_fraction(other) -> float
+
+        Returns the fraction of overlap a query interval or 
+        IntervalList object has with the calling IntervalList object.
+
+        The `setter` keyword argument accepts a callable used to 
+        extract/construct from the input object an Interval-descendant
+        class instance for querying the IntervalList. This is useful
+        when the input is not of the same object class as the members
+        of IntervalList. The callable must accept one (and only one)
+        argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
+        >>> ilist.intersection_fraction(Interval("Chr", 40, 70))
+        0.3333333333333333
+        """
+        nodes = map(lambda i: self._set(i, setter, False), _iter(intervals)) \
+            if   query \
+            else self._iter_nodes()
+            
+        numerator = self.intersection_length(intervals, setter=setter)
+        denominator = sum(map(lambda n: len(n.interval), nodes))
+        return numerator / float(max(1, denominator))
+
 
 class _Sublist(BaseIntervalCollection, _deque):
     def __init__(self, nodes=None, index=-1, setter=remit):
@@ -2383,10 +2405,10 @@ class IntervalSet(BaseIntervalCollection):
         dist = 0  # = -dist
         nodes = self._toplist
         toplist = ncls._toplist
-        toplist.append(_Node(Interval(
-            nodes[0].interval.namespace,
-            nodes[0].interval.beg,
-            nodes[0].interval.end
+        toplist.append(_Node(LeftClosedInterval(
+            namespace=nodes[0].interval.namespace,
+            beg=nodes[0].interval.beg,
+            end=nodes[0].interval.end
         )))
         intersection = dist.__ge__ if abutting else dist.__gt__
         while i < N:
@@ -2395,10 +2417,10 @@ class IntervalSet(BaseIntervalCollection):
                 toplist[p].interval.end = nodes[i].interval.end
             else:
                 # no intersection, add new node p:
-                toplist.append(_Node(Interval(
-                    nodes[i].interval.namespace,
-                    nodes[i].interval.beg,
-                    nodes[i].interval.end
+                toplist.append(_Node(LeftClosedInterval(
+                    namespace=nodes[i].interval.namespace,
+                    beg=nodes[i].interval.beg,
+                    end=nodes[i].interval.end
                 )))
                 p += 1
             i += 1
@@ -2452,26 +2474,26 @@ class IntervalSet(BaseIntervalCollection):
         nodes = self._toplist
         toplist = ncls._toplist
         if self.beg > lower:
-            toplist.append(_Node(Interval(
-                self.namespace,
-                lower,
-                self.beg
+            toplist.append(_Node(LeftClosedInterval(
+                namespace=self.namespace,
+                beg=lower,
+                end=self.beg
             )))
             ncls._length += 1
         for i in range(1, self._toplist.length):
             if gapped(nodes[i].interval.beg - nodes[i-1].interval.end):
                 # gap between the two intervals, new record:
-                toplist.append(_Node(Interval(
-                    nodes[i].interval.namespace,
-                    nodes[i-1].interval.end,
-                    nodes[i].interval.beg
+                toplist.append(_Node(LeftClosedInterval(
+                    namespace=nodes[i].interval.namespace,
+                    beg=nodes[i-1].interval.end,
+                    end=nodes[i].interval.beg
                 )))
                 ncls._length += 1
         if self.end < upper:
-            toplist.append(_Node(Interval(
-                self.namespace,
-                self.end,
-                upper
+            toplist.append(_Node(LeftClosedInterval(
+                namespace=self.namespace,
+                beg=self.end,
+                end=upper
             )))
             ncls._length += 1
         return ncls
@@ -2524,26 +2546,6 @@ class IntervalSet(BaseIntervalCollection):
         """
         self._copy_state(self.difference(other, pairwise, setter))
 
-        
-    def hull(self, other=None):
-        """
-        self.hull() -> Interval
-        self.hull(other) -> Interval
-
-        Returns the smallest interval closure of self (and, optionally,
-        other).
-        """
-        this = Interval(self.namespace, self.beg, self.end)
-        if this.isempty():
-            this.clear()
-        if other:
-            if other.isempty():
-                other = Interval()
-            if this.namespace == other.namespace:
-                this.beg = min(this.beg, other.beg)
-                this.end = max(this.end, other.end)
-        return this
-
     
     def intersection(self, other, pairwise=True, setter=None):
         """
@@ -2583,7 +2585,7 @@ class IntervalSet(BaseIntervalCollection):
                 if ((0 <= toplist.index < toplist.length) and
                     (toplist[toplist.index].interval.beg < node.interval.end)):
                     # member node must intersection query node by search criterion
-                    copy = Interval()
+                    copy = LeftClosedInterval()
                     copy.namespace = toplist[toplist.index].interval.namespace
                     if toplist[toplist.index].interval.issuperinterval(node.interval):
                         copy.beg = node.interval.beg
@@ -2770,10 +2772,10 @@ class IntervalSet(BaseIntervalCollection):
                         # peek at the next node1 to set k
                         k = j + 1
                     nodes.append(_Node(
-                        Interval(
-                            nodes1[i].interval.namespace,
-                            min(nodes1[i].interval.beg, nodes2[j].interval.beg),
-                            max(nodes1[i].interval.end, nodes2[j].interval.end),
+                        LeftClosedInterval(
+                            namespace=nodes1[i].interval.namespace,
+                            beg=min(nodes1[i].interval.beg, nodes2[j].interval.beg),
+                            end=max(nodes1[i].interval.end, nodes2[j].interval.end),
                         ),
                         (
                             nodes1[i].instance,

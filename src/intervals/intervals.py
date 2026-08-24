@@ -63,9 +63,9 @@ class _IntervalIndexInterface(object):
     @property
     def beg(self):
         """
-        self.beg -> int
+        self.beg -> value
 
-        The beginning (0-based) coordinate of the interval.
+        Return self's start numeric value (0-based).
 
         >>> interval.beg = 350
         >>> print(interval.beg)
@@ -82,22 +82,24 @@ class _IntervalIndexInterface(object):
     @property
     def mid(self):
         """
-        self.mid -> int
+        self.mid -> value
 
-        The midpoint of the interval.
+        Return self's midpoint value.
 
         >>> print(self.mid)
         412
         """        
-        return self.beg + (self.end - self.beg) // 2
+        return _NULL_POS \
+            if   self.isempty() \
+            else self.beg + ((self.end - self.beg) >> 1)
         
 
     @property
     def end(self):
         """
-        self.end -> int
+        self.end -> value
 
-        The ending (1-based) coordinate of the interval.
+        Return self's end value (1-based).
 
         >>> interval.end = 500
         >>> print(interval.end)
@@ -115,8 +117,9 @@ class _IntervalIndexInterface(object):
         """
         self.isempty() -> bool
 
-        Test whether self is a valid interval range. If either
-        self.beg or self.end are nan, this method returns True.
+        Return a boolean indicating whether self is a valid interval range.
+        If either self.beg or self.end values are nan, this method returns
+        True.
         """
         return not (self.beg < self.end)
 
@@ -125,7 +128,7 @@ class _IntervalIndexInterface(object):
         """
         self.issingleton() -> bool
 
-        Test whether self.end - self.beg == 1
+        Return a boolean indicating whether self is a singleton interval.
         """
         return ((self.end - self.beg) == 1)
 
@@ -168,10 +171,9 @@ class _IntervalArithmeticInterface(object):
 
     def __abs__(self):
         """
-        abs(self) -> Interval
+        abs(self) -> interval
 
-        Return the absolute value of an interval's beginning-/end-
-        points.
+        Return a copy of self with absolute start and end values.
         """
         copy = self.copy()
         copy.beg = min(abs(self.beg),abs(self.end))
@@ -181,11 +183,12 @@ class _IntervalArithmeticInterface(object):
 
     def __add__(self, value):
         """
-        self + value -> Interval
+        self + value -> interval
 
-        Shift self Interval beginning-/end-points by value, where 
-        value can be any numeric primitive or BaseInterval-
-        descendant class instance.
+        Return a copy of self with start and end values shifted by
+        the amount given via the input value argument, where the value
+        argument is a numeric primitive or BaseInterval-descendant
+        class instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='+', i=_0s)
@@ -196,9 +199,9 @@ class _IntervalArithmeticInterface(object):
 
     def __ceil__(self):
         """
-        math.ceil(self) -> Interval
+        math.ceil(self) -> interval
 
-        Take the ceiling of an interval's beginning-/end-points. 
+        Return a copy of self with start and end values ceilinged.
         """
         copy = self.copy()
         copy.beg = _ceil(self.beg)
@@ -210,8 +213,8 @@ class _IntervalArithmeticInterface(object):
         """
         float(self) -> float
 
-        Cast the beginning-/end-points of an interval to floating-
-        point values.
+        Return a copy of self with start and end values cast to 
+        floating-point values.
         """
         copy = self.copy()
         copy.beg *= 1.0
@@ -221,9 +224,9 @@ class _IntervalArithmeticInterface(object):
 
     def __floor__(self):
         """
-        math.floor(self) -> Interval
+        math.floor(self) -> interval
 
-        Floor an interval's beginning-/end-points.
+        Return a copy of self with start and end values floored.
         """
         copy = self.copy()
         copy.beg = _floor(self.beg, 1)
@@ -233,11 +236,12 @@ class _IntervalArithmeticInterface(object):
 
     def __floordiv__(self, value):
         """
-        self // value -> Interval
+        self // value -> interval
 
-        Divide and floor interval beginning-/end-points by value, 
-        where value can be any numeric primitive or BaseInterval-
-        descendant class instance.
+        Return a copy of self with start and end values divided by the
+        amount given via the input value argument then floored, where
+        the value argument is a numeric primitive or BaseInterval
+        -descendant class instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='//', i=_1s)
@@ -261,11 +265,12 @@ class _IntervalArithmeticInterface(object):
 
     def __iadd__(self, value):
         """
-        self += value -> Interval
+        self += value -> interval
 
-        In-place addition. Shift interval beginning-/end-points by 
-        value, where value can be any numeric primitive or
-        BaseInterval-descendant class instance.
+        In-place addition. Shift self's start and end values by the
+        amount given via the input value argument, where the value
+        argument is a numeric primitive or BaseInterval-descendant
+        class instance.
         """
         beg, end = self.__lvalue_get(value, op='+=', i=_0s)
         self.beg += beg
@@ -275,11 +280,12 @@ class _IntervalArithmeticInterface(object):
 
     def __imul__(self, value):
         """
-        self *= value -> Interval
+        self *= value -> interval
 
-        In-place multiplication. Scale interval beginning-/end-points 
-        by value, where value can be any numeric primitive or
-        BaseInterval-descendant class instance.
+        In-place multiplication. Scale self's start and end values by the
+        amount given via the input value argument, where the value
+        argument is a numeric primitive or BaseInterval-descendant
+        class instance.
         """
         beg, end = self.__lvalue_get(value, op='*=', i=_0s)
         _beg = min(self.beg * beg, self.beg * end,
@@ -293,9 +299,10 @@ class _IntervalArithmeticInterface(object):
 
     def __int__(self):
         """
-        int(self) -> Interval
+        int(self) -> interval
 
-        Cast the interval beginning-/end-points to integer values.
+        Return a copy of self with start and end values cast to integer
+        values.
         """
         copy = self.copy()
         copy.beg = _int(self.beg)
@@ -305,11 +312,12 @@ class _IntervalArithmeticInterface(object):
     
     def __isub__(self, value):
         """
-        self -= value -> Interval
+        self -= value -> interval
 
-        In-place subtraction. Shift interval beginning-/end-points 
-        by value, where value can be any numeric primitive or
-        BaseInterval-descendant class instance.
+        In-place subtraction. Shift self's start and end values by the
+        amount given via the input value argument, where the value
+        argument is a numeric primitive or BaseInterval-descendant
+        class instance.
         """
         beg, end = self.__lvalue_get(value, op='-=', i=_0s)
         self.beg -= beg
@@ -319,11 +327,12 @@ class _IntervalArithmeticInterface(object):
 
     def __lshift__(self, value):
         """
-        self << value -> Interval
+        self << value -> interval
 
-        Bitwise left-shift interval beginning-/end-points by value,
-        where value can be any numeric primitive or BaseInterval-
-        descendant class instance.
+        Return a copy of self with start and end values bitwise left-shifted
+        by the amount given via the input value argument, where the value
+        argument is a numeric primitive or BaseInterval-descendant class
+        instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='<<', i=_0s)
@@ -334,11 +343,11 @@ class _IntervalArithmeticInterface(object):
 
     def __mod__(self, value):
         """
-        self % value -> Interval
+        self % value -> interval
 
-        Modulo the interval beginning-/end-points by value, where
-        value can be any numeric primitive or BaseInterval-
-        descendant class instance.
+        Return a copy of self with start and end values modulo'd by the 
+        amount given via the input value argument, where the value argument
+        is a numeric primitive or BaseInterval-descendant class instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='<<', i=_0s)
@@ -351,11 +360,11 @@ class _IntervalArithmeticInterface(object):
     
     def __mul__(self, value):
         """
-        self * value -> Interval
+        self * value -> interval
 
-        Multiply interval beginning-/end-points by value, where
-        value can be any numeric primitive or BaseInterval-
-        descendant class instance.
+        Return a copy of self with start and end values multiplied by the
+        amount given via the input value argument, where the value argument
+        is a numeric primitive or BaseInterval-descendant class instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='*', i=_0s)
@@ -368,9 +377,10 @@ class _IntervalArithmeticInterface(object):
 
     def __neg__(self):
         """
-        -self -> value
+        -self -> interval
 
-        Change the numeric sign of the interval beginning-/end-points.
+        Return a copy of self with the numeric signs of start and end values
+        negated.
         """
         copy = self.copy()
         copy.beg = -1 * self.end
@@ -380,21 +390,26 @@ class _IntervalArithmeticInterface(object):
 
     def __pos__(self):
         """
-        +self -> value
+        +self -> interval
         
-        Returns a copy of the calling object with beginning-/end-points
-        numeric signs unchanged.
+        Return a copy of self with the numeric signs of start and end values
+        unchanged.
         """
         return self.copy()
 
 
     def __pow__(self, value):
         """
-        self**mod -> Interval
-        pow(self, mod) -> Interval
+        self**mod -> interval
+        pow(self, mod) -> interval
 
-        Obtain self to the power of mod for the beginning-/end-points
-        of the interval.
+        Return a copy of self with the start and end values raised to the
+        power of the input value argument, where the value argument is
+        a numeric primitive or BaseInterval-descendant class instance. 
+        
+        The result is ill-defined if an input interval contains negative
+        values and the exponent is a non-integer, in which case a ValueError
+        is raised.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='*', i=_0s)
@@ -407,10 +422,11 @@ class _IntervalArithmeticInterface(object):
     
     def __radd__(self, value):
         """
-        value + self -> Interval
+        value + self -> interval
 
-        Right-side addtion. Shift a value by interval beginning-/end-
-        points, where value can be any numeric primitive.
+        Right-side addtion. Return a copy of self with the start and end
+        values shifted by the amount given via the input value argument,
+        where the value argument is a numeric primitive.
         """
         copy = self.copy()
         beg, end = self.__rvalue_get(value, op='+', i=_0s)
@@ -423,8 +439,13 @@ class _IntervalArithmeticInterface(object):
         """
         value // self -> Interval
 
-        Divide and floor value by interval, where value can be any 
-        numeric primitive.
+        Right-side floor division. Return a copy of self with the start
+        and end values divided by the amount given via the input value
+        argument and then floored, where the value argument is a numeric
+        primitive.
+
+        The result is ill-defined if self contains 0, in which case a
+        ZeroDivisionError is raised.
         """
         copy = self.copy()
         value, _ = self.__rvalue_get(value, op='//', i=_nulls)
@@ -446,10 +467,11 @@ class _IntervalArithmeticInterface(object):
 
     def __rlshift__(self, value):
         """
-        value << self -> Interval
+        value << self -> interval
 
-        Bitwise left-shift value by the beginning-/end-points of self, 
-        where value can be any numeric primitive.
+        Right-side bitwise left-shift. Return a copy of self with the input
+        value argument bitwise left-shifted by the amount of self's start
+        and end values, where the value argument is a numeric primitive.
         """        
         copy = self.copy()
         beg, end = self.__rvalue_get(value, op='<<', i=_0s)
@@ -460,10 +482,11 @@ class _IntervalArithmeticInterface(object):
 
     def __rmul__(self, value):
         """
-        value * self -> Interval
+        value * self -> interval
 
-        Multiply value by self, where value can be any numeric
-        primitive.
+        Right-side multiplication. Return a copy of self with the start
+        and end values multiplied by the amount given via the input value
+        argument, where the value argument is a numeric primitive.
         """
         copy = self.copy()
         value, _ = self.__rvalue_get(value, op='*', i=_0s)
@@ -474,10 +497,11 @@ class _IntervalArithmeticInterface(object):
 
     def __rmod__(self, value):
         """
-        value % self -> Interval
+        value % self -> interval
 
-        Modulo value by self, where value can be any numeric
-        primitive.
+        Right-side modulo. Return a copy of self with the input value
+        argument module'd by the amount of self's start and end values,
+        where the value argument is a numeric primitive.
         """
         copy = self.copy()
         value, _ = self.__rvalue_get(value, op='%', i=_0s)
@@ -488,10 +512,10 @@ class _IntervalArithmeticInterface(object):
 
     def __round__(self, ndigits=None):
         """
-        round(self, ndigits) -> Interval
+        round(self, ndigits) -> interval
 
-        Round the beginning-/end-points of an interval to `ndigits`.
-        Performs banker's rounding, same as built-in `round()`.
+        Return a copy of self with the start and end values rounded to 
+        ndigits. Performs banker's rounding, same as built-in `round()`.
         """
         copy = self.copy()
         copy.beg = round(self.beg, ndigits)
@@ -501,10 +525,11 @@ class _IntervalArithmeticInterface(object):
     
     def __rrshift__(self, value):
         """
-        value >> self -> Interval
+        value >> self -> interval
 
-        Bitwise right-shift value by the beginning-/end-points of self,
-        where value can be any numeric primitive.
+        Right-side bitwise right-shift. Return a copy of self with the input
+        value argument bitwise right-shifted by the amount of self's start
+        and end values, where the value argument is a numeric primitive.
         """
         copy = self.copy()
         value, _ = self.__rvalue_get(value, op='>>', i=_0s)
@@ -515,11 +540,12 @@ class _IntervalArithmeticInterface(object):
 
     def __rshift__(self, value):
         """
-        self >> value -> Interval
+        self >> value -> interval
 
-        Bitwise right-shift the beginning-/end-points of self by value,
-        where value can be any numeric primitive or BaseInterval-
-        descendant class instance.
+        Return a copy of self with the start and end values bitwise right-
+        shifted by the amount given via the input value argument, where the
+        value argument is a numeric primitive or BaseInterval-descendant class
+        instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='>>', i=_0s)
@@ -530,10 +556,11 @@ class _IntervalArithmeticInterface(object):
 
     def __rsub__(self, value):
         """
-        value - self -> Interval
+        value - self -> interval
 
-        Right-side subtraction. Shift interval beginning-/end-points
-        by value, where value can be any numeric primitive.
+        Right-side subtraction. Return a copy of self with the start and
+        end values subtracted from the input value argument, where the
+        value argument is a numeric primitive.
         """        
         copy = self.copy()
         value, _ = self.__rvalue_get(value, op='-', i=_0s)
@@ -544,10 +571,11 @@ class _IntervalArithmeticInterface(object):
 
     def __rtruediv__(self, value):
         """
-        value / self -> Interval
+        value / self -> interval
 
-        Divide value by beginning-/end-points of self, where value 
-        can be any numeric primitive.
+        Right-side division. Return a copy of self with the start and
+        end values divided into the input value argument, where the
+        value argument is a numeric primitive.
         """
         copy = self.copy()
         value, _ = self.__rvalue_get(value, op='/', i=_nulls)
@@ -567,11 +595,11 @@ class _IntervalArithmeticInterface(object):
 
     def __sub__(self, value):
         """
-        self - value -> Interval
+        self - value -> interval
 
-        Shift interval beginning-/end-points by value, where value
-        can be any numeric primitive or an BaseInterval-descendant
-        class instance.
+        Return a copy of self with the start and end values subtracted by
+        the amount given via the input value argument, where input value
+        is a numeric primitive or an BaseInterval-descendant class instance.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='-', i=_0s)
@@ -582,11 +610,14 @@ class _IntervalArithmeticInterface(object):
 
     def __truediv__(self, value):
         """
-        self / value -> Interval
+        self / value -> interval
 
-        Divided interval beginning-/end-points by value, where value
-        can be any numeric primitive or BaseInterval-descendant class
-        instance.
+        Return a copy of self with the start and end values divided by
+        the amount given via the input value argument, where input value
+        is a numeric primitive or BaseInterval-descendant class instance.
+
+        The result is ill-defined if the input value contains 0, in which
+        case a ZeroDivisionError is raised.
         """
         copy = self.copy()
         beg, end = self.__lvalue_get(value, op='/', i=_1s)
@@ -607,6 +638,10 @@ class _IntervalArithmeticInterface(object):
 
 
     def __trunc__(self):
+        """
+        Return a copy of self with the start and end values truncated to
+        the Integral closest to x between 0 and x.
+        """
         copy = self.copy()
         copy.beg = _int(self.beg)
         copy.end = _int(copy.end)
@@ -622,7 +657,7 @@ class _IntervalSetInterface(object):
         """
         self.empty() -> None
 
-        Empty the Interval object.
+        In-place empty. Set self's start and end values to 0.
         
         >>> interval = Interval("Chr", 15, 55)
         >>> interval.empty()
@@ -631,13 +666,14 @@ class _IntervalSetInterface(object):
         """
         self.beg = 0
         self.end = 0
-    
-        
+
+
     def null(self):
         """
         self.null() -> None
 
-        Empty the Interval object.
+        In-place null. Set self's start and end values to nan and namespace
+        to None.
         
         >>> interval = Interval("Chr", 15, 55)
         >>> interval.null()
@@ -649,10 +685,17 @@ class _IntervalSetInterface(object):
         
     def __and__(self, other):
         """
-        self & other -> Interval or None
+        self & other -> Interval
+        self.intersection(other) -> Interval
 
-        Return the intersection interval of two Intervals. See the
-        `intersection()` method documentation for more information.
+        Return an interval object of the same type as self representing
+        the intersection of self and other. Disjoint intervals return a
+        null object.
+
+        >>> I1 = Interval("Chr", 1, 60)
+        >>> I2 = Interval("Chr", 45, 80)
+        >>> I1 & I2
+        Interval(Chr:45-60)
         """
         return self.intersection(other)
 
@@ -662,7 +705,8 @@ class _IntervalSetInterface(object):
         self &= other -> None
         self.intersection_update(other) -> None
 
-        Update self with the intersection of itself and other.
+        In-place intersection. Update self with the intersection of itself
+        and other.
         """
         self.intersection_update(value)
 
@@ -676,18 +720,27 @@ class _IntervalSetInterface(object):
         """
         other in self -> bool
 
-        Test if other is contained within self. See `issuperinterval()`
-        documentation for more information.
+        Returns a boolean indicating whether self is a superinterval of
+        other.
+
+        See `issuperinterval()` method documentation for more information.
         """
         return self.issuperinterval(other)
 
 
     def __or__(self, other):
         """
-        self | other -> Interval or 2-tuple
+        self | other -> interval or 2-tuple
+        self.union(other) -> interval or 2-tuple
 
-        Return the union interval of two Intervals. See `union()`
-        documentation for more information.
+        Return an interval object of the same type as self representing
+        the union (inclusive OR) of self and other. If the two intervals
+        are disjoint, return a 2-tuple containing the result intervals. 
+        If the two intervals are abutting and `abutting=True`, return a
+        single interval object.
+
+        >>> Interval("Chr", 0, 60) | Interval("Chr", 45, 80)
+        Interval(Chr:0-80)
         """
         return self.union(other)
 
@@ -705,12 +758,18 @@ class _IntervalSetInterface(object):
     def __xor__(self, other):
         """
         self ^ other -> 2-tuple of Intervals
-        
-        Returns the (xor) symmetric difference intervals wrapped in 
-        a tuple. The right-side and left-side objects are returned
-        as the same class type(s) as their inputs, unless one object
-        is contained within another, then both objects returned are 
-        of the larger type.
+        self.symmetric_difference(other) -> 2-tuple of Intervals
+
+        Returns a 2-tuple of interval objects representing the symmetric
+        difference (exclusive OR, XOR) of self and other. The left-side
+        and right-side objects are returned as the same class type(s) as
+        the inputs, unless one interval is subinterval of another, then
+        both objects returned are of the superinterval's type.
+
+        >>> I1 = Interval("Chr", 1, 60)
+        >>> I2 = Interval("Chr", 45, 80)
+        >>> I1.symmetric_difference(I2)
+        (Interval(Chr:1-45), Interval(Chr:60-80))
         """
         return self.symmetric_difference(other)
 
@@ -729,7 +788,8 @@ class _IntervalSetInterface(object):
         """
         self.isabutting(other) -> bool
 
-        Test whether self is abutting the beginning or end of other.
+        Return a boolean indicating whether self is abutting the start
+        or end of other.
 
         >>> Interval("Chr", 30, 40).isabutting(Interval("Chr", 40, 60))
         True
@@ -741,7 +801,7 @@ class _IntervalSetInterface(object):
         """
         self.isabutting_beg(other) -> bool
 
-        Test whether self is abutting the beginning of other.
+        Return a boolean indicating whether self abutts the start of other.
 
         >>> Interval("Chr", 30, 40).isabutting_beg(Interval("Chr", 40, 60))
         True
@@ -756,7 +816,7 @@ class _IntervalSetInterface(object):
         """
         self.isabutting_end(other) -> bool
 
-        Test whether self is abutting the end of other.
+        Return a boolean indicating whether self abutts the end of other.
 
         >>> Interval("Chr", 60, 80).isabutting_end(Interval("Chr", 40, 60))
         True
@@ -771,9 +831,10 @@ class _IntervalSetInterface(object):
         """
         self.issuperinterval(other) -> bool
 
-        Test whether self is containing other (whether self is a 
-        superinterval of self). When `strict=True`, evaluate to True
-        only when self is a strict superinterval of other.
+        Return a boolean indicating whether self is a superinterval of 
+        other. When `strict=True`, evaluate to True only when self is a
+        strict superinterval of other, i.e. when:
+        self.start < other.start and other.end < self.end
 
         >>> i1 = Interval("Chr", 20, 80)
         >>> i2 = Interval("Chr", 40, 60)
@@ -796,9 +857,10 @@ class _IntervalSetInterface(object):
         """
         self.issubinterval(other) -> bool
 
-        Test whether self is contained within other (whether self is
-        a subinterval of other). When `strict=True`, evaluate to True
-        only when self is a strict subinterval of other.
+        Return a boolean indicating whether self is a subinterval of 
+        other. When `strict=True`, evaluate to True only when self is
+        a strict subinterval of other, i.e. when:
+        other.start < self.start and self.end < other.end
 
         >>> i1 = Interval("Chr", 20, 80)
         >>> i2 = Interval("Chr", 40, 60)
@@ -811,17 +873,14 @@ class _IntervalSetInterface(object):
         >>> i1.issubinterval(i1, strict=True)
         False
         """
-        strict = strict and (self.beg == other.beg) and (self.end == other.end)
-        return ((self.namespace == other.namespace) and 
-                (other.beg <= self.beg <= self.end <= other.end) and
-                (not strict))
+        return other.issuperinterval(self, strict=strict)
 
 
     def isintersecting(self, other):
         """
         self.isintersecting(other) -> bool
 
-        Test whether self has any kind of overlap with other.
+        Return a boolean indicating whether self intersects other.
 
         >>> Interval("Chr", 20, 60).isintersecting(Interval("Chr", 40, 80))
         True
@@ -834,7 +893,8 @@ class _IntervalSetInterface(object):
         """
         self.isintersecting_beg(other) -> bool
 
-        Test whether self isintersecting the left-most edge of other.
+        Return a boolean indicating whether other's start value is
+        contained within self's interval range.
 
         >>> Interval("Chr", 20, 60).isintersecting_beg(Interval("Chr", 40, 80))
         True
@@ -851,7 +911,8 @@ class _IntervalSetInterface(object):
         """
         self.isintersecting_end(other) -> bool
 
-        Test whether self isintersecting the right-most edge of other.
+        Return a boolean indicating whether other's end value is
+        contained within self's interval range.
 
         >>> Interval("Chr", 40, 80).isintersecting_end(Interval("Chr", 20, 60))
         True
@@ -868,7 +929,7 @@ class _IntervalSetInterface(object):
         """
         self.intersection_length(other) -> value
 
-        Returns the intersection length between two intervals.
+        Return the intersection length between two intervals, or 0 if none.
 
         >>> Interval("Chr", 20, 60).intersection_length(Interval("Chr", 40, 70))
         20
@@ -882,24 +943,23 @@ class _IntervalSetInterface(object):
         """
         self.intersection_fraction(other) -> float
 
-        Calculates intersection length as a fraction of self.
+        Return the intersection length as a fraction of self, or 0 if none.
 
         >>> I1 = Interval("Chr", 20, 60)
         >>> I2 = Interval("Chr", 40, 70)
         >>> I1.intersection_fraction(I2)
         0.5
         """
-        return float(self.intersection_length(other)) / max(1, len(self))
+        return float(self.intersection_length(other)) / max(1, self.end - self.beg)
     
     
     def inner_distance(self, other):
         """
         self.inner_distance(other) -> value
 
-        Returns the distance between the inner-most coordinates of
-        two intervals. A negative distances indicates that self is
-        downstream of other. Abutting and intersecting intervals 
-        return `0`.
+        Return the minimum distance between the start values and end 
+        values of self and other. Negative distances indicate other is
+        upstream of self. Abutting and intersecting intervals return 0.
 
         >>> I1 = Interval("Chr", 10, 20)
         >>> I2 = Interval("Chr", 45, 80)
@@ -924,7 +984,7 @@ class _IntervalSetInterface(object):
         self.jaccard_distance(other) -> value
 
         Returns the Jaccard distance (1 - Jaccard similarity) between
-        two intervals.
+        self and other.
 
         >>> I1 = Interval("Chr", 10, 20)
         >>> I2 = Interval("Chr", 15, 30)
@@ -932,7 +992,10 @@ class _IntervalSetInterface(object):
         0.75
         """
         intersection_length = float(self.intersection_length(other))
-        return 1.0 - intersection_length / (len(self) + len(other) - intersection_length)
+        return 1.0 - intersection_length / (
+            (self.end - self.beg) + (other.end - other.beg)
+            - intersection_length
+        )
 
     
     def outer_distance(self, other, maxrange=False):
@@ -940,17 +1003,17 @@ class _IntervalSetInterface(object):
         self.outer_distance(other) -> value
         self.outer_distance(other, maxrange=True) -> value
 
-        Returns the distance between the outer-most points of 
-        two intervals. A negative distance indicates that self
-        is downstream of other.
+        Return the maximum distance between the start values and end
+        values of self and other. Negative distances indicate other
+        is upstream of self.
 
         >>> I1 = Interval("Chr", 10, 17)
         >>> I2 = Interval("Chr", 5, 8)
         >>> I1.outer_distance(I2)
         -12
 
-        If maxrange=True, then the outer distance of intersecting
-        intervals is calculated as min(self.beg, other.beg) and 
+        If `maxrange=True`, the outer distance of intersecting
+        intervals is calculated as min(self.start, other.start) and 
         max(self.end, other.end).
 
         >>> I1 = Interval("Chr", 10, 20)
@@ -981,12 +1044,15 @@ class _IntervalSetInterface(object):
 
     def difference(self, other):
         """
-        self.difference(other) -> Interval or 2-tuple
+        self - other -> interval or 2-tuple
+        self.difference(other) -> interval or 2-tuple
         
-        Returns the difference interval(s) of the same type as the 
-        left-side/calling object. If either interval is contained
-        within the other, return a tuple containing the two result
-        intervals.
+        Return an interval, or 2-tuple of intervals, of the same type 
+        as self representing the difference of self and other. 
+    
+        If self and other are disjoint, return a copy of self. 
+        If self contains other, return a tuple containing two intervals. 
+        If self is a subinterval of other, return a null interval object.
 
         >>> I1 = Interval("Chr", 1, 60)
         >>> I2 = Interval("Chr", 45, 80)
@@ -1019,11 +1085,11 @@ class _IntervalSetInterface(object):
 
     def hull(self, other=None):
         """
-        self.hull() -> Interval
-        self.hull(other) -> Interval
+        self.hull() -> interval
+        self.hull(other) -> interval
 
-        Returns the smallest interval closure of self (and, optionally,
-        other). 
+        Return an interval object the same type as self represeting the
+        smallest interval closure of self (and, optionally, other). 
         """
         copy = self.copy()
         if other and self.namespace == other.namespace:
@@ -1034,11 +1100,11 @@ class _IntervalSetInterface(object):
         
     def intersection(self, other):
         """
-        self & other -> Interval
-        self.intersection(other) -> Interval
+        self & other -> interval
+        self.intersection(other) -> interval
 
-        Returns the intersection interval of the same type as the 
-        left-side/calling object. Disjoint intervals return a null
+        Return an interval object the same type as self representing the
+        intersection of self and other. Disjoint intervals return a null
         object.
 
         >>> I1 = Interval("Chr", 1, 60)
@@ -1063,7 +1129,8 @@ class _IntervalSetInterface(object):
         self &= other -> None
         self.intersection_update(other) -> None
 
-        Update self with the intersection of itself and other.
+        In-place intersection. Update self with the intersection of 
+        itself and other.
         """
         copy = self.intersection(other)
         self.namespace = copy.namespace
@@ -1073,14 +1140,15 @@ class _IntervalSetInterface(object):
 
     def symmetric_difference(self, other):
         """
-        self ^ other -> 2-tuple of Intervals
-        self.symmetric_difference(other) -> 2-tuple of Intervals
+        self ^ other -> 2-tuple of intervals
+        self.symmetric_difference(other) -> 2-tuple of intervals
 
-        Returns the (xor) symmetric difference Intervals wrapped in 
-        a tuple. The right-side and left-side objects are returned
-        as the same class type(s) as their inputs, unless one object
-        is contained within another, then both objects returned are 
-        of the larger type.
+        Return a 2-tuple of interval objects representing the symmetric
+        difference (exclusive OR, XOR) of self and other. The left- and
+        right-side objects are returned as the same types as self and
+        other, respectively, unless one interval is a subinterval of 
+        another, in which case both objects returned are of the 
+        superinterval's type.
 
         >>> I1 = Interval("Chr", 1, 60)
         >>> I2 = Interval("Chr", 45, 80)
@@ -1108,9 +1176,12 @@ class _IntervalSetInterface(object):
         self | other -> Interval or 2-tuple
         self.union(other) -> Interval or 2-tuple
 
-        Returns the union (inclusive or) interval(s) of the same type
-        as the left-side/calling object possibly wrapped in a tuple 
-        object.
+        Return an interval object the same type as self representing
+        the union (inclusive OR) of self and other. If the two intervals
+        are disjoint, return a tuple containing two intervals with left-
+        and right-side objects the same types as self and other, 
+        respectively. If self and other are abutting and `abutting=True`,
+        return a single interval object.
 
         >>> Interval("Chr", 0, 60).union(Interval("Chr", 45, 80))
         Interval(Chr:0-80)
@@ -1141,7 +1212,8 @@ class _IntervalSetInterface(object):
         """
         self.isdisjoint(other) -> bool
 
-        Test whether self and other are disjoint (non-intersecting).
+        Return a boolean indicating whether self and other are disjoint
+        (non-intersecting) intervals.
 
         >>> Interval("Chr", 0, 20).isdisjoint(Interval("Chr", 45, 80))
         True
@@ -1155,8 +1227,8 @@ class _IntervalSetInterface(object):
         """
         self.isempty() -> bool
 
-        Test whether self is a valid interval range. If self is null
-        this method will also return True.
+        Return a boolean indicating whether self is an invalid interval
+        range. If self is null this method will return True.
         """
         return not (self.beg <= self.end)
 
@@ -1165,7 +1237,7 @@ class _IntervalSetInterface(object):
         """
         self.isfinite() -> bool
 
-        Test whether self is a finite interval.
+        Return a boolean indicating whether self is a finite interval.
         """
         return _isfinite(self.beg) and _isfinite(self.end)
 
@@ -1174,7 +1246,8 @@ class _IntervalSetInterface(object):
         """
         self.isnull() -> bool
 
-        Test whether self.beg or self.end are null (nan) values.
+        Return a boolean indicating whether either start or end are
+        null (nan) values.
         """
         return _isnull(self.beg) or _isnull(self.end)
 
@@ -1183,7 +1256,7 @@ class _IntervalSetInterface(object):
         """
         self.issingleton() -> bool
 
-        Test whether self.beg == self.end
+        Return a boolean indicating whether start == end.
         """
         # nan == nan -> False
         return self.beg == self.end
@@ -1214,7 +1287,7 @@ class _IntervalIdentityInterface(object):
         """
         bool(self) -> bool
 
-        Test if an Interval is non-empty.
+        Return a boolean indicating whether self is non-empty.
         
         >>> bool(Interval("Chr", 350, 475))
         True
@@ -1228,7 +1301,7 @@ class _IntervalIdentityInterface(object):
         """
         hash(self) -> int
 
-        Return a runtime-unique id for the Interval object.
+        Return a runtime-unique id for self.
         
         >>> hash(Interval("Chr", 350, 475))
         4465105936
@@ -1237,6 +1310,14 @@ class _IntervalIdentityInterface(object):
         
 
     def __repr__(self):
+        """
+        repr(self) -> str
+
+        Return a string representation of self.
+        
+        >>> repr(Interval("Chr", 350, 475))
+        'BaseInterval([350, 475, namespace=Chr])'
+        """
         return "%s(%s)" % (self.__class__.__name__, str(self))
 
     
@@ -1244,7 +1325,7 @@ class _IntervalIdentityInterface(object):
         """
         str(self) -> str
 
-        Return a string representation of the Interval object.
+        Return a string representation of self.
         
         >>> str(Interval("Chr", 350,475))
         '[350, 475, namespace=None]'
@@ -1258,7 +1339,9 @@ class _IntervalIdentityInterface(object):
         """
         self == other -> bool
 
-        Test for interval equality. Null objects are always not equal.
+        Return a boolean indicating whether self is positionally equal
+        to other. Null objects are always non-equal. If self and other
+        are in different namespaces, return False.
         """
         return ((self.namespace == other.namespace) and
                 (self.beg == other.beg) and
@@ -1269,7 +1352,9 @@ class _IntervalIdentityInterface(object):
         """
         self > other -> bool
 
-        Test if self Interval is greater-than other.
+        Return a boolean indicating whether self is positionally 
+        greater-than other. If self and other are in different 
+        namespaces, return False.
         """
         return ((self.namespace == other.namespace) and
                 ((self.beg > other.beg) or
@@ -1281,7 +1366,9 @@ class _IntervalIdentityInterface(object):
         """
         self >= other -> bool
 
-        Test if self Interval is greater-than or equal-to other: 
+        Return a boolean indicating whether self is positionally 
+        greater-than or equal-to other. If self and other are in
+        different namespaces, return False.
         """
         return self == other or self > other
     
@@ -1290,7 +1377,9 @@ class _IntervalIdentityInterface(object):
         """
         self < other -> bool
 
-        Test if self Interval is less-than other.
+        Return a boolean indicating whether self is positionally 
+        less-than other. If self and other are in different 
+        namespaces, return False.
         """
         return ((self.namespace == other.namespace) and
                 ((self.beg < other.beg) or
@@ -1302,7 +1391,9 @@ class _IntervalIdentityInterface(object):
         """
         self <= other -> bool
 
-        Test if self Interval is less-than or equal-to other.
+        Return a boolean indicating whether self is positionally 
+        less-than or equal-to other. If self and other are in different 
+        namespaces, return False.
         """
         return self == other or self < other
 
@@ -1311,7 +1402,9 @@ class _IntervalIdentityInterface(object):
         """
         self != other -> bool
 
-        Test for interval inequality.
+        Return a boolean indicating whether self is not positionally
+        equal to other. If self and other are in different namespaces,
+        return True.
         """
         return not (self == other)
 
@@ -1349,8 +1442,8 @@ class BaseInterval(
         """
         self.beg -> value
 
-        The beginning coordinate of the Interval.
-        
+        Return self's start numeric value (0-based).
+
         >>> interval.beg = 350
         >>> print(interval.beg)
         350
@@ -1368,18 +1461,18 @@ class BaseInterval(
         """
         self.start -> value
 
-        Alias for the `beg` attribute.
+        Return self's start numeric value (0-based).
         
         >>> interval.start = 350
         >>> print(interval.start)
         350
         """
-        return self.beg
+        return self._beg
 
 
     @start.setter
     def start(self, start):
-        self.beg = start
+        self._beg = start
 
 
     @property
@@ -1387,7 +1480,7 @@ class BaseInterval(
         """
         self.mid -> value
 
-        The midpoint of the interval.
+        Return self's midpoint value.
         
         >>> print(self.mid)
         412.5
@@ -1402,7 +1495,7 @@ class BaseInterval(
         """
         self.end -> value
 
-        The ending (1-based) coordinate of the interval.
+        Return self's end value (1-based).
         
         >>> interval.end = 500
         >>> print(interval.end)
@@ -1421,18 +1514,18 @@ class BaseInterval(
         """
         self.stop -> value
         
-        Alias for `end` attribute.
+        Return self's end value (1-based).
         
         >>> interval.stop = 500
         >>> print(interval.stop)
         500
         """
-        return self.end
+        return self._end
 
 
     @stop.setter
     def stop(self, stop):
-        self.end = stop
+        self._end = stop
         
 
     def __len__(self):
@@ -1446,12 +1539,15 @@ class BaseInterval(
         
     def copy(self, deep=False):
         """
-        self.copy() -> Interval
-        self.copy(deep=True) -> Interval
+        self.copy() -> interval
+        self.copy(deep=True) -> interval
 
-        If `deep=False`, return a shallow copy of the Interval object.
-        If `deep=True`, return a deep copy of the Interval object.
+        Return a copy of self.
 
+        If `deep=False`, return a shallow copy of the interval object.
+        If `deep=True`, return a deep copy of the interval object.
+
+        >>> interval = Interval("Chr", 350, 475)
         >>> interval.copy() is interval
         False
         """
@@ -1478,7 +1574,7 @@ class BaseInterval(
 class ClosedInterval(BaseInterval):
     """
     Class representing a generic fully-closed continuous interval; 
-    i.e., start/begin and stop/end coordinates may be floating-point
+    i.e., start and end coordinates may be floating-point
     values, and are inclusive in interval intersection.
 
     The `self.namespace` attribute provides an abstraction allowing 
@@ -1501,9 +1597,9 @@ class ClosedInterval(BaseInterval):
 class LeftClosedInterval(BaseInterval):
     """
     Class representing a generic left-closed, right-open continuous
-    interval; i.e., start/begin and stop/end coordinates may be
-    floating-point values, with start/begin inclusive in interval
-    intersection and exclusive stop/end.
+    interval; i.e., start and end coordinates may be
+    floating-point values, with start inclusive in interval
+    intersection and exclusive end.
 
     The `self.namespace` attribute provides an abstraction allowing 
     this module access to a stable id or name and enable comparions
@@ -1515,10 +1611,11 @@ class LeftClosedInterval(BaseInterval):
     def issuperinterval(self, other, strict=False):
         """
         self.issuperinterval(other) -> bool
-        
-        Test whether self is containing other (whether self is a 
-        superinterval of self). When `strict=True`, evaluate to True
-        only when self is a strict superinterval of other.
+
+        Return a boolean indicating whether self is a superinterval of other.
+        When `strict=True`, evaluate to True only when self is a strict 
+        superinterval of other, i.e. when:
+        self.start < other.start and other.end < self.end
 
         >>> i1 = Interval("Chr", 20, 80)
         >>> i2 = Interval("Chr", 40, 60)
@@ -1541,9 +1638,10 @@ class LeftClosedInterval(BaseInterval):
         """
         self.issubinterval(other) -> bool
 
-        Test whether self is contained within other (whether self is
-        a subinterval of other). When `strict=True`, evaluate to True
-        only when self is a strict subinterval of other.
+        Return a boolean indicating whether self is a subinterval of other. 
+        When `strict=True`, evaluate to True only when self is a strict
+        subinterval of other, i.e. when:
+        other.start < self.start and self.end < other.end
 
         >>> i1 = Interval("Chr", 20, 80)
         >>> i2 = Interval("Chr", 40, 60)
@@ -1566,7 +1664,7 @@ class LeftClosedInterval(BaseInterval):
         """
         self.isintersecting(other) -> bool
 
-        Test whether self has any kind of overlap with other.
+        Return a boolean indicating whether self intersects other.
 
         >>> Interval("Chr", 20, 60).isintersecting(Interval("Chr", 40, 80))
         True
@@ -1579,7 +1677,8 @@ class LeftClosedInterval(BaseInterval):
         """
         self.isintersecting_beg(other) -> bool
 
-        Test whether self isintersecting the left-most edge of other.
+        Return a boolean indicating whether other's start value is
+        contained within self's interval range.
 
         >>> Interval("Chr", 20, 60).isintersecting_beg(Interval("Chr", 40, 80))
         True
@@ -1596,7 +1695,8 @@ class LeftClosedInterval(BaseInterval):
         """
         self.isintersecting_end(other) -> bool
 
-        Test whether self isintersecting the right-most edge of other.
+        Return a boolean indicating whether other's end value is
+        contained within self's interval range.
 
         >>> Interval("Chr", 40, 80).isintersecting_end(Interval("Chr", 20, 60))
         True
@@ -1622,9 +1722,9 @@ class LeftClosedInterval(BaseInterval):
 class Interval(_IntervalIndexInterface, LeftClosedInterval):
     """
     Class representing a generic left-closed, right-open discrete
-    interval; i.e., start/begin and stop/end coordinates only permit
-    integer values, with start/begin (0-based) inclusive in interval
-    intersection and exclusive stop/end (1-based).
+    interval; i.e., start and end coordinates only permit
+    integer values, with start (0-based) inclusive in interval
+    intersection and exclusive end (1-based).
 
     The `self.namespace` attribute provides an abstraction allowing 
     this module access to a stable id or name and enable comparions
@@ -1635,7 +1735,7 @@ class Interval(_IntervalIndexInterface, LeftClosedInterval):
     
     def __init__(self, name=_NULL_NAME, beg=_NULL_POS, end=_NULL_POS):
         """
-        >>> IndexInterval("Chr1", 15, 37) -> IndexInterval
+        >>> Interval("Chr1", 15, 37) -> Interval
         """
         super().__init__(namespace=name, beg=beg, end=end)
 
@@ -1644,9 +1744,9 @@ class Interval(_IntervalIndexInterface, LeftClosedInterval):
         """
         str(self) -> str
 
-        Return a string representation of the object.
+        Return a string representation of self.
 
-        >>> str(IndexInterval("Chr", 350,475))
+        >>> str(Interval("Chr", 350,475))
         'Chr:350-475'
         """
         return "%s:%s-%s" % (str(self.namespace), str(self.beg), str(self.end))
@@ -1656,6 +1756,8 @@ class Interval(_IntervalIndexInterface, LeftClosedInterval):
     def name(self):
         """
         self.name -> value
+
+        Return the namespace attribute of self.
         
         In an inheriting child class, if the `namespace` attribute
         is best defined by another attribute (e.g., as `self.contig`, 
@@ -1665,7 +1767,7 @@ class Interval(_IntervalIndexInterface, LeftClosedInterval):
 
         For example: 
             def __init__(self, chrom, beg, end):
-                Interval.__init__(self, chrom, beg, end)
+                super().__init__(namespace=chrom, beg=beg, end=end)
             @property
             def chrom(self):
                 return self.namespace
@@ -1706,7 +1808,7 @@ class ClosedPoint(ClosedInterval):
         """
         self.beg -> value
 
-        The beginning coordinate of the point.
+        Return self's start numeric value.
 
         >>> point.beg = 350
         >>> print(point.beg)
@@ -1726,7 +1828,7 @@ class ClosedPoint(ClosedInterval):
         """
         self.end -> value
 
-        The ending coordinate of the point.
+        Return self's end value.
 
         >>> point.end = 500
         >>> print(point.end)
@@ -1746,16 +1848,22 @@ class ClosedPoint(ClosedInterval):
         """
         self.mid -> value
 
-        The midpoint of the point.
+        Return self's midpoint value.
 
         >>> print(point.mid)
         412
         """        
-        return self.end
+        return _NULL_POS if self.isempty() else self.end
 
 
     @property
     def pos(self):
+        """
+        self.pos -> value
+
+        Return self's position value. Alias for beg/start and end,
+        since they are equal for a point.
+        """
         return self.end
 
 
@@ -1772,7 +1880,9 @@ class ClosedPoint(ClosedInterval):
         """
         self.issingleton() -> True
 
-        A point is always a singleton.
+        Return a boolean indicating whether self is a singleton interval.
+
+        A point is a singleton, so always returns True.
         """
         return True
     
@@ -1804,9 +1914,9 @@ class LeftClosedPoint(LeftClosedInterval):
 class Point(_IntervalIndexInterface, LeftClosedPoint):
     """
     Class representing a generic left-closed, right-open discrete
-    point; i.e., start/begin and stop/end coordinates only permit
-    integer values, with start/begin (0-based) inclusive in interval
-    intersection and exclusive stop/end (1-based).
+    point; i.e., start and end coordinates only permit
+    integer values, with start (0-based) inclusive in interval
+    intersection and exclusive end (1-based).
 
     The `self.namespace` attribute provides an abstraction allowing 
     this module access to a stable id or name and enable comparions
@@ -1817,7 +1927,7 @@ class Point(_IntervalIndexInterface, LeftClosedPoint):
 
     def __init__(self, name=_NULL_NAME, pos=_NULL_POS):
         """
-        >>> IndexPoint("Chr1", 37) -> IndexPoint
+        >>> Point("Chr1", 37) -> Point
         """
         super().__init__(pos=pos, namespace=name)
         
@@ -1828,7 +1938,7 @@ class Point(_IntervalIndexInterface, LeftClosedPoint):
 
         Return a string representation of the object.
 
-        >>> str(IndexPoint("Chr", 350,475))
+        >>> str(Point("Chr", 350,475))
         'Chr:350-475'
         """
         return "%s:%s" % (str(self.namespace), str(self.end))
@@ -1893,6 +2003,8 @@ class Point(_IntervalIndexInterface, LeftClosedPoint):
         """
         self.name -> value
         
+        Return the namespace attribute of self.
+
         In an inheriting child class, if the `namespace` attribute
         is best defined by another attribute (e.g., as `self.contig`, 
         `self.scaff`, `self.chrom`, etc.) for the purpose of the class,
@@ -1926,3 +2038,10 @@ class Point(_IntervalIndexInterface, LeftClosedPoint):
 
 # NOTES:
 # - builtin numeric types all have a .real, .imag, and .conjugate attributes
+#
+# - Bounded intervals are bounded sets, in the sense that their diameter 
+#   (which is equal to the absolute difference between the endpoints) is 
+#   finite. The diameter may be called the length, width, measure, range,
+#   or size of the interval. The size of unbounded intervals is usually 
+#   defined as +∞, and the size of the empty interval may be defined as 0
+#   (or left undefined).

@@ -338,6 +338,10 @@ class TestCase008_Point(TestCase005_ClosedPoint):
         self.assertEqual(i.beg, 125)
         self.assertEqual(i.end, 126)
 
+    def test_mid_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'mid'))
+
+
         
         
 class TestCase009_BaseInterval(TestCase):
@@ -2441,7 +2445,7 @@ class TestCase014__Node(TestCase):
     def test__init__0(self):
         with self.assertRaisesRegex(
                 TypeError,
-                "missing \d+ required positional argument"):
+                r"missing \d+ required positional argument"):
             _Node()
 
     def test__init__1(self):
@@ -2628,6 +2632,9 @@ class TestCase016_IntervalList(TestCase):
     def test_extendleft_0(self):
         self.assertTrue(hasattr(self.constructor(), 'extendleft'))
 
+    def test_hull_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'hull'))
+        
     def test_index_0(self):
         self.assertTrue(hasattr(self.constructor(), 'index'))
 
@@ -2703,11 +2710,11 @@ class TestCase016_IntervalList(TestCase):
     def test_find_intersection_index_slice_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_slice'))
         
-    def test_find_intersection_length_0(self):
-        self.assertTrue(hasattr(self.constructor(), 'find_intersection_length'))
+    def test_intersection_length_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'intersection_length'))
         
-    def test_find_intersection_fraction_0(self):
-        self.assertTrue(hasattr(self.constructor(), 'find_intersection_fraction'))
+    def test_intersection_fraction_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'intersection_fraction'))
 
     def test_find_intersecting_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_intersecting'))
@@ -2717,7 +2724,7 @@ class TestCase016_IntervalList(TestCase):
 class TestCase017_IntervalList(TestCase):
     def setUp(self):
         self.interval0  = Interval("Chr", 0, 4)
-        self.interval10 = Interval("Chr",0, 50)
+        self.interval10 = Interval("Chr", 0, 50)
         self.interval9  = Interval("Chr", 0, 5000)
         self.interval1  = Interval("Chr", 1, 5)
         self.interval2  = Interval("Chr", 1, 5)
@@ -2725,10 +2732,11 @@ class TestCase017_IntervalList(TestCase):
         self.interval3  = Interval("Chr", 10, 25)
         self.interval4  = Interval("Chr", 25, 50)
         self.interval5  = Interval("Chr", 20, 35)
-        self.interval12 = Interval("Chr",35, 97)
-        self.interval11 = Interval("Chr",40,100)
+        self.interval12 = Interval("Chr", 35, 97)
+        self.interval11 = Interval("Chr", 40,100)
         self.interval6  = Interval("Chr", 45, 95)
         self.interval7  = Interval("Chr", 100, 110)
+        self.interval13 = Interval("X", 100, 110)
 
         self.intervalList1 = IntervalList()
         self.intervalList2 = IntervalList([
@@ -2760,7 +2768,10 @@ class TestCase017_IntervalList(TestCase):
         del(self.interval10)
         del(self.interval11)
         del(self.interval12)
+        del(self.interval13)
+        del(self.intervalList1)
         del(self.intervalList2)
+        del(self.intervalList3)
         
     def test__init__0(self):
         ilist = IntervalList([self.interval0])
@@ -2808,6 +2819,10 @@ class TestCase017_IntervalList(TestCase):
             for i in range(len(self.intervalList3))
         ]
         self.assertEqual(observed_max, expected_max)
+
+    def test__init__5(self):
+        with self.assertRaises(ValueError):
+            IntervalList([self.interval0, self.interval13])
 
     def test__setitem__0(self):
         num_items = len(self.intervalList2)
@@ -2886,6 +2901,18 @@ class TestCase017_IntervalList(TestCase):
             for i in range(len(self.intervalList3))
         ]
         self.assertEqual(observed_max, expected_max)
+
+    def test__str__0(self):
+        self.assertIsInstance(str(self.intervalList1), str)
+        self.assertEqual(str(self.intervalList1),'[]')
+
+    def test__str__1(self):
+        string = '[%s, %s, %s]' % (
+            str(self.interval1),
+            str(self.interval3),
+            str(self.interval5)
+        )
+        self.assertEqual(str(self.intervalList2), string)
         
     def test_append_0(self):
         num_items = len(self.intervalList1)
@@ -3903,40 +3930,40 @@ class TestCase017_IntervalList(TestCase):
         index = ilist.find_intersection_index_slice(self.interval4)  # 25-50
         self.assertEqual(index, slice(0, 4))
         
-    def test_find_intersection_length_1(self):
-        length = self.intervalList2.find_intersection_length(Interval("Chr", 0, 5))
+    def test_intersection_length_1(self):
+        length = self.intervalList2.intersection_length(Interval("Chr", 0, 5))
         self.assertEqual(length, 4)
 
-    def test_find_intersection_length_2(self):
-        length = self.intervalList2.find_intersection_length(Interval("Chr", 2, 4))
+    def test_intersection_length_2(self):
+        length = self.intervalList2.intersection_length(Interval("Chr", 2, 4))
         self.assertEqual(length, 2)
 
-    def test_find_intersection_length_3(self):
-        length = self.intervalList2.find_intersection_length(Interval("Chr", 0, 20))
+    def test_intersection_length_3(self):
+        length = self.intervalList2.intersection_length(Interval("Chr", 0, 20))
         self.assertEqual(length, 14)
 
-    def test_find_intersection_length_4(self):
-        length = self.intervalList2.find_intersection_length(Interval("Chr", 10, 50))
+    def test_intersection_length_4(self):
+        length = self.intervalList2.intersection_length(Interval("Chr", 10, 50))
         self.assertEqual(length, 30)
         
-    def test_find_intersection_fraction_1(self):
-        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 0, 5))
+    def test_intersection_fraction_1(self):
+        length = self.intervalList2.intersection_fraction(Interval("Chr", 0, 5))
         self.assertAlmostEqual(length, 4/34.0, 2)
         
-    def test_find_intersection_fraction_2(self):
-        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 2, 4))
+    def test_intersection_fraction_2(self):
+        length = self.intervalList2.intersection_fraction(Interval("Chr", 2, 4))
         self.assertAlmostEqual(length, 2/34.0, 2)
 
-    def test_find_intersection_fraction_3(self):
-        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 0, 20))
+    def test_intersection_fraction_3(self):
+        length = self.intervalList2.intersection_fraction(Interval("Chr", 0, 20))
         self.assertAlmostEqual(length, 14/34.0, 2)
 
-    def test_find_intersection_fraction_4(self):
-        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 10, 50))
+    def test_intersection_fraction_4(self):
+        length = self.intervalList2.intersection_fraction(Interval("Chr", 10, 50))
         self.assertAlmostEqual(length, 30/34.0, 2)
 
-    def test_find_intersection_fraction_5(self):
-        length = self.intervalList2.find_intersection_fraction(Interval("Chr", 0, 5), query=True)
+    def test_intersection_fraction_5(self):
+        length = self.intervalList2.intersection_fraction(Interval("Chr", 0, 5), query=True)
         self.assertAlmostEqual(length, 4/5.0, 2)
         
     def test_find_intersecting_1(self):
@@ -3962,7 +3989,7 @@ class TestCase017_IntervalList(TestCase):
     def test_find_intersecting_6(self):
         intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 40, 50)))
         self.assertEqual(intersections, [])
-                    
+
 
 # TEST IntervalSet.insort() exhaustively!!!
 # TEST IntervalSet.remove() exhaustively!!!
