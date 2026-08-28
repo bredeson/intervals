@@ -649,8 +649,13 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        index = self.find_index(interval,
-                                lower=start, upper=stop, setter=setter)
+        index = \
+            self.find_index(
+                interval,
+                lower=start,
+                upper=stop,
+                setter=setter
+            )
         if 0 <= index < len(self):
             return index
         else:
@@ -685,21 +690,17 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
-        if not (0 <= lower < len(self)):
-            lower = 0
-        if not (0 <= upper < len(self)):
-            upper = len(self)
-        while lower < upper:
-            middle = lower + (upper - lower) // 2
-            if node.interval < self._get_node(middle).interval:
-                upper = middle
-            else:
-                lower = middle + 1
-        self.insert(lower, interval, setter)
-        return lower
-
+        index = \
+            self.find_insertion_index_end(
+                interval,
+                lower=lower,
+                upper=upper,
+                setter=setter
+            )
+        self.insert(index, interval, setter)
+        return index
         
+
     def insortleft(self, interval, lower=0, upper=-1, setter=None):
         """
         Insert an interval into its sorted position, with identical
@@ -712,20 +713,16 @@ class IntervalList(BaseIntervalCollection, _deque):
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
         """
-        node = self._set(interval, setter)
-        if not (0 <= lower < len(self)):
-            lower = 0
-        if not (0 <= upper < len(self)):
-            upper = len(self)
-        while lower < upper:
-            middle = lower + (upper - lower) // 2
-            if self._get_node(middle).interval < node.interval:
-                lower = middle + 1
-            else:
-                upper = middle
-        self.insert(lower, interval, setter)
-        return lower
-
+        index = \
+            self.find_insertion_index_beg(
+                interval,
+                lower=lower,
+                upper=upper,
+                setter=setter
+            )
+        self.insert(index, interval, setter)
+        return index
+    
 
     def update(self, intervals, setter=None):
         """
@@ -936,6 +933,58 @@ class IntervalList(BaseIntervalCollection, _deque):
             lower = lower if u < l else lower-1
         return lower
 
+    
+    def find_insertion_index_beg(self, interval, lower=0, upper=-1, setter=None):
+        """
+        Insert an interval into its sorted position, with identical
+        intervals inserted to the beginning/left of existing ones.
+
+        The `setter` keyword argument accepts a callable used to 
+        extract/construct from the input object an Interval-descendant
+        class instance for setting the IntervalList. This is useful
+        when the input is not of the same object class as the members
+        of IntervalList. The callable must accept one (and only one)
+        argument and outputs a single Interval-descendant object.
+        """
+        node = self._set(interval, setter)
+        if not (0 <= lower < len(self)):
+            lower = 0
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+        while lower < upper:
+            middle = lower + (upper - lower) // 2
+            if self._get_node(middle).interval < node.interval:
+                lower = middle + 1
+            else:
+                upper = middle
+        return lower
+
+
+    def find_insertion_index_end(self, interval, lower=0, upper=-1, setter=None):
+        """
+        Insert an interval into its sorted position, with identical
+        intervals inserted to the end/right of existing ones.
+
+        The `setter` keyword argument accepts a callable used to 
+        extract/construct from the input object an Interval-descendant
+        class instance for setting the IntervalList. This is useful
+        when the input is not of the same object class as the members
+        of IntervalList. The callable must accept one (and only one)
+        argument and outputs a single Interval-descendant object.
+        """
+        node = self._set(interval, setter)
+        if not (0 <= lower < len(self)):
+            lower = 0
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+        while lower < upper:
+            middle = lower + (upper - lower) // 2
+            if node.interval < self._get_node(middle).interval:
+                upper = middle
+            else:
+                lower = middle + 1
+        return lower
+    
 
     def find_intersection_index_beg(self, interval, lower=0, upper=-1, setter=None):
         """
@@ -1116,7 +1165,13 @@ class IntervalList(BaseIntervalCollection, _deque):
         """
         return map(self.__getitem__, self.find_intersection_index_range(intervals, setter=setter))
 
+    
+    find_insertion_index_start = find_insertion_index_beg
 
+    find_insertion_index_stop = find_insertion_index_end
+
+    find_insertion_index = find_insertion_index_end
+    
     find_intersection_index_start = find_intersection_index_beg
 
     find_intersection_index_stop = find_intersection_index_end
@@ -1189,6 +1244,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         return numerator / float(max(1, denominator))
 
 
+    
 class _Sublist(BaseIntervalCollection, _deque):
     def __init__(self, nodes=None, index=-1, setter=remit):
         BaseIntervalCollection.__init__(self, setter)

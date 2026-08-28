@@ -204,6 +204,11 @@ In the following table, `self` represents an `IntervalList` instance, `interval`
 | `self.find_index_nearest(interval)`         | Return the nearest (inclusive) index for an `interval`, returns the left-most index when members are equidistant to `interval`. |
 | `self.find_index_start(interval)`           | Alias for `find_index_beg()`. |
 | `self.find_index_stop(interval)`            | Alias for `find_index_end()`. |
+| `self.find_insertion_index(interval)`       | The recommended method for determining an `interval`s insertion position. Return the insertion index to the right of any existing identical intervals, maintaining the observed order.  |
+| `self.find_insertion_index_beg(interval)`   | Return the insertion index for a given `interval`, where the index points to the beginning/left of any existing identical intervals.  |
+| `self.find_insertion_index_end(interval)`   | Return the insertion index for a given `interval`, where the index points to the end/right of any existing identical intervals.  |
+| `self.find_insertion_index_start(interval)` | Alias for `find_insertion_index_beg()`  |
+| `self.find_insertion_index_stop(interval)`  | Alias for `find_insertion_index_end()`  |
 | `self.find_intersection_fraction(iterable)`      | Returns the fraction of intersection an `iterable` of `interval`s has with those of `self`. |
 | `self.find_intersection_index_beg(interval)`     | Return the (0-based inclusive) index of the left-most intersecting interval in `self` for a given `interval`, or -1 if none. |
 | `self.find_intersection_index_end(interval)`     | Return the (0-based exclusive) index of the right-most intersecting interval in `self` for a given `interval`, or -1 if none. |

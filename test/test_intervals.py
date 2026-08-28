@@ -2688,18 +2688,45 @@ class TestCase016_IntervalList(TestCase):
 
     def test_find_index_beg_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_index_beg'))
+
+    def test_find_index_start_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_index_start'))
         
     def test_find_index_end_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_index_end'))
+
+    def test_find_index_stop_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_index_stop'))        
         
     def test_find_index_nearest_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_index_nearest'))
+
+    def test_find_insertion_index_beg_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_insertion_index_beg'))
+
+    def test_find_insertion_index_start_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_insertion_index_start'))        
+
+    def test_find_insertion_index_end_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_insertion_index_end'))
+
+    def test_find_insertion_index_stop_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_insertion_index_stop'))        
+
+    def test_find_insertion_index_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_insertion_index'))
         
     def test_find_intersection_index_beg_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_beg'))
-    
+
+    def test_find_intersection_index_start_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_start'))
+        
     def test_find_intersection_index_end_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_end'))
+
+    def test_find_intersection_index_stop_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_stop'))        
 
     def test_find_intersection_index_nearest_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_intersection_index_nearest'))
@@ -2722,6 +2749,7 @@ class TestCase016_IntervalList(TestCase):
 
         
 class TestCase017_IntervalList(TestCase):
+    constructor = IntervalList
     def setUp(self):
         self.interval0  = Interval("Chr", 0, 4)
         self.interval10 = Interval("Chr", 0, 50)
@@ -2738,13 +2766,13 @@ class TestCase017_IntervalList(TestCase):
         self.interval7  = Interval("Chr", 100, 110)
         self.interval13 = Interval("X", 100, 110)
 
-        self.intervalList1 = IntervalList()
-        self.intervalList2 = IntervalList([
+        self.instance1 = self.constructor()
+        self.instance2 = self.constructor([
             self.interval1,  # Chr:1-5
             self.interval3,  # Chr:10-25
             self.interval5   # Chr:20-35
         ])
-        self.intervalList3 = IntervalList([
+        self.instance3 = self.constructor([
             self.interval0,  # 0-4
             self.interval1,  # 1-5
             self.interval8,  # 5-15
@@ -2769,13 +2797,13 @@ class TestCase017_IntervalList(TestCase):
         del(self.interval11)
         del(self.interval12)
         del(self.interval13)
-        del(self.intervalList1)
-        del(self.intervalList2)
-        del(self.intervalList3)
+        del(self.instance1)
+        del(self.instance2)
+        del(self.instance3)
         
     def test__init__0(self):
-        ilist = IntervalList([self.interval0])
-        self.assertIsInstance(ilist, IntervalList)
+        ilist = self.constructor([self.interval0])
+        self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 1)
         self.assertEqual(len(ilist), deque.__len__(ilist))
         self.assertEqual(ilist[0], self.interval0)
@@ -2783,8 +2811,8 @@ class TestCase017_IntervalList(TestCase):
         
     def test__init__1(self):
         intervals = [(5, self.interval0)]
-        ilist = IntervalList(intervals, setter=lambda i: i[1])
-        self.assertIsInstance(ilist, IntervalList)
+        ilist = self.constructor(intervals, setter=lambda i: i[1])
+        self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), len(intervals))
         self.assertEqual(len(ilist), deque.__len__(ilist))
         self.assertEqual(list(ilist), intervals)
@@ -2796,8 +2824,8 @@ class TestCase017_IntervalList(TestCase):
             (5, self.interval1),
             (15, self.interval8)
         ]
-        ilist = IntervalList(intervals, setter=lambda i: i[1])
-        self.assertIsInstance(ilist, IntervalList)
+        ilist = self.constructor(intervals, setter=lambda i: i[1])
+        self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), len(intervals))
         self.assertEqual(len(ilist), deque.__len__(ilist))
         self.assertEqual(list(ilist), intervals)
@@ -2807,104 +2835,104 @@ class TestCase017_IntervalList(TestCase):
     def test__init__3(self):
         expected_max = [5, 25, 35]
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
         
     def test__init__4(self):
         expected_max = [4, 5, 15, 50, 100, 100, 110]
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test__init__5(self):
         with self.assertRaises(ValueError):
-            IntervalList([self.interval0, self.interval13])
+            self.constructor([self.interval0, self.interval13])
 
     def test__setitem__0(self):
-        num_items = len(self.intervalList2)
-        self.intervalList2[2] = self.interval12  # 35-97
-        self.assertEqual(len(self.intervalList2), num_items)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[2], self.interval12)
+        num_items = len(self.instance2)
+        self.instance2[2] = self.interval12  # 35-97
+        self.assertEqual(len(self.instance2), num_items)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[2], self.interval12)
         expected_max = [5, 25, 97]
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test__setitem__1(self):
-        num_items = len(self.intervalList2)
-        self.intervalList2[1] = self.interval8  # 5-15
-        self.assertEqual(len(self.intervalList2), num_items)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[1], self.interval8)
+        num_items = len(self.instance2)
+        self.instance2[1] = self.interval8  # 5-15
+        self.assertEqual(len(self.instance2), num_items)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[1], self.interval8)
         expected_max = [5, 15, 35]
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
         
     def test__setitem__2(self):
-        num_items = len(self.intervalList2)
-        self.intervalList2[1] = interval = Interval("Chr",10,40)
-        self.assertEqual(len(self.intervalList2), num_items)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[1], interval)
+        num_items = len(self.instance2)
+        self.instance2[1] = interval = Interval("Chr",10,40)
+        self.assertEqual(len(self.instance2), num_items)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[1], interval)
         expected_max = [5, 40, 40]
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test__setitem__3(self):
-        num_items = len(self.intervalList3)
-        self.intervalList3[5] = interval = Interval("Chr",41,99)
-        self.assertEqual(len(self.intervalList3), num_items)
-        self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
-        self.assertIs(self.intervalList3[5], interval)
+        num_items = len(self.instance3)
+        self.instance3[5] = interval = Interval("Chr",41,99)
+        self.assertEqual(len(self.instance3), num_items)
+        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertIs(self.instance3[5], interval)
         expected_max = [4, 5, 15, 50, 100, 100, 110]
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test__setitem__4(self):
-        num_items = len(self.intervalList3)
-        self.intervalList3[4] = interval = Interval("Chr",40,55)
-        self.assertEqual(len(self.intervalList3), num_items)
-        self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
-        self.assertIs(self.intervalList3[4], interval)
+        num_items = len(self.instance3)
+        self.instance3[4] = interval = Interval("Chr",40,55)
+        self.assertEqual(len(self.instance3), num_items)
+        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertIs(self.instance3[4], interval)
         expected_max = [4, 5, 15, 50, 55, 95, 110]
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test__setitem__5(self):
-        num_items = len(self.intervalList3)
-        self.intervalList3[4] = interval = Interval("Chr",40,45)
-        self.assertEqual(len(self.intervalList3), num_items)
-        self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
-        self.assertIs(self.intervalList3[4], interval)
+        num_items = len(self.instance3)
+        self.instance3[4] = interval = Interval("Chr",40,45)
+        self.assertEqual(len(self.instance3), num_items)
+        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertIs(self.instance3[4], interval)
         expected_max = [4, 5, 15, 50, 50, 95, 110]
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test__str__0(self):
-        self.assertIsInstance(str(self.intervalList1), str)
-        self.assertEqual(str(self.intervalList1),'[]')
+        self.assertIsInstance(str(self.instance1), str)
+        self.assertEqual(str(self.instance1),'[]')
 
     def test__str__1(self):
         string = '[%s, %s, %s]' % (
@@ -2912,103 +2940,103 @@ class TestCase017_IntervalList(TestCase):
             str(self.interval3),
             str(self.interval5)
         )
-        self.assertEqual(str(self.intervalList2), string)
+        self.assertEqual(str(self.instance2), string)
         
     def test_append_0(self):
-        num_items = len(self.intervalList1)
-        self.assertEqual(num_items, deque.__len__(self.intervalList1))
-        self.intervalList1.append(self.interval6)
-        self.assertEqual(len(self.intervalList1), num_items+1)
-        self.assertEqual(len(self.intervalList1), deque.__len__(self.intervalList1))
-        self.assertIs(self.intervalList1[-1], self.interval6)
+        num_items = len(self.instance1)
+        self.assertEqual(num_items, deque.__len__(self.instance1))
+        self.instance1.append(self.interval6)
+        self.assertEqual(len(self.instance1), num_items+1)
+        self.assertEqual(len(self.instance1), deque.__len__(self.instance1))
+        self.assertIs(self.instance1[-1], self.interval6)
 
     def test_append_1(self):
-        num_items = len(self.intervalList2)
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        self.intervalList2.append(self.interval6)
-        self.assertEqual(len(self.intervalList2), num_items+1)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[-1], self.interval6)
+        num_items = len(self.instance2)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.instance2.append(self.interval6)
+        self.assertEqual(len(self.instance2), num_items+1)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[-1], self.interval6)
         
     def test_append_2(self):
         expected_max = [5, 25, 35, 95]
-        self.intervalList2.append(self.interval6)
+        self.instance2.append(self.interval6)
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_append_3(self):
         expected_max = [5, 25, 35, 50]
-        self.intervalList2.append(self.interval4)
+        self.instance2.append(self.interval4)
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_append_4(self):
         expected_max = [5, 25, 35, 35]
-        self.intervalList2.append(Interval("Chr", 21, 30))
+        self.instance2.append(Interval("Chr", 21, 30))
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)        
                     
     def test_appendleft_0(self):
-        num_items = len(self.intervalList1)
-        self.assertEqual(num_items, deque.__len__(self.intervalList1))
-        self.intervalList1.appendleft(self.interval6)
-        self.assertEqual(len(self.intervalList1), num_items+1)
-        self.assertEqual(len(self.intervalList1), deque.__len__(self.intervalList1))
-        self.assertIs(self.intervalList1[0], self.interval6)
+        num_items = len(self.instance1)
+        self.assertEqual(num_items, deque.__len__(self.instance1))
+        self.instance1.appendleft(self.interval6)
+        self.assertEqual(len(self.instance1), num_items+1)
+        self.assertEqual(len(self.instance1), deque.__len__(self.instance1))
+        self.assertIs(self.instance1[0], self.interval6)
 
     def test_appendleft_1(self):
-        num_items = len(self.intervalList2)
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        self.intervalList2.appendleft(self.interval6)
-        self.assertEqual(len(self.intervalList2), num_items+1)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[0], self.interval6)
+        num_items = len(self.instance2)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.instance2.appendleft(self.interval6)
+        self.assertEqual(len(self.instance2), num_items+1)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[0], self.interval6)
         
     def test_appendleft_2(self):
         expected_max = [1, 5, 25, 35]
-        self.intervalList2.appendleft(Interval("Chr",0,1))
+        self.instance2.appendleft(Interval("Chr",0,1))
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
         
     def test_appendleft_3(self):
         expected_max = [4, 5, 25, 35]
-        self.intervalList2.appendleft(self.interval0)
+        self.instance2.appendleft(self.interval0)
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_appendleft_4(self):
         expected_max = [50, 50, 50, 50, 50, 100, 100, 110]
-        self.intervalList3.appendleft(self.interval10)
+        self.instance3.appendleft(self.interval10)
 
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_clear_1(self):
-        ilist = IntervalList([self.interval0])
-        self.assertIsInstance(ilist, IntervalList)
+        ilist = self.constructor([self.interval0])
+        self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 1)
         self.assertEqual(len(ilist), deque.__len__(ilist))
         ilist.clear()
@@ -3016,142 +3044,142 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(len(ilist), deque.__len__(ilist))
         
     def test_extend_0(self):
-        num_items = len(self.intervalList2)
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        self.intervalList2.extend([self.interval0])
-        self.assertEqual(len(self.intervalList2), num_items+1)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[-1], self.interval0)
+        num_items = len(self.instance2)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.instance2.extend([self.interval0])
+        self.assertEqual(len(self.instance2), num_items+1)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[-1], self.interval0)
 
     def test_extend_1(self):
         expected_max = [5, 25, 35, 95, 110]
-        self.intervalList2.extend([
+        self.instance2.extend([
             self.interval6,
             self.interval7
         ])
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_extend_2(self):
         expected_max = [5, 25, 35, 35, 95]
-        self.intervalList2.extend([
+        self.instance2.extend([
             Interval("Chr",25,30),
             self.interval6
         ])
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_extend_3(self):
         expected_max = [5, 25, 35, 35, 100, 100]
-        self.intervalList2.extend([
+        self.instance2.extend([
             Interval("Chr",25,30),
             self.interval11,
             self.interval6
         ])
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
         
     def test_extendleft_0(self):
-        num_items = len(self.intervalList2)
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        self.intervalList2.extendleft([self.interval6])
-        self.assertEqual(len(self.intervalList2), num_items+1)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[0], self.interval6)
+        num_items = len(self.instance2)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.instance2.extendleft([self.interval6])
+        self.assertEqual(len(self.instance2), num_items+1)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[0], self.interval6)
 
     def test_extendleft_1(self):
         expected_max = [4, 5, 25, 35]
-        self.intervalList2.extendleft([
+        self.instance2.extendleft([
             self.interval0
         ])
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)        
 
     def test_extendleft_2(self):
         expected_max = [50, 50, 50, 50, 50, 100, 100, 110]
-        self.intervalList3.extendleft([
+        self.instance3.extendleft([
             self.interval10
         ])
 
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
         
     def test_extendleft_3(self):
         expected_max = [50, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000]
-        self.intervalList3.extendleft([
+        self.instance3.extendleft([
             self.interval9,
             self.interval10
         ])
 
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)        
         
     def test_insert_0(self):
-        num_items = len(self.intervalList2)
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        self.intervalList2.insert(2, self.interval4)
-        self.assertEqual(len(self.intervalList2), num_items+1)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
+        num_items = len(self.instance2)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.instance2.insert(2, self.interval4)
+        self.assertEqual(len(self.instance2), num_items+1)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
         self.assertEqual(
-            list(self.intervalList2),
+            list(self.instance2),
             [self.interval1, self.interval3, self.interval4, self.interval5]
         )
 
     def test_insert_1(self):
         expected_max = [5, 15, 25, 35]
-        self.intervalList2.insert(1, self.interval8)  # 5-15
+        self.instance2.insert(1, self.interval8)  # 5-15
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)        
 
     def test_insert_2(self):
         expected_max = [50, 50, 50, 50, 50, 100, 100, 110]
-        self.intervalList3.insert(0, self.interval10)
+        self.instance3.insert(0, self.interval10)
 
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)        
 
     def test_insert_3(self):
         expected_max = [4, 50, 50, 50, 50, 100, 100, 110]
-        self.intervalList3.insert(1, self.interval10)
+        self.instance3.insert(1, self.interval10)
 
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_insert_4(self):
         expected_max = [50, 50, 50]
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval10,  # 0-50
             self.interval4,   # 25-50
         ])
@@ -3167,7 +3195,7 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(observed_max, expected_max)
         
     def test_update_1(self):
-        num_items = len(self.intervalList2)
+        num_items = len(self.instance2)
         answer = [
             self.interval1,
             self.interval2,
@@ -3176,16 +3204,16 @@ class TestCase017_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        self.intervalList2.update([self.interval6, self.interval2, self.interval7])
-        self.assertEqual(len(self.intervalList2), num_items+3)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertEqual(list(self.intervalList2), answer)
-        self.assertIs(self.intervalList2[0], self.interval1)
-        self.assertIs(self.intervalList2[1], self.interval2)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.instance2.update([self.interval6, self.interval2, self.interval7])
+        self.assertEqual(len(self.instance2), num_items+3)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(list(self.instance2), answer)
+        self.assertIs(self.instance2[0], self.interval1)
+        self.assertIs(self.instance2[1], self.interval2)
 
     def test_updateleft_1(self):
-        num_items = len(self.intervalList2)
+        num_items = len(self.instance2)
         answer = [
             self.interval0,
             self.interval2,
@@ -3194,46 +3222,46 @@ class TestCase017_IntervalList(TestCase):
             self.interval5,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        self.intervalList2.updateleft([self.interval0, self.interval2, self.interval7])
-        self.assertEqual(len(self.intervalList2), num_items+3)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertEqual(list(self.intervalList2), answer)
-        self.assertIs(self.intervalList2[1], self.interval2)
-        self.assertIs(self.intervalList2[2], self.interval1)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.instance2.updateleft([self.interval0, self.interval2, self.interval7])
+        self.assertEqual(len(self.instance2), num_items+3)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(list(self.instance2), answer)
+        self.assertIs(self.instance2[1], self.interval2)
+        self.assertIs(self.instance2[2], self.interval1)
         
     def test_popleft_1(self):
-        num_items = len(self.intervalList2)
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        item1 = self.intervalList2[0]
-        item2 = self.intervalList2.popleft()
-        self.assertEqual(len(self.intervalList2), num_items-1)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
+        num_items = len(self.instance2)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        item1 = self.instance2[0]
+        item2 = self.instance2.popleft()
+        self.assertEqual(len(self.instance2), num_items-1)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
         self.assertIs(item1, item2)
 
     def test_popleft_2(self):
         expected_max = [25, 35]
-        item = self.intervalList2.popleft()
+        item = self.instance2.popleft()
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_popleft_3(self):
         expected_max = [5, 15, 50, 100, 100, 110]
-        item = self.intervalList3.popleft()
+        item = self.instance3.popleft()
 
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_popleft_4(self):
         expected_max = [50, 50, 50, 50, 100, 100, 110]
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval10,
             self.interval1,
             self.interval8,
@@ -3257,37 +3285,37 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(observed_max, expected_max)
         
     def test_pop_1(self):
-        num_items = len(self.intervalList2)
-        self.assertEqual(num_items, deque.__len__(self.intervalList2))
-        item1 = self.intervalList2[-1]
-        item2 = self.intervalList2.pop()
-        self.assertEqual(len(self.intervalList2), num_items-1)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
+        num_items = len(self.instance2)
+        self.assertEqual(num_items, deque.__len__(self.instance2))
+        item1 = self.instance2[-1]
+        item2 = self.instance2.pop()
+        self.assertEqual(len(self.instance2), num_items-1)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
         self.assertIs(item1, item2)
 
     def test_pop_2(self):
         expected_max = [4, 5, 15, 50, 100, 100]
-        item = self.intervalList3.pop()
+        item = self.instance3.pop()
 
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_pop_3(self):
         expected_max = [5, 25]
-        item = self.intervalList2.pop()
+        item = self.instance2.pop()
 
         observed_max = [
-            self.intervalList2._get_node(i).max \
-            for i in range(len(self.intervalList2))
+            self.instance2._get_node(i).max \
+            for i in range(len(self.instance2))
         ]
         self.assertEqual(observed_max, expected_max)
         
     def test_pop_4(self):
         expected_max = [50, 50, 100, 100]
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval10,
             self.interval3,
             self.interval11,
@@ -3309,37 +3337,37 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(observed_max, expected_max)
     
     def test_rotate_1(self):
-        self.intervalList2 = IntervalList([
+        self.instance2 = self.constructor([
             self.interval3, self.interval4, self.interval5
         ])
-        num_items = len(self.intervalList2)
-        item1 = self.intervalList2[0]
-        item2 = self.intervalList2[1]
-        item3 = self.intervalList2[-1]
-        self.intervalList2.rotate(-1)  # pull leftward
-        self.assertEqual(len(self.intervalList2), num_items)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[0], item2)
-        self.assertIs(self.intervalList2[-2], item3)
-        self.assertIs(self.intervalList2[-1], item1)
+        num_items = len(self.instance2)
+        item1 = self.instance2[0]
+        item2 = self.instance2[1]
+        item3 = self.instance2[-1]
+        self.instance2.rotate(-1)  # pull leftward
+        self.assertEqual(len(self.instance2), num_items)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[0], item2)
+        self.assertIs(self.instance2[-2], item3)
+        self.assertIs(self.instance2[-1], item1)
         
     def test_rotate_2(self):
-        self.intervalList2 = IntervalList([
+        self.instance2 = self.constructor([
             self.interval3, self.interval4, self.interval5
         ])
-        num_items = len(self.intervalList2)
-        item1 = self.intervalList2[0]
-        item2 = self.intervalList2[-2]
-        item3 = self.intervalList2[-1]
-        self.intervalList2.rotate(+1)  # pull rightward
-        self.assertEqual(len(self.intervalList2), num_items)
-        self.assertEqual(len(self.intervalList2), deque.__len__(self.intervalList2))
-        self.assertIs(self.intervalList2[0], item3)
-        self.assertIs(self.intervalList2[1], item1)
-        self.assertIs(self.intervalList2[-1], item2)        
+        num_items = len(self.instance2)
+        item1 = self.instance2[0]
+        item2 = self.instance2[-2]
+        item3 = self.instance2[-1]
+        self.instance2.rotate(+1)  # pull rightward
+        self.assertEqual(len(self.instance2), num_items)
+        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertIs(self.instance2[0], item3)
+        self.assertIs(self.instance2[1], item1)
+        self.assertIs(self.instance2[-1], item2)        
 
     def test_remove_1(self):
-        num_items = len(self.intervalList3)
+        num_items = len(self.instance3)
         answer = [
             self.interval0,
             self.interval1,
@@ -3348,14 +3376,14 @@ class TestCase017_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.intervalList3))
-        self.intervalList3.remove(self.interval11)
-        self.assertEqual(len(self.intervalList3), num_items-1)
-        self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
-        self.assertEqual(list(self.intervalList3), answer)
+        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.instance3.remove(self.interval11)
+        self.assertEqual(len(self.instance3), num_items-1)
+        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(list(self.instance3), answer)
 
     def test_remove_2(self):
-        num_items = len(self.intervalList3)
+        num_items = len(self.instance3)
         answer = [
             self.interval1,
             self.interval8,
@@ -3364,14 +3392,14 @@ class TestCase017_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.intervalList3))
-        self.intervalList3.remove(self.interval0)
-        self.assertEqual(len(self.intervalList3), num_items-1)
-        self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
-        self.assertEqual(list(self.intervalList3), answer)
+        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.instance3.remove(self.interval0)
+        self.assertEqual(len(self.instance3), num_items-1)
+        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(list(self.instance3), answer)
 
     def test_remove_3(self):
-        num_items = len(self.intervalList3)
+        num_items = len(self.instance3)
         answer = [
             self.interval0,
             self.interval1,
@@ -3380,49 +3408,49 @@ class TestCase017_IntervalList(TestCase):
             self.interval11,
             self.interval6,
         ]
-        self.assertEqual(num_items, deque.__len__(self.intervalList3))
-        self.intervalList3.remove(self.interval7)
-        self.assertEqual(len(self.intervalList3), num_items-1)
-        self.assertEqual(len(self.intervalList3), deque.__len__(self.intervalList3))
-        self.assertEqual(list(self.intervalList3), answer)        
+        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.instance3.remove(self.interval7)
+        self.assertEqual(len(self.instance3), num_items-1)
+        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(list(self.instance3), answer)        
         
     def test_remove_4(self):
         expected_max = [4, 5, 15, 50, 100, 100, 110]
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
-        self.intervalList3.remove(self.interval6)
+        self.instance3.remove(self.interval6)
         
         expected_max = [4, 5, 15, 50, 100, 110]
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_remove_5(self):
         expected_max = [4, 5, 15, 50, 100, 100, 110]
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
-        self.intervalList3.remove(self.interval11)
+        self.instance3.remove(self.interval11)
         
         expected_max = [4, 5, 15, 50, 95, 110]
         observed_max = [
-            self.intervalList3._get_node(i).max \
-            for i in range(len(self.intervalList3))
+            self.instance3._get_node(i).max \
+            for i in range(len(self.instance3))
         ]
         self.assertEqual(observed_max, expected_max)
 
     def test_remove_6(self):
         expected_max = [97, 100, 100]
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval12,  # 35-97
             self.interval11,  # 40-100
             self.interval6    # 45-95
@@ -3443,55 +3471,55 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(observed_max, expected_max)
         
     def test_find_index_beg_1(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 0, 1))
+        index = self.instance2.find_index_beg(Interval("Chr", 0, 1))
         self.assertEqual(index, 0)
 
     def test_find_index_beg_2(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 1, 2))
+        index = self.instance2.find_index_beg(Interval("Chr", 1, 2))
         self.assertEqual(index, 0)
         
     def test_find_index_beg_3(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 4, 5))
+        index = self.instance2.find_index_beg(Interval("Chr", 4, 5))
         self.assertEqual(index, 0)
 
     def test_find_index_beg_4(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 5, 6))
+        index = self.instance2.find_index_beg(Interval("Chr", 5, 6))
         self.assertEqual(index, 1)
 
     def test_find_index_beg_5(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 9, 10))
+        index = self.instance2.find_index_beg(Interval("Chr", 9, 10))
         self.assertEqual(index, 1)
 
     def test_find_index_beg_6(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 10, 11))
+        index = self.instance2.find_index_beg(Interval("Chr", 10, 11))
         self.assertEqual(index, 1)
 
     def test_find_index_beg_7(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 19, 20))
+        index = self.instance2.find_index_beg(Interval("Chr", 19, 20))
         self.assertEqual(index, 1)
         
     def test_find_index_beg_8(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 20, 21))
+        index = self.instance2.find_index_beg(Interval("Chr", 20, 21))
         self.assertEqual(index, 1)
 
     def test_find_index_beg_9(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 24, 25))
+        index = self.instance2.find_index_beg(Interval("Chr", 24, 25))
         self.assertEqual(index, 1)
 
     def test_find_index_beg_10(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 25, 26))
+        index = self.instance2.find_index_beg(Interval("Chr", 25, 26))
         self.assertEqual(index, 2)
 
     def test_find_index_beg_11(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 34, 35))
+        index = self.instance2.find_index_beg(Interval("Chr", 34, 35))
         self.assertEqual(index, 2)
 
     def test_find_index_beg_12(self):
-        index = self.intervalList2.find_index_beg(Interval("Chr", 35, 36))
+        index = self.instance2.find_index_beg(Interval("Chr", 35, 36))
         self.assertEqual(index, 3)
 
     def test_find_index_beg_13(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval7   # 100-110
@@ -3503,7 +3531,7 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, 0)
 
     def test_find_index_beg_14(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval7   # 100-110
@@ -3515,59 +3543,59 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, 0)
 
     def test_find_index_beg_15(self):
-        index = self.intervalList3.find_index_beg(Interval("Chr",95,100))
+        index = self.instance3.find_index_beg(Interval("Chr",95,100))
         self.assertEqual(index, 4)
         
     def test_find_index_end_1(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 0, 1))
+        index = self.instance2.find_index_end(Interval("Chr", 0, 1))
         self.assertEqual(index, 0)
 
     def test_find_index_end_2(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 1, 2))
+        index = self.instance2.find_index_end(Interval("Chr", 1, 2))
         self.assertEqual(index, 1)
         
     def test_find_index_end_3(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 4, 5))
+        index = self.instance2.find_index_end(Interval("Chr", 4, 5))
         self.assertEqual(index, 1)
 
     def test_find_index_end_4(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 5, 6))
+        index = self.instance2.find_index_end(Interval("Chr", 5, 6))
         self.assertEqual(index, 1)
 
     def test_find_index_end_5(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 9, 10))
+        index = self.instance2.find_index_end(Interval("Chr", 9, 10))
         self.assertEqual(index, 1)
 
     def test_find_index_end_6(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 10, 11))
+        index = self.instance2.find_index_end(Interval("Chr", 10, 11))
         self.assertEqual(index, 2)
 
     def test_find_index_end_7(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 19, 20))
+        index = self.instance2.find_index_end(Interval("Chr", 19, 20))
         self.assertEqual(index, 2)
         
     def test_find_index_end_8(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 20, 21))
+        index = self.instance2.find_index_end(Interval("Chr", 20, 21))
         self.assertEqual(index, 3)
         
     def test_find_index_end_9(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 24, 25))
+        index = self.instance2.find_index_end(Interval("Chr", 24, 25))
         self.assertEqual(index, 3)
 
     def test_find_index_end_10(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 25, 26))
+        index = self.instance2.find_index_end(Interval("Chr", 25, 26))
         self.assertEqual(index, 3)
 
     def test_find_index_end_11(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 34, 35))
+        index = self.instance2.find_index_end(Interval("Chr", 34, 35))
         self.assertEqual(index, 3)
 
     def test_find_index_end_12(self):
-        index = self.intervalList2.find_index_end(Interval("Chr", 35, 36))
+        index = self.instance2.find_index_end(Interval("Chr", 35, 36))
         self.assertEqual(index, 3)        
 
     def test_find_index_end_13(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval7   # 100-110
@@ -3576,7 +3604,7 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, 2)
 
     def test_find_index_end_14(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval7   # 100-110
@@ -3585,7 +3613,7 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, 2)
 
     def test_find_index_end_15(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval4,  #  25-50
@@ -3595,104 +3623,160 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, 4)
         
     def test_find_index_nearest_1(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",0,1))
+        index = self.instance2.find_index_nearest(Interval("Chr",0,1))
         self.assertEqual(index, 0)
 
     def test_find_index_nearest_2(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",1,2))
+        index = self.instance2.find_index_nearest(Interval("Chr",1,2))
         self.assertEqual(index, 0)
 
     def test_find_index_nearest_3(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",4,5))
+        index = self.instance2.find_index_nearest(Interval("Chr",4,5))
         self.assertEqual(index, 0)
 
     def test_find_index_nearest_4(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",5,6))
+        index = self.instance2.find_index_nearest(Interval("Chr",5,6))
         self.assertEqual(index, 0)
 
     def test_find_index_nearest_5(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",6,7))
+        index = self.instance2.find_index_nearest(Interval("Chr",6,7))
         self.assertEqual(index, 0)
 
     def test_find_index_nearest_6(self):
         # equidinstant features return left-most index
-        index = self.intervalList2.find_index_nearest(Interval("Chr",7,8))
+        index = self.instance2.find_index_nearest(Interval("Chr",7,8))
         self.assertEqual(index, 0)
 
     def test_find_index_nearest_7(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",8,9))
+        index = self.instance2.find_index_nearest(Interval("Chr",8,9))
         self.assertEqual(index, 1)
 
     def test_find_index_nearest_8(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",9,10))
+        index = self.instance2.find_index_nearest(Interval("Chr",9,10))
         self.assertEqual(index, 1)
 
     def test_find_index_nearest_9(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",10,11))
+        index = self.instance2.find_index_nearest(Interval("Chr",10,11))
         self.assertEqual(index, 1)
         
     def test_find_index_nearest_10(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",24,25))
+        index = self.instance2.find_index_nearest(Interval("Chr",24,25))
         self.assertEqual(index, 2)
 
     def test_find_index_nearest_11(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",25,26))
+        index = self.instance2.find_index_nearest(Interval("Chr",25,26))
         self.assertEqual(index, 2)
 
     def test_find_index_nearest_12(self):
-        index = self.intervalList2.find_index_nearest(Interval("Chr",50,51))
+        index = self.instance2.find_index_nearest(Interval("Chr",50,51))
         self.assertEqual(index, 2)
 
+    def test_find_insertion_index_beg_1(self):
+        index = self.instance1.find_insertion_index_beg(Interval("Chr", 50,51))
+        self.assertEqual(index, 0)
+
+    def test_find_insertion_index_beg_2(self):
+        index = self.instance2.find_insertion_index_beg(Interval("Chr",5,10))
+        self.assertEqual(index, 1)
+
+    def test_find_insertion_index_beg_3(self):
+        index = self.instance2.find_insertion_index_beg(Interval("Chr",15,20))
+        self.assertEqual(index, 2)
+
+    def test_find_insertion_index_beg_4(self):
+        index = self.instance2.find_insertion_index_beg(Interval("Chr",40,50))
+        self.assertEqual(index, 3)
+        
+    def test_find_insertion_index_beg_5(self):
+        index = self.instance2.find_insertion_index_beg(Interval("Chr",1,5))
+        self.assertEqual(index, 0)
+
+    def test_find_insertion_index_beg_6(self):
+        index = self.instance2.find_insertion_index_beg(Interval("Chr",10,25))
+        self.assertEqual(index, 1)
+
+    def test_find_insertion_index_beg_7(self):
+        index = self.instance2.find_insertion_index_beg(Interval("Chr",20,35))
+        self.assertEqual(index, 2)
+
+    def test_find_insertion_index_end_1(self):
+        index = self.instance1.find_insertion_index_end(Interval("Chr", 50,51))
+        self.assertEqual(index, 0)
+
+    def test_find_insertion_index_end_2(self):
+        index = self.instance2.find_insertion_index_end(Interval("Chr",5,10))
+        self.assertEqual(index, 1)
+
+    def test_find_insertion_index_end_3(self):
+        index = self.instance2.find_insertion_index_end(Interval("Chr",15,20))
+        self.assertEqual(index, 2)
+
+    def test_find_insertion_index_end_4(self):
+        index = self.instance2.find_insertion_index_end(Interval("Chr",40,50))
+        self.assertEqual(index, 3)
+        
+    def test_find_insertion_index_end_5(self):
+        index = self.instance2.find_insertion_index_end(Interval("Chr",1,5))
+        self.assertEqual(index, 1)
+
+    def test_find_insertion_index_end_6(self):
+        index = self.instance2.find_insertion_index_end(Interval("Chr",10,25))
+        self.assertEqual(index, 2)
+
+    def test_find_insertion_index_end_7(self):
+        index = self.instance2.find_insertion_index_end(Interval("Chr",20,35))
+        self.assertEqual(index, 3)
+        
     def test_find_intersection_index_beg_1(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 0, 1))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 0, 1))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_beg_2(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 1, 2))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 1, 2))
         self.assertEqual(index, 0)
         
     def test_find_intersection_index_beg_3(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 4, 5))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 4, 5))
         self.assertEqual(index, 0)
 
     def test_find_intersection_index_beg_4(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 5, 6))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 5, 6))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_beg_5(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 9, 10))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 9, 10))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_beg_6(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 10, 11))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 10, 11))
         self.assertEqual(index, 1)
 
     def test_find_intersection_index_beg_7(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 19, 20))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 19, 20))
         self.assertEqual(index, 1)
         
     def test_find_intersection_index_beg_8(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 20, 21))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 20, 21))
         self.assertEqual(index, 1)
         
     def test_find_intersection_index_beg_9(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 24, 25))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 24, 25))
         self.assertEqual(index, 1)
 
     def test_find_intersection_index_beg_10(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 25, 26))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 25, 26))
         self.assertEqual(index, 2)
 
     def test_find_intersection_index_beg_11(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 34, 35))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 34, 35))
         self.assertEqual(index, 2)
 
     def test_find_intersection_index_beg_12(self):
-        index = self.intervalList2.find_intersection_index_beg(Interval("Chr", 35, 36))
+        index = self.instance2.find_intersection_index_beg(Interval("Chr", 35, 36))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_beg_13(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval7   # 100-110
@@ -3701,7 +3785,7 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, 0)
 
     def test_find_intersection_index_beg_14(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval7   # 100-110
@@ -3710,152 +3794,152 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, 0)
 
     def test_find_intersection_index_beg_15(self):
-        index = self.intervalList3.find_intersection_index_beg(Interval("Chr",95,100))
+        index = self.instance3.find_intersection_index_beg(Interval("Chr",95,100))
         self.assertEqual(index, 4)
         
     def test_find_intersection_index_end_1(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 0, 1))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 0, 1))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_end_2(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 1, 2))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 1, 2))
         self.assertEqual(index, 1)
         
     def test_find_intersection_index_end_3(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 4, 5))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 4, 5))
         self.assertEqual(index, 1)
 
     def test_find_intersection_index_end_4(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 5, 6))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 5, 6))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_end_5(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 9, 10))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 9, 10))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_end_6(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 10, 11))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 10, 11))
         self.assertEqual(index, 2)
 
     def test_find_intersection_index_end_7(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 19, 20))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 19, 20))
         self.assertEqual(index, 2)
         
     def test_find_intersection_index_end_8(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 20, 21))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 20, 21))
         self.assertEqual(index, 3)
         
     def test_find_intersection_index_end_9(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 24, 25))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 24, 25))
         self.assertEqual(index, 3)
 
     def test_find_intersection_index_end_10(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 25, 26))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 25, 26))
         self.assertEqual(index, 3)
 
     def test_find_intersection_index_end_11(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 34, 35))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 34, 35))
         self.assertEqual(index, 3)
 
     def test_find_intersection_index_end_12(self):
-        index = self.intervalList2.find_intersection_index_end(Interval("Chr", 35, 36))
+        index = self.instance2.find_intersection_index_end(Interval("Chr", 35, 36))
         self.assertEqual(index, -1)        
         
     def test_find_intersection_index_nearest_1(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",0,1))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",0,1))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_nearest_2(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",1,2))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",1,2))
         self.assertEqual(index, 0)
 
     def test_find_intersection_index_nearest_3(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",4,5))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",4,5))
         self.assertEqual(index, 0)
 
     def test_find_intersection_index_nearest_4(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",5,6))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",5,6))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_nearest_5(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",6,7))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",6,7))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_nearest_6(self):
         # equidinstant features return left-most index
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",7,8))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",7,8))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_nearest_7(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",8,9))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",8,9))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_nearest_8(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",9,10))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",9,10))
         self.assertEqual(index, -1)
 
     def test_find_intersection_index_nearest_9(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",10,11))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",10,11))
         self.assertEqual(index, 1)
 
     def test_find_intersection_index_nearest_10(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",19,20))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",19,20))
         self.assertEqual(index, 1)
 
     def test_find_intersection_index_nearest_11(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",20,21))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",20,21))
         self.assertEqual(index, 1)
         
     def test_find_intersection_index_nearest_12(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",24,25))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",24,25))
         self.assertEqual(index, 2)
         
     def test_find_intersection_index_nearest_13(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",25,26))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",25,26))
         self.assertEqual(index, 2)
 
     def test_find_intersection_index_nearest_14(self):
-        index = self.intervalList2.find_intersection_index_nearest(Interval("Chr",50,51))
+        index = self.instance2.find_intersection_index_nearest(Interval("Chr",50,51))
         self.assertEqual(index, -1)
         
     def test_find_intersection_index_range_1(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 1)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 0, 1)))
         self.assertEqual(indices, [])
 
     def test_find_intersection_index_range_2(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 2)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 0, 2)))
         self.assertEqual(indices, [0])
 
     def test_find_intersection_index_range_3(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 2, 8)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 2, 8)))
         self.assertEqual(indices, [0])
 
     def test_find_intersection_index_range_4(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 20)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 0, 20)))
         self.assertEqual(indices, [0, 1])
 
     def test_find_intersection_index_range_5(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 0, 22)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 0, 22)))
         self.assertEqual(indices, [0, 1, 2])
 
     def test_find_intersection_index_range_6(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 15, 22)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 15, 22)))
         self.assertEqual(indices, [1, 2])
 
     def test_find_intersection_index_range_7(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 22, 50)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 22, 50)))
         self.assertEqual(indices, [1, 2])
 
     def test_find_intersection_index_range_8(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 25, 50)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 25, 50)))
         self.assertEqual(indices, [2])
 
     def test_find_intersection_index_range_9(self):
-        indices = list(self.intervalList2.find_intersection_index_range(Interval("Chr", 40, 50)))
+        indices = list(self.instance2.find_intersection_index_range(Interval("Chr", 40, 50)))
         self.assertEqual(indices, [])
 
     def test_find_intersection_index_range_10(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval5,  #  20-35
@@ -3865,7 +3949,7 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, [0,2])
 
     def test_find_intersection_index_range_11(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval5,  #  20-35
@@ -3875,43 +3959,43 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, [0,2,3])
 
     def test_find_intersection_index_slice_1(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 1))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 0, 1))
         self.assertEqual(indices, slice(-1, -1))
 
     def test_find_intersection_index_slice_2(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 2))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 0, 2))
         self.assertEqual(indices, slice(0, 1))
 
     def test_find_intersection_index_slice_3(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 2, 8))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 2, 8))
         self.assertEqual(indices, slice(0, 1))
 
     def test_find_intersection_index_slice_4(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 20))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 0, 20))
         self.assertEqual(indices, slice(0, 2))
 
     def test_find_intersection_index_slice_5(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 0, 22))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 0, 22))
         self.assertEqual(indices, slice(0, 3))
 
     def test_find_intersection_index_slice_6(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 15, 22))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 15, 22))
         self.assertEqual(indices, slice(1, 3))
 
     def test_find_intersection_index_slice_7(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 22, 50))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 22, 50))
         self.assertEqual(indices, slice(1, 3))
 
     def test_find_intersection_index_slice_8(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 25, 50))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 25, 50))
         self.assertEqual(indices, slice(2, 3))
 
     def test_find_intersection_index_slice_9(self):
-        indices = self.intervalList2.find_intersection_index_slice(Interval("Chr", 40, 50))
+        indices = self.instance2.find_intersection_index_slice(Interval("Chr", 40, 50))
         self.assertEqual(indices, slice(-1, -1))
         
     def test_find_intersection_index_slice_10(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval5,  #  20-35
@@ -3921,7 +4005,7 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, slice(0, 3))
 
     def test_find_intersection_index_slice_11(self):
-        ilist = IntervalList([
+        ilist = self.constructor([
             self.interval9,  #   0-5000
             self.interval3,  #  10-25
             self.interval5,  #  20-35
@@ -3931,63 +4015,63 @@ class TestCase017_IntervalList(TestCase):
         self.assertEqual(index, slice(0, 4))
         
     def test_intersection_length_1(self):
-        length = self.intervalList2.intersection_length(Interval("Chr", 0, 5))
+        length = self.instance2.intersection_length(Interval("Chr", 0, 5))
         self.assertEqual(length, 4)
 
     def test_intersection_length_2(self):
-        length = self.intervalList2.intersection_length(Interval("Chr", 2, 4))
+        length = self.instance2.intersection_length(Interval("Chr", 2, 4))
         self.assertEqual(length, 2)
 
     def test_intersection_length_3(self):
-        length = self.intervalList2.intersection_length(Interval("Chr", 0, 20))
+        length = self.instance2.intersection_length(Interval("Chr", 0, 20))
         self.assertEqual(length, 14)
 
     def test_intersection_length_4(self):
-        length = self.intervalList2.intersection_length(Interval("Chr", 10, 50))
+        length = self.instance2.intersection_length(Interval("Chr", 10, 50))
         self.assertEqual(length, 30)
         
     def test_intersection_fraction_1(self):
-        length = self.intervalList2.intersection_fraction(Interval("Chr", 0, 5))
+        length = self.instance2.intersection_fraction(Interval("Chr", 0, 5))
         self.assertAlmostEqual(length, 4/34.0, 2)
         
     def test_intersection_fraction_2(self):
-        length = self.intervalList2.intersection_fraction(Interval("Chr", 2, 4))
+        length = self.instance2.intersection_fraction(Interval("Chr", 2, 4))
         self.assertAlmostEqual(length, 2/34.0, 2)
 
     def test_intersection_fraction_3(self):
-        length = self.intervalList2.intersection_fraction(Interval("Chr", 0, 20))
+        length = self.instance2.intersection_fraction(Interval("Chr", 0, 20))
         self.assertAlmostEqual(length, 14/34.0, 2)
 
     def test_intersection_fraction_4(self):
-        length = self.intervalList2.intersection_fraction(Interval("Chr", 10, 50))
+        length = self.instance2.intersection_fraction(Interval("Chr", 10, 50))
         self.assertAlmostEqual(length, 30/34.0, 2)
 
     def test_intersection_fraction_5(self):
-        length = self.intervalList2.intersection_fraction(Interval("Chr", 0, 5), query=True)
+        length = self.instance2.intersection_fraction(Interval("Chr", 0, 5), query=True)
         self.assertAlmostEqual(length, 4/5.0, 2)
         
     def test_find_intersecting_1(self):
-        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 0, 1)))
+        intersections = list(self.instance2.find_intersecting(Interval("Chr", 0, 1)))
         self.assertEqual(intersections, [])
 
     def test_find_intersecting_2(self):
-        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 2, 4)))
-        self.assertEqual(intersections, [self.intervalList2[0]])
+        intersections = list(self.instance2.find_intersecting(Interval("Chr", 2, 4)))
+        self.assertEqual(intersections, [self.instance2[0]])
 
     def test_find_intersecting_3(self):
-        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 2, 15)))
-        self.assertEqual(intersections, [self.intervalList2[0], self.intervalList2[1]])
+        intersections = list(self.instance2.find_intersecting(Interval("Chr", 2, 15)))
+        self.assertEqual(intersections, [self.instance2[0], self.instance2[1]])
 
     def test_find_intersecting_4(self):
-        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 15, 22)))
-        self.assertEqual(intersections, [self.intervalList2[1], self.intervalList2[2]])
+        intersections = list(self.instance2.find_intersecting(Interval("Chr", 15, 22)))
+        self.assertEqual(intersections, [self.instance2[1], self.instance2[2]])
 
     def test_find_intersecting_5(self):
-        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 25, 50)))
-        self.assertEqual(intersections, [self.intervalList2[2]])
+        intersections = list(self.instance2.find_intersecting(Interval("Chr", 25, 50)))
+        self.assertEqual(intersections, [self.instance2[2]])
 
     def test_find_intersecting_6(self):
-        intersections = list(self.intervalList2.find_intersecting(Interval("Chr", 40, 50)))
+        intersections = list(self.instance2.find_intersecting(Interval("Chr", 40, 50)))
         self.assertEqual(intersections, [])
 
 
