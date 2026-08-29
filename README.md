@@ -100,51 +100,51 @@ In the following table, `self` and `other` represent an instance of `BaseInterva
 
 | Attribute                                 | Description                                                  |
 | ----------------------------------------- | ------------------------------------------------------------ |
-| `self.beg`                                | Return the begin/start coordinate (0-based, inclusive) of `self`. |
-| `self.clear()`                            | Alias for `null()`.                                           |
-| `self.copy()`                             | Return new copy of `self`.                                    |
-| `self.difference(other)`                  | Return an Interval object representing the set difference of `self` and `other`. |
-| `self.difference_update(other)`           | Update `self` with the result of `difference()`.              |
-| `self.empty()`                            | Set the `self` start and end coordinates both to zero.        |
-| `self.end`                                | Return the end/stop coordinate (0-based, exclusive) of `self`. |
-| `self.hull()` or `self.hull(other)`       | Return an Interval representing the hull of `self` or, optionally, `self` and `other`. |
-| `self.inner_distance(other)`              | Return the numeric inner distance between two `self` and `other`. |
-| `self.intersection(other)`                | Return an Interval representing the set intersection between `self` and `other`. |
+| `self.beg`                                | Bound variable. Return the begin/start coordinate (0-based, inclusive) of `self`. |
+| `self.clear()`                            | Callable. Alias for `null()`.                                           |
+| `self.copy()`                             | Callable. Return new copy of `self`.                                    |
+| `self.difference(other)`                  | Callable. Return an Interval object representing the set difference of `self` and `other`. |
+| `self.difference_update(other)`           | Callable. Update `self` with the result of `difference()`.              |
+| `self.empty()`                            | Callable. Set the `self` start and end coordinates both to zero.        |
+| `self.end`                                | Bound variable. Return the end/stop coordinate (0-based, exclusive) of `self`. |
+| `self.hull()` or `self.hull(other)`       | Callable. Return an Interval representing the hull of `self` or, optionally, `self` and `other`. |
+| `self.inner_distance(other)`              | Callable. Return the numeric inner distance between two `self` and `other`. |
+| `self.intersection(other)`                | Callable. Return an Interval representing the set intersection between `self` and `other`. |
 | `self.intersection_update(other)`         | Update the `self` with the result of `intersection()`.        |
-| `self.isabutting(other)`                  | Test if `self` is abutting the start or end of `other`.       |
-| `self.isabutting_beg(other)`              | Test if `self` is abutting the start of `other`.              |
-| `self.isabutting_end(other)`              | Test if `self` is abutting the end of `other`.                |
-| `self.isabutting_start(other)`            | Alias for `isabutting_beg()`.                                 |
-| `self.isabutting_stop(other)`             | Alias for `isabutting_stop()`.                                |
-| `self.isdisjoint(other)`                  | Test if `self` and `other` are non-intersecting.               |
-| `self.isempty()`                          | Test if `self` is a zero-lengthed interval.                   |
-| `self.isfinite()`                         | Test if `self` is a finite interval.                          |
-| `self.isnull()`                           | Test if `self` has `nan`-valued start or end.                 |
-| `self.isintersecting(other)`              | Test if `self` intersects `other`.                              |
-| `self.isintersecting_beg(other)`          | Test if `self` intersects the start of `other`.                 |
-| `self.isintersecting_end(other)`          | Test if `self` intersects the end of `other`.                   |
-| `self.isintersecting_start(other)`        | Alias for `isintersecting_beg()`.                             |
-| `self.isintersecting_stop(other)`         | Alias for `isintersecting_end()`.                             |
-| `self.issingleton()`                      | Test if `self` is 1 unit long.                                |
-| `self.issubinterval(other)`               | Alias for `issubset()`.                                       |
-| `self.issubset(other)`                    | Test if `self` is contained within `other`.                   |
-| `self.issuperinterval(other)`             | Alias for `issuperset()`.                                     |
-| `self.issuperset(other)`                  | Test if `self` contains `other`.                              |
-| `self.mid`                                | Return the mid-point coordinate of `self`.                    |
-| `self.name`                               | Alias for `namespace`.                                        |
-| `self.namespace`                          | The namespace of `self` (optional).                           |
-| `self.null()`                             | Delete from `self` the values in the `name`, `start`, and `end` bound variables. |
-| `self.outer_distance(other)`              | Return the outer distance between `self` and `other`.         |
-| `self.intersection_fraction(other)`            | Return the intersection fraction as relative to length of `self`.  |
-| `self.intersection_length(other)`              | Return the length of intersection betwen `self` and `other`.       |
-| `self.start`                              | Alias for `beg`.                                              |
-| `self.stop`                               | Alias for `end`.                                              |
-| `self.symmetric_difference(other)`        | Return 2-tuple representing the symmetric difference (XOR) between `self` and `other`. |
-| `self.symmetric_difference_update(other)` | Raises `NotImplementedError`.                                 |
-| `self.to_slice()`                         | Return a `slice` object containing the Pythonic range of intersecting items, or `slice(-1, -1)` if none.  |
-| `self.to_string()`                        | Return string representatio of `self`. Same as `str(self)`.   |
-| `self.union(other)`                       | Return an Interval object representing the union of `self` and `other`. |
-| `self.union_update(other)`                | Update `self` with the result of `union()`.                   |
+| `self.isabutting(other)`                  | Callable. Test if `self` is abutting the start or end of `other`.       |
+| `self.isabutting_beg(other)`              | Callable. Test if `self` is abutting the start of `other`.              |
+| `self.isabutting_end(other)`              | Callable. Test if `self` is abutting the end of `other`.                |
+| `self.isabutting_start(other)`            | Callable. Alias for `isabutting_beg()`.                                 |
+| `self.isabutting_stop(other)`             | Callable. Alias for `isabutting_stop()`.                                |
+| `self.isdisjoint(other)`                  | Callable. Test if `self` and `other` are non-intersecting.               |
+| `self.isempty()`                          | Callable. Test if `self` is a zero-lengthed interval.                   |
+| `self.isfinite()`                         | Callable. Test if `self` is a finite interval.                          |
+| `self.isnull()`                           | Callable. Test if `self` has `nan`-valued start or end.                 |
+| `self.isintersecting(other)`              | Callable. Test if `self` intersects `other`.                              |
+| `self.isintersecting_beg(other)`          | Callable. Test if `self` intersects the start of `other`.                 |
+| `self.isintersecting_end(other)`          | Callable. Test if `self` intersects the end of `other`.                   |
+| `self.isintersecting_start(other)`        | Callable. Alias for `isintersecting_beg()`.                             |
+| `self.isintersecting_stop(other)`         | Callable. Alias for `isintersecting_end()`.                             |
+| `self.issingleton()`                      | Callable. Test if `self` is 1 unit long.                                |
+| `self.issubinterval(other)`               | Callable. Alias for `issubset()`.                                       |
+| `self.issubset(other)`                    | Callable. Test if `self` is contained within `other`.                   |
+| `self.issuperinterval(other)`             | Callable. Alias for `issuperset()`.                                     |
+| `self.issuperset(other)`                  | Callable. Test if `self` contains `other`.                              |
+| `self.mid`                                | Bound variable. Read only. Return the mid-point coordinate of `self`.                    |
+| `self.name`                               | Bound variable. Alias for `namespace`.                                        |
+| `self.namespace`                          | Bound variable. The namespace of `self` (optional).                           |
+| `self.null()`                             | Callable. Delete from `self` the values in the `name`, `start`, and `end` bound variables. |
+| `self.outer_distance(other)`              | Callable. Return the outer distance between `self` and `other`.         |
+| `self.intersection_fraction(other)`       | Callable. Return the intersection fraction as relative to length of `self`.  |
+| `self.intersection_length(other)`         | Callable. Return the length of intersection betwen `self` and `other`.       |
+| `self.start`                              | Bound variable. Alias for `beg`.                                              |
+| `self.stop`                               | Bound variable. Alias for `end`.                                              |
+| `self.symmetric_difference(other)`        | Callable. Return 2-tuple representing the symmetric difference (XOR) between `self` and `other`. |
+| `self.symmetric_difference_update(other)` | Callable. Raises `NotImplementedError`.                                 |
+| `self.to_slice()`                         | Callable. Return a `slice` object containing the Pythonic range of intersecting items, or `slice(-1, -1)` if none.  |
+| `self.to_string()`                        | Callable. Return string representatio of `self`. Same as `str(self)`.   |
+| `self.union(other)`                       | Callable. Return an Interval object representing the union of `self` and `other`. |
+| `self.union_update(other)`                | Callable. Update `self` with the result of `union()`.                   |
 |                                           |                                                               |
 
 
@@ -189,55 +189,56 @@ In the following table, `self` represents an `IntervalList` instance, `interval`
 
 | Attribute  | Description |
 |---------------------------------------------|------------------------------|
-| `self.append(interval)`                     | Add an interval to the right side of `self`. |
-| `self.appendleft(interval)`                 | Add an interval to the left side of `self`. |
-| `self.beg`                                  | Return the begin/start coordinate (0-based, inclusive) of the first interval in `self`, or `nan` if empty. |
-| `self.clear()`                              | Remove all elements from `self`. |
-| `self.copy()`                               | Return a shallow copy of `self`. |
-| `self.count(interval)`                      | Return number of occurrences of `interval` in `self`. |
-| `self.end`                                  | Return the end/stop coordinate (0-based, exclusive) of the last interval in `self`, or `nan` if empty. |
-| `self.extend(iterable)`                     | Extend the right side of the `self` with intervals from `iterable`. |
-| `self.extendleft(iterable)`                 | Extend the left side of `self` with elements from the iterable. |
-| `self.find_index(interval)`                 | Return the first index of `interval` in `self`. Raises ValueError if the value is not present. |
-| `self.find_index_beg(interval)`             | Return the start (0-based inclusive) index for `interval`. |
-| `self.find_index_end(interval)`             | Return the end (0-based exclusive) index for `interval`. |
-| `self.find_index_nearest(interval)`         | Return the nearest (inclusive) index for an `interval`, returns the left-most index when members are equidistant to `interval`. |
-| `self.find_index_start(interval)`           | Alias for `find_index_beg()`. |
-| `self.find_index_stop(interval)`            | Alias for `find_index_end()`. |
-| `self.find_insertion_index(interval)`       | The recommended method for determining an `interval`s insertion position. Return the insertion index to the right of any existing identical intervals, maintaining the observed order.  |
-| `self.find_insertion_index_beg(interval)`   | Return the insertion index for a given `interval`, where the index points to the beginning/left of any existing identical intervals.  |
-| `self.find_insertion_index_end(interval)`   | Return the insertion index for a given `interval`, where the index points to the end/right of any existing identical intervals.  |
-| `self.find_insertion_index_start(interval)` | Alias for `find_insertion_index_beg()`  |
-| `self.find_insertion_index_stop(interval)`  | Alias for `find_insertion_index_end()`  |
-| `self.find_intersection_fraction(iterable)`      | Returns the fraction of intersection an `iterable` of `interval`s has with those of `self`. |
-| `self.find_intersection_index_beg(interval)`     | Return the (0-based inclusive) index of the left-most intersecting interval in `self` for a given `interval`, or -1 if none. |
-| `self.find_intersection_index_end(interval)`     | Return the (0-based exclusive) index of the right-most intersecting interval in `self` for a given `interval`, or -1 if none. |
-| `self.find_intersection_index_nearest(interval)` | Return the (0-based inclusive) index of the nearest intersecting interval in `self` for a given `interval`, or -1 if none. Returns the left-most index when members are equidistant to `interval`. |
-| `self.find_intersection_index_range(iterable)`   | Homage to `range()`. Returns generator object yielding the indices for intervals in `self` intersecting those in `iterable`. |
-| `self.find_intersection_index_slice(iterable)`   | Perform an intersect search with one or more query interval objects in `iterable` and return a `slice` object containing the Pythonic range of intersecting items, or `slice(-1, -1)` if none. |
-| `self.find_intersection_index_start(interval)`   | Alias for `find_intersection_index_beg()`. |
-| `self.find_intersection_index_stop(interval)`    | Alias for `find_intersection_index_end()`. |
-| `self.find_intersection_length(iterable)`        | Returns the length of intersects an `iterable` of interval objects have with `self`. |
-| `self.find_intersection_pairs(iterable)`         | Preform an intersect search of `self` with one or more interval objects in `iterable` and return a generator object producing a 2-tuple for each interval in `iterable` and its intersecting member in `self`. |
-| `self.find_intersecting(iterable)`              | Perform an intersect search of `self` with an `iterable` of interval objects and return an generator object producing members of `self` that intersect. |
-| `self.index(interval)`                      | Alias of `find_index()`. |
-| `self.insert(index, interval)`              | Insert `interval` into `self` before `index`. |
-| `self.insort(interval)`                     | Insert an `interval` into its sorted position, with identical intervals inserted to the right of existing ones. |
-| `self.insortleft(interval)`                 | Insert an `interval` into its sorted position, with identical intervals inserted to the left of existing ones. |
-| `self.isempty()`                            | Test if `self` is contains no intervals. |
-| `self.isfinite()`                           | Test if `self` is a finite interval. |
-| `self.isnull()`                             | Test if `self` has `nan`-valued start or end. |
-| `self.namespace`                            | The namespace of `self` (optional). |
-| `self.null()`                                | Alias for `clear()`. |
-| `self.pop()`                                | Pop one interval off the right side of `self` and return it. |
-| `self.popleft()`                            | Pop one interval off the left side of `self` and return it. |
-| `self.remove(interval)`                     | Remove an `interval` from `self`. |
-| `self.reverse()`                            | Reverse in place the order of interval members in `self.` |
-| `self.rotate(int)`                          | Rotate `self` n steps to the right (default n=1). If n is negative, rotates left. |
-| `self.start`                                | Alias for `beg.` |
-| `self.stop`                                 | Alias for `end`. |
-| `self.update(iterable)`                     | Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the right of existing ones. |
-| `self.updateleft(iterable)`                 | Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the left of existing ones. |
+| `self.append(interval)`                     | Callable. Add an interval to the right side of `self`. |
+| `self.appendleft(interval)`                 | Callable. Add an interval to the left side of `self`. |
+| `self.beg`                                  | Bound variable. Read only. Return the begin/start coordinate (0-based, inclusive) of the first interval in `self`, or `nan` if empty. |
+| `self.clear()`                              | Callable. Remove all elements from `self`. |
+| `self.copy()`                               | Callable. Return a shallow copy of `self`. |
+| `self.count(interval)`                      | Callable. Return number of occurrences of `interval` in `self`. |
+| `self.end`                                  | Bound variable. Read only. Return the end/stop coordinate (0-based, exclusive) of the last interval in `self`, or `nan` if empty. |
+| `self.extend(iterable)`                     | Callable. Extend the right side of the `self` with intervals from `iterable`. |
+| `self.extendleft(iterable)`                 | Callable. Extend the left side of `self` with elements from the iterable. |
+| `self.find_index(interval)`                 | Callable. Return the first index of `interval` in `self`. Raises ValueError if the value is not present. |
+| `self.find_index_beg(interval)`             | Callable. Return the start (0-based inclusive) index for `interval`. |
+| `self.find_index_end(interval)`             | Callable. Return the end (0-based exclusive) index for `interval`. |
+| `self.find_index_nearest(interval)`         | Callable. Return the nearest (inclusive) index for an `interval`, returns the left-most index when members are equidistant to `interval`. |
+| `self.find_index_start(interval)`           | Callable. Alias for `find_index_beg()`. |
+| `self.find_index_stop(interval)`            | Callable. Alias for `find_index_end()`. |
+| `self.find_insertion_index(interval)`       | Callable. The recommended method for determining an `interval`s insertion position. Return the insertion index to the right of any existing identical intervals, maintaining the observed order.  |
+| `self.find_insertion_index_beg(interval)`   | Callable. Return the insertion index for a given `interval`, where the index points to the beginning/left of any existing identical intervals.  |
+| `self.find_insertion_index_end(interval)`   | Callable. Return the insertion index for a given `interval`, where the index points to the end/right of any existing identical intervals.  |
+| `self.find_insertion_index_start(interval)` | Callable. Alias for `find_insertion_index_beg()`  |
+| `self.find_insertion_index_stop(interval)`  | Callable. Alias for `find_insertion_index_end()`  |
+| `self.find_intersection_index_beg(interval)`     | Callable. Return the (0-based inclusive) index of the left-most intersecting interval in `self` for a given `interval`, or -1 if none. |
+| `self.find_intersection_index_end(interval)`     | Callable. Return the (0-based exclusive) index of the right-most intersecting interval in `self` for a given `interval`, or -1 if none. |
+| `self.find_intersection_index_nearest(interval)` | Callable. Return the (0-based inclusive) index of the nearest intersecting interval in `self` for a given `interval`, or -1 if none. Returns the left-most index when members are equidistant to `interval`. |
+| `self.find_intersection_index_range(iterable)`   | Callable. Homage to `range()`. Returns generator object yielding the indices for intervals in `self` intersecting those in `iterable`. |
+| `self.find_intersection_index_slice(iterable)`   | Callable. Perform an intersect search with one or more query interval objects in `iterable` and return a `slice` object containing the Pythonic range of intersecting items, or `slice(-1, -1)` if none. |
+| `self.find_intersection_index_start(interval)`   | Callable. Alias for `find_intersection_index_beg()`. |
+| `self.find_intersection_index_stop(interval)`    | Callable. Alias for `find_intersection_index_end()`. |
+| `self.find_intersection_pairs(iterable)`         | Callable. Preform an intersect search of `self` with one or more interval objects in `iterable` and return a generator object producing a 2-tuple for each interval in `iterable` and its intersecting member in `self`. |
+| `self.find_intersecting(iterable)`              | Callable. Perform an intersect search of `self` with an `iterable` of interval objects and return an generator object producing members of `self` that intersect. |
+| `self.index(interval)`                      | Callable. Alias of `find_index()`. |
+| `self.insert(index, interval)`              | Callable. Insert `interval` into `self` before `index`. |
+| `self.insort(interval)`                     | Callable. Insert an `interval` into its sorted position, with identical intervals inserted to the right of existing ones. |
+| `self.insortleft(interval)`                 | Callable. Insert an `interval` into its sorted position, with identical intervals inserted to the left of existing ones. |
+| `self.intersection_fraction(iterable)`      | Callable. Returns the fraction of intersection an `iterable` of `interval`s has with those of `self`. |
+| `self.intersection_length(iterable)`        | Callable. Returns the length of intersects an `iterable` of interval objects have with `self`. |
+| `self.isempty()`                            | Callable. Test if `self` is contains no intervals. |
+| `self.isfinite()`                           | Callable. Test if `self` is a finite interval. |
+| `self.isnull()`                             | Callable. Test if `self` has `nan`-valued start or end. |
+| `self.namespace`                            | Bound variable. Read only. The namespace of `self` (optional). |
+| `self.null()`                               | Callable. Alias for `clear()`. |
+| `self.pop()`                                | Callable. Pop one interval off the right side of `self` and return it. |
+| `self.popleft()`                            | Callable. Pop one interval off the left side of `self` and return it. |
+| `self.remove(interval)`                     | Callable. Remove an `interval` from `self`. |
+| `self.reverse()`                            | Callable. Reverse in place the order of interval members in `self.` |
+| `self.rotate(int)`                          | Callable. Rotate `self` n steps to the right (default n=1). If n is negative, rotates left. |
+| `self.sort()`                               | Callable. Sort `self` in-place. |
+| `self.start`                                | Bound variable. Read only. Alias for `beg`. |
+| `self.stop`                                 | Bound variable. Read only. Alias for `end`. |
+| `self.update(iterable)`                     | Callable. Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the right of existing ones. |
+| `self.updateleft(iterable)`                 | Callable. Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the left of existing ones. |
 
 The `IntervalList` constructor and its methods taking `interval` or `iterable` arguments as input provide a `setter` keyword argument, which accepts a function used to extract/construct from the input object a `BaseInterval`-descendant class instance for setting the `IntervalList`. This is useful when the inputs are not of the same object class/interface as the members of `IntervalList`. The `setter` argument function must accept one (and only one) positional input argument and output a single `BaseInterval`-descendant object.
 
