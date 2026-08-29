@@ -2674,6 +2674,9 @@ class TestCase016_IntervalList(TestCase):
     def test_rotate_0(self):
         self.assertTrue(hasattr(self.constructor(), 'rotate'))
 
+    def test_sort_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'sort'))
+
     def test_start_0(self):
         self.assertTrue(hasattr(self.constructor(), 'start'))
 
@@ -3464,6 +3467,24 @@ class TestCase017_IntervalList(TestCase):
         ilist.remove(self.interval11)
 
         expected_max = [97, 97]
+        observed_max = [
+            ilist._get_node(i).max \
+            for i in range(len(ilist))
+        ]
+        self.assertEqual(observed_max, expected_max)
+
+    def test_sort_1(self):
+        ilist = self.constructor()
+        ilist.extend([
+            self.interval5,  # 20-35
+            self.interval3,  # 10-25
+            self.interval12, # 35-97
+            self.interval1   # 1-5
+        ])
+        self.assertEqual(list(ilist), [self.interval5, self.interval3, self.interval12, self.interval1])
+        ilist.sort()
+        self.assertEqual(list(ilist), [self.interval1, self.interval3, self.interval5, self.interval12])
+        expected_max = [5, 25, 35, 97]
         observed_max = [
             ilist._get_node(i).max \
             for i in range(len(ilist))

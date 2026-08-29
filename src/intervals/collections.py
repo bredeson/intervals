@@ -1,10 +1,7 @@
 """
-Performance Notes:
- 1. A collections.deque() is implemented in C and supports O(1) 
-    insert()s and pop()s on either end, and is therefore faster 
-    than a builtin.list() (which is O(n) performance b/c of re-allocs). 
-    See:
-    https://stackoverflow.com/questions/23487307/python-deque-vs-list-performance-comparison
+This module provides support for collections of Interval objects in sorted
+order. The IntervalList class is a subclass of collections.deque() and provides
+efficient insertion, deletion, and iteration while maintaining sorted order.
 
 """
 
@@ -48,8 +45,8 @@ def _node_pos_nested(node):
     return (node.interval.isempty(), node.interval.beg, -node.interval.end)
 
 
-def remit(x):
-    return x
+def remit(item):
+    return item
 
 
 def isiterable(item):
@@ -150,78 +147,77 @@ class BaseIntervalCollection(
 
     @property
     def namespace(self):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'namespace'))
 
     
     @namespace.setter
     def namespace(self, namespace):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'namespace'))    
 
     
     @property
     def beg(self):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'beg'))
 
     
     @property
     def start(self):
-        """
-        self.start -> value
-
-        Alias for the `beg` attribute.
-        
-        >>> interval.start = 350
-        >>> print(interval.start)
-        350
-        """
+        """Raise NotImplementedError."""
         return self.beg
 
 
     @property
     def mid(self):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'mid'))
 
 
     @property
     def end(self):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'end'))
 
     
     @property
     def stop(self):
-        """
-        self.stop -> value
-        
-        Alias for `end` attribute.
-        
-        >>> interval.stop = 500
-        >>> print(interval.stop)
-        500
-        """
+        """Raise NotImplementedError."""
         return self.end
 
     
     def clear(self):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'clear'))
 
     
     def copy(self):
+        """
+        self.copy() -> IntervalList
+
+        Create a copy of self.
+        """
         return self.__class__(self, setter=self._setter)
 
     
     def empty(self):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'empty'))
 
     
     def null(self):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'null'))
 
     
     def pop(self):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'pop'))
 
     
     def remove(self, interval):
+        """Raise NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'remove'))
 
     
@@ -242,6 +238,16 @@ class BaseIntervalCollection(
 
 
     def to_string(self):
+        """
+        self.to_string() -> str
+
+        Return a string representation of the interval.
+
+        >>> interval = Interval("Chr", 350, 475)
+        >>> print(interval.to_string())
+        [Chr, 350, 475]
+        """
+
         return str(self)
     
 
@@ -380,15 +386,42 @@ class BaseIntervalCollection(
 
 
 class IntervalList(BaseIntervalCollection, _deque):
+    """
+    A list of Interval-descendant objects, sorted by start position.
+
+    IntervalList inherits from `collections.deque()` but requires all
+    BaseInterval-descendant object members to be of the same namespace,
+    or a ValueError is raised. 
+    
+    For many functions to work correctly, the user is required to maintain
+    IntervalList members in sorted order (which is not enforced by the 
+    class) or risk incorrect behavior. As such, the user is recommended
+    to use the `insort()` and `insortleft()` methods to insert new members
+    into the IntervalList in proper order. The `update()` and `updateleft()`
+    methods are also provided to insert multiple members. Methods such as
+    `append()`, `appendleft()`, `extend()`, and `extendleft()` are provided
+    for convenience, but the user is responsible for ensuring sorted order
+    is maintained when using these methods. Unlike the `deque()` class, 
+    however, an in-place `list()`-like `sort()` method is provided.
+
+    The `find_*()` methods are provided to search for members of the 
+    IntervalList. These methods return the index of the found member. When 
+    a member is not found, the `find_index()` and `find_intersection_index_*()`
+    methods return `-1`, while `find_index_*()` and `find_insertion_index*()`
+    methods return the index where a new member should be inserted to maintain
+    sorted order.
+
+    The `lower` and `upper` keyword parameters can be used to restrict the
+    search space when the lower and upper bounds are known.
+
+    The `setter` keyword parameter accepts a callable used to extract or
+    construct from a method's input object an Interval-descendant class 
+    instance for querying or storing the IntervalList. This is useful
+    when the input is not of the same object class as the members of 
+    IntervalList. The callable must accept one (and only one) argument and
+    outputs a single Interval-descendant object.
+    """
     def __init__(self, intervals=[], setter=None):
-        """
-        The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
-        class instance for setting the IntervalList. This is useful
-        when the inputs are not of the same object class as the members
-        of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
-        """
         BaseIntervalCollection.__init__(self, setter or remit)
         _deque.__init__(self)
         if intervals:
@@ -407,6 +440,15 @@ class IntervalList(BaseIntervalCollection, _deque):
         return _deque.__setitem__(self, index, node)
 
 
+    def _copy_node(self, node):
+        return _Node(node.interval, node.instance, node.max, node.sublist)
+
+
+    def _reset_node_max(self, node):
+        node.max = node.interval.end
+        return node
+    
+
     def _update_node_max(self, index, stop):
         prev = None
         if index != 0 and index > -len(self):
@@ -424,65 +466,150 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     
     def __add__(self, intervals):
+        """
+        self + intervals -> IntervalList
+
+        Return a new IntervalList containing the elements of self and
+        the elements of intervals.
+        """
         copy = self.copy()
         copy.extend(intervals)
         return copy
 
     
     def __bool__(self):
+        """
+        bool(self) -> bool
+
+        Test if an IntervalList is non-empty.
+        """
         return bool(len(self))
 
     
     def __contains__(self, interval):
+        """
+        interval in self -> bool
+        self.__contains__(interval) -> bool
+
+        Check if an interval is in the IntervalList.
+        """
         return not (self.find_index(interval) < 0)
 
     
     def __copy__(self):
+        """
+        self.__copy__() -> IntervalList
+
+        Create a shallow copy of the IntervalList.
+        """
         return self.copy()
 
     
     def __delitem__(self, index):
+        """
+        del(self[index]) -> None
+        self.__delitem__(index) -> None
+
+        Delete the interval at the given index.
+        """
         node = self._get_node(index)
         _deque.__delitem__(self, index)
         self._update_node_max(index, node.max)
 
 
     def __getitem__(self, index):
+        """
+        self[index] -> interval
+        self.__getitem__(index) -> interval
+
+        Return the interval at the given index.
+        """
         return self._get(_deque.__getitem__(self, index))
 
 
     def __iadd__(self, intervals):
+        """
+        self += intervals -> IntervalList
+
+        Extend the IntervalList in-place with the elements of intervals.
+        """
         self.extend(intervals)
         return self
 
     
     def __imul__(self, value):
+        """
+        self *= value -> IntervalList
+        self.__imul__(value) -> IntervalList
+
+        Extend the IntervalList in-place with the elements of self
+        repeated value times.
+        """
         self.__init__(list(self) * value, setter=self._setter)
         return self
 
     
     def __iter__(self):
+        """
+        iter(self) -> generator
+        self.__iter__() -> generator
+
+        Return a generator object for iterating over the intervals in
+        the IntervalList.
+        """
         return map(self._get, self._iter_nodes())
 
     
     def __len__(self):
+        """
+        len(self) -> int
+        self.__len__() -> int
+
+        Return the number of intervals in the IntervalList.
+        """
         return _deque.__len__(self)
 
 
     def __mul__(self, value):
+        """
+        self * value -> IntervalList
+        self.__mul__(value) -> IntervalList
+
+        Return a new IntervalList containing the elements of self
+        repeated value times.
+        """
         return self.__class__(list(self) * value, setter=self._setter)
 
     
     def __reversed__(self):
-        raise NotImplementedError(_NO_METHOD(self,'__reversed__'))
-        # return (self[~i] for i in range(len(self)))
+        """
+        reversed(self) -> generator
+        self.__reversed__() -> generator
+
+        Return a generator object for iterating over the intervals in
+        the IntervalList in reverse order.
+        """
+        return (self[~i] for i in range(len(self)))
 
 
     def __rmul__(self, value):
+        """
+        value * self -> IntervalList
+        self.__rmul__(value) -> IntervalList
+
+        Return a new IntervalList containing the elements of self
+        repeated value times.
+        """
         return self.__mul__(value)
     
     
     def __setitem__(self, index, interval):
+        """
+        self[index] = interval
+        self.__setitem__(index, interval)
+
+        Set the interval at the given index.
+        """
         node = self._set(interval)
         stop = max(self._get_node(index).max, node.max)
         _deque.__setitem__(self, index, node)
@@ -491,6 +618,12 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     @property
     def namespace(self):
+        """
+        self.namespace -> value
+
+        Read only. Return the namespace of the IntervalList. Returns 
+        None if null.
+        """
         return _NULL_NAME \
             if   self.isnull() \
             else self._get_node(0).interval.namespace
@@ -498,6 +631,15 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     @property
     def beg(self):
+        """
+        self.beg -> value
+
+        Read only. Return self's start numeric value (0-based).
+
+        >>> ilist = IntervalList([Interval("Chr", 350, 475)])
+        >>> print(ilist.beg)
+        350
+        """
         return _NULL_POS \
             if   self.isnull() \
             else self._get_node(0).interval.beg
@@ -505,16 +647,43 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     @property
     def start(self):
+        """
+        self.start -> value
+
+        Read only.Alias for the `beg` attribute.
+        
+        >>> ilist = IntervalList([Interval("Chr", 350, 475)])
+        >>> print(ilist.start)
+        350
+        """
         return self.beg
 
 
     @property
     def mid(self):
+        """
+        self.mid -> value
+
+        Read only. Return self's midpoint value.
+
+        >>> ilist = IntervalList([Interval("Chr", 350, 475)])
+        >>> print(ilist.mid)
+        412.5
+        """
         return self.beg + (self.end - self.beg) / 2.0
     
 
     @property
     def end(self):
+        """
+        self.end -> value
+
+        Read only. Return self's end value (1-based).
+
+        >>> ilist = IntervalList([Interval("Chr", 350, 475)])
+        >>> print(ilist.end)
+        475
+        """
         return _NULL_POS \
             if   self.isnull() \
             else self._get_node(-1).interval.end
@@ -522,15 +691,38 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     @property
     def stop(self):
+        """
+        self.stop -> value
+
+        Read only. Alias for the `end` attribute.
+
+        >>> ilist = IntervalList([Interval("Chr", 350, 475)])
+        >>> print(ilist.stop)
+        475
+        """
         return self.end
 
 
     def isnull(self):
-        return len(self) < 1
+        """
+        self.isnull() -> bool
+
+        Check if the IntervalList is null.
+
+        >>> ilist = IntervalList()
+        >>> ilist.isnull()
+        True
+        """
+        # intervals containing nan values are sorted to the end of the list, 
+        # so check the last interval for nullity:
+        return len(self) < 1 or self._get_node(-1).interval.isnull()
 
     
     def append(self, interval, setter=None):
         """
+        self.append(interval) -> None
+        self.append(interval, setter=callable) -> None
+        
         Append interval to the right side of IntervalList.
 
         The `setter` keyword argument accepts a callable used to
@@ -539,6 +731,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300)])
+        >>> ilist.append(Interval("Chr", 350, 475))
+        >>> print(ilist)
+        [Chr:50-300, Chr:350-475]
         """
         node = self._set(interval, setter)
         index = len(self)
@@ -548,6 +745,9 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def appendleft(self, interval, setter=None):
         """
+        self.appendleft(interval) -> None
+        self.appendleft(interval, setter=callable) -> None
+
         Append interval to the left side of IntervalList.
 
         The `setter` keyword argument accepts a callable used to 
@@ -556,6 +756,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 350, 475)])
+        >>> ilist.appendleft(Interval("Chr", 50, 300))
+        >>> print(ilist)
+        [Chr:50-300, Chr:350-475]
         """
         node = self._set(interval, setter)
         _deque.appendleft(self, node)
@@ -563,18 +768,31 @@ class IntervalList(BaseIntervalCollection, _deque):
 
 
     def clear(self):
+        """
+        self.clear() -> None
+
+        Clear all elements from the IntervalList.
+        """
         _deque.clear(self)
 
         
     def copy(self):
-        """Create a copy of the IntervalList."""
+        """
+        self.copy() -> IntervalList
+
+        Create a copy of the IntervalList.
+        """
+        # self is already sorted, avoid a re-sort
         copy = self.__class__(setter=self._setter)
-        copy.extend(self)  # self is already sorted, so avoid a sort
+        copy.extend(map(self._copy_node, self._iter_nodes()), setter=remit)
         return copy
         
 
     def count(self, interval, setter=None):
         """
+        self.count(interval) -> int
+        self.count(interval, setter=callable) -> int
+
         Count the number of elements equal to interval.
         
         The `setter` keyword argument accepts a callable used to 
@@ -583,12 +801,25 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([
+        ...     Interval("Chr", 50, 300),
+        ...     Interval("Chr", 50, 300),
+        ...     Interval("Chr", 50, 300),
+        ...     Interval("Chr", 50, 300),
+        ...     Interval("Chr", 350, 475)
+        ... ])
+        >>> ilist.count(Interval("Chr", 50, 300))
+        4
         """
         return _deque.count(self, self._set(interval, setter))
         
 
     def extend(self, intervals, setter=None):
         """
+        self.extend(intervals) -> None
+        self.extend(intervals, setter=callable) -> None
+        
         Extend the right side of the IntervalList with elements from
         the iterable.
 
@@ -598,6 +829,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the inputs are not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList()
+        >>> ilist.extend([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> print(ilist)
+        [Chr:50-300, Chr:350-475]
         """
         prev = None
         if self:
@@ -612,6 +848,9 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def extendleft(self, intervals, setter=None):
         """
+        self.extendleft(intervals) -> None
+        self.extendleft(intervals, setter=callable) -> None
+
         Extend the left side of the IntervalList with elements from 
         the iterable.
 
@@ -621,6 +860,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the inputs are not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList()
+        >>> ilist.extendleft([Interval("Chr", 350, 475), Interval("Chr", 50, 300)])
+        >>> print(ilist)
+        [Chr:50-300, Chr:350-475]
         """
         intervals = _iter(intervals)
         _deque.extendleft(self, map(lambda i: self._set(i, setter), intervals))
@@ -638,6 +882,10 @@ class IntervalList(BaseIntervalCollection, _deque):
             
     def index(self, interval, start=0, stop=-1, setter=None):
         """
+        self.index(interval) -> int
+        self.index(interval, start=int, stop=int) -> int
+        self.index(interval, start=int, stop=int, setter=callable) -> int
+
         Return the first index of interval. 
         
         Raises ValueError if the interval is not present.
@@ -648,6 +896,10 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> ilist.index(Interval("Chr", 350, 475))
+        1
         """
         index = \
             self.find_index(
@@ -664,6 +916,9 @@ class IntervalList(BaseIntervalCollection, _deque):
         
     def insert(self, index, interval, setter=None):
         """
+        self.insert(index, interval) -> None
+        self.insert(index, interval, setter=callable) -> None
+
         Insert interval before index
 
         The `setter` keyword argument accepts a callable used to 
@@ -672,6 +927,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> ilist.insert(1, Interval("Chr", 300, 350))
+        >>> print(ilist)
+        [Chr:50-300, Chr:300-350, Chr:350-475]
         """
         node = self._set(interval, setter)
         _deque.insert(self, index, node)
@@ -680,6 +940,10 @@ class IntervalList(BaseIntervalCollection, _deque):
         
     def insort(self, interval, lower=0, upper=-1, setter=None):
         """
+        self.insort(interval) -> int
+        self.insort(interval, lower=int, upper=int) -> int
+        self.insort(interval, lower=int, upper=int, setter=callable) -> int
+
         Insert an interval into its sorted position, with identical
         intervals inserted to the right of existing ones.
 
@@ -689,6 +953,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> ilist.insort(Interval("Chr", 300, 350))
+        >>> print(ilist)
+        [Chr:50-300, Chr:300-350, Chr:350-475]
         """
         index = \
             self.find_insertion_index_end(
@@ -703,6 +972,10 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def insortleft(self, interval, lower=0, upper=-1, setter=None):
         """
+        self.insortleft(interval) -> int
+        self.insortleft(interval, lower=int, upper=int) -> int
+        self.insortleft(interval, lower=int, upper=int, setter=callable) -> int
+
         Insert an interval into its sorted position, with identical
         intervals inserted to the left of existing ones.
 
@@ -712,6 +985,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> ilist.insortleft(Interval("Chr", 300, 350))
+        >>> print(ilist)
+        [Chr:50-300, Chr:300-350, Chr:350-475]
         """
         index = \
             self.find_insertion_index_beg(
@@ -726,6 +1004,9 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def update(self, intervals, setter=None):
         """
+        self.update(intervals) -> None
+        self.update(intervals, setter=callable) -> None
+        
         `insort()` a collection of intervals
         
         The `setter` keyword argument accepts a callable used to 
@@ -734,6 +1015,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the inputs are not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300)])
+        >>> ilist.update([Interval("Chr", 350, 475), Interval("Chr", 300, 350)])
+        >>> print(ilist)
+        [Chr:50-300, Chr:300-350, Chr:350-475]
         """
         nodes = map(lambda i: self._set(i, setter), intervals)
         for node in sorted(nodes, key=_node_pos):
@@ -742,6 +1028,9 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def updateleft(self, intervals, setter=None):
         """
+        self.updateleft(intervals) -> None
+        self.updateleft(intervals, setter=callable) -> None
+
         `insortleft()` a collection of intervals
 
         The `setter` keyword argument accepts a callable used to 
@@ -750,6 +1039,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the inputs are not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300)])
+        >>> ilist.updateleft([Interval("Chr", 350, 475), Interval("Chr", 300, 350)])
+        >>> print(ilist)
+        [Chr:50-300, Chr:300-350, Chr:350-475]
         """
         nodes = map(lambda i: self._set(i, setter), intervals)
         for node in sorted(nodes, key=_node_pos):
@@ -758,14 +1052,32 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def pop(self):
         """
+        self.pop() -> interval
+
         Pop one item off the right side of IntervalList and return it.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> interval = ilist.pop()
+        >>> print(interval)
+        Chr:350-475
+        >>> print(ilist)
+        [Chr:50-300]
         """
         return self._get(_deque.pop(self))
 
 
     def popleft(self):
         """
+        self.popleft() -> interval
+
         Pop one item off the left side of IntervalList and return it.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> interval = ilist.popleft()
+        >>> print(interval)
+        Chr:50-300
+        >>> print(ilist)
+        [Chr:350-475]
         """
         node = _deque.popleft(self)
         self._update_node_max(0, node.max)
@@ -774,7 +1086,11 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def remove(self, interval, setter=None):
         """
-        Remove an interval from the IntervalList.
+        self.remove(interval) -> int
+        self.remove(interval, setter=callable) -> int
+
+        Remove an interval from the IntervalList. Returns the index of
+        the removed interval.
 
         The `setter` keyword argument accepts a callable used to 
         extract/construct from the input object an Interval-descendant
@@ -782,6 +1098,13 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr",280,400), Interval("Chr", 350, 475)])
+        >>> index = ilist.remove(Interval("Chr",280,400))
+        >>> print(index)
+        1
+        >>> print(ilist)
+        [Chr:50-300, Chr:350-475]
         """
         index = self.find_index(interval, setter=setter)
         if 0 <= index < len(self):
@@ -790,12 +1113,42 @@ class IntervalList(BaseIntervalCollection, _deque):
             raise ValueError(_NOT_IN(self, repr(interval)))
         return index
 
+
+    def sort(self, key=None, reverse=False):
+        """
+        self.sort() -> None
+
+        Sort the IntervalList in place. The `key` and `reverse` 
+        arguments are provided for compatibility with the built-in
+        `list.sort()` method, but are ignored; the IntervalList is
+        always sorted by start position.
+
+        >>> ilist = IntervalList()
+        >>> ilist.extend([Interval("Chr", 350, 475), Interval("Chr", 50, 300)])
+        >>> print(ilist)
+        [Chr:350-475, Chr:50-300]
+        >>> ilist.sort()
+        >>> print(ilist)
+        [Chr:50-300, Chr:350-475]
+        """
+        if self:
+            nodes = sorted(self._iter_nodes())
+            self.clear()
+            self.extend(map(self._reset_node_max, nodes), setter=remit)
+
         
     def find_index_beg(self, interval, lower=0, upper=-1, setter=None):
         """
-        Return the start (inclusive) index for a query interval. 
-        IntervalList members may not necessarily overlap the input 
-        interval object.
+        self.find_index_beg(interval) -> int
+        self.find_index_beg(interval, setter=callable) -> int
+        self.find_index_beg(interval, lower=int, upper=int) -> int
+        
+        Return the start/left-most (inclusive) index for the input
+        interval. IntervalList members may not necessarily intersect 
+        the input interval object. When the input interval overlaps
+        an existing member, the index of the left-most intersecting 
+        member is returned. If no members intersect the input interval,
+        the equivalent of the insertion index is returned.
 
         The `lower` and `upper` keywords can be used to restrict the
         search space when the lower and upper bounds are known.
@@ -806,6 +1159,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_index_beg(Interval("Chr", 280,400))
+        >>> print(index)
+        0
         """
         node = self._set(interval, setter, False)
         if not (0 <= lower < len(self)):
@@ -823,8 +1181,18 @@ class IntervalList(BaseIntervalCollection, _deque):
     
     def find_index_end(self, interval, lower=0, upper=-1, setter=None):
         """
-        Return the end (exclusive) index for a query interval;
-        i.e., the index of the first non-intersecting interval.
+        self.find_index_end(interval) -> int
+        self.find_index_end(interval, setter=callable) -> int
+        self.find_index_end(interval, lower=int, upper=int) -> int
+
+        Return the end/right-most (exclusive) index for the input 
+        interval (i.e., the index of the first non-intersecting 
+        member to the right of the input interval). IntervalList 
+        members may not necessarily intersect the input interval 
+        object. When the input interval intersects an existing member,
+        the index after the right-most intersecting member is returned.
+        If no members intersect the input interval, the equivalent of
+        the insertion index is returned. 
 
         The `lower` and `upper` keywords can be used to restrict the
         search space when the lower and upper bounds are known.
@@ -835,6 +1203,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_index_end(Interval("Chr", 280,400))
+        >>> print(index)
+        2
         """
         node = self._set(interval, setter, False)
         if not (0 <= lower < len(self)):
@@ -854,7 +1227,11 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def find_index(self, interval, lower=0, upper=-1, setter=None):
         """
-        Return the index for a query interval, or -1 if it doesn't
+        self.find_index(interval) -> int
+        self.find_index(interval, setter=callable) -> int
+        self.find_index(interval, lower=int, upper=int) -> int
+
+        Return the index for the input interval, or -1 if it doesn't
         exist.
 
         The `lower` and `upper` keywords can be used to restrict the
@@ -866,6 +1243,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_index(Interval("Chr", 350, 475))
+        >>> print(index)
+        1
         """
         node = self._set(interval, setter, False)
         if not (0 <= lower < len(self)):
@@ -885,7 +1267,11 @@ class IntervalList(BaseIntervalCollection, _deque):
     
     def find_index_nearest(self, interval, lower=0, upper=-1, setter=None):
         """
-        Return the nearest (inclusive) index for a query interval. 
+        self.find_index_nearest(interval) -> int
+        self.find_index_nearest(interval, setter=callable) -> int
+        self.find_index_nearest(interval, lower=int, upper=int) -> int
+
+        Return the nearest (inclusive) index for the input interval. 
         IntervalList members may not necessarily intersect the input 
         Interval object. Returns the left-most index when members 
         are equidistant to the query interval.
@@ -899,6 +1285,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_index_nearest(Interval("Chr", 301,302))
+        >>> print(index)
+        0 
         """
         node = self._set(interval, setter, False)
         if not (0 <= lower < len(self)):
@@ -936,8 +1327,13 @@ class IntervalList(BaseIntervalCollection, _deque):
     
     def find_insertion_index_beg(self, interval, lower=0, upper=-1, setter=None):
         """
-        Insert an interval into its sorted position, with identical
-        intervals inserted to the beginning/left of existing ones.
+        self.find_insertion_index_beg(interval) -> int
+        self.find_insertion_index_beg(interval, setter=callable) -> int
+        self.find_insertion_index_beg(interval, lower=int, upper=int) -> int
+
+        Return the index at which to insert the input interval into 
+        its sorted position, with identical intervals inserted to the 
+        beginning/left of existing ones.
 
         The `setter` keyword argument accepts a callable used to 
         extract/construct from the input object an Interval-descendant
@@ -945,6 +1341,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_insertion_index_beg(Interval("Chr", 280, 350))
+        >>> print(index)
+        1
         """
         node = self._set(interval, setter)
         if not (0 <= lower < len(self)):
@@ -962,8 +1363,13 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def find_insertion_index_end(self, interval, lower=0, upper=-1, setter=None):
         """
-        Insert an interval into its sorted position, with identical
-        intervals inserted to the end/right of existing ones.
+        self.find_insertion_index_end(interval) -> int
+        self.find_insertion_index_end(interval, setter=callable) -> int
+        self.find_insertion_index_end(interval, lower=int, upper=int) -> int
+
+        Return the index at which to insert the input interval into 
+        its sorted position, with identical intervals inserted to the 
+        end/right of existing ones.
 
         The `setter` keyword argument accepts a callable used to 
         extract/construct from the input object an Interval-descendant
@@ -971,6 +1377,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_insertion_index_end(Interval("Chr", 280, 350))
+        >>> print(index)
+        2
         """
         node = self._set(interval, setter)
         if not (0 <= lower < len(self)):
@@ -988,6 +1399,10 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def find_intersection_index_beg(self, interval, lower=0, upper=-1, setter=None):
         """
+        self.find_intersection_index_beg(interval) -> int
+        self.find_intersection_index_beg(interval, setter=callable) -> int
+        self.find_intersection_index_beg(interval, lower=int, upper=int) -> int
+
         Return the (inclusive) index of the left-most intersecting
         IntervalList member, or -1 if none.
 
@@ -1000,6 +1415,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_intersection_index_beg(Interval("Chr", 280, 400))
+        >>> print(index)
+        0
         """
         node = self._set(interval, setter, False)
         index = self.find_index_beg(node.interval, lower, upper, remit)
@@ -1011,8 +1431,13 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def find_intersection_index_end(self, interval, lower=0, upper=-1, setter=None):
         """
+        self.find_intersection_index_end(interval) -> int
+        self.find_intersection_index_end(interval, setter=callable) -> int
+        self.find_intersection_index_end(interval, lower=int, upper=int) -> int
+
         Return the (exclusive) index of the right-most intersecting
-        IntervalList member, or -1 if none.
+        IntervalList member (i.e., the index of the first non-intersecting 
+        member to the right of the input interval), or -1 if none.
 
         The `lower` and `upper` keywords can be used to restrict the
         search space when the lower and upper bounds are known.
@@ -1023,6 +1448,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_intersection_index_end(Interval("Chr", 280, 400))
+        >>> print(index)
+        2
         """
         node = self._set(interval, setter, False)
         index = self.find_index_end(node.interval, lower, upper, remit)
@@ -1034,6 +1464,10 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def find_intersection_index_nearest(self, interval, lower=0, upper=-1, setter=None):
         """
+        self.find_intersection_index_nearest(interval) -> int
+        self.find_intersection_index_nearest(interval, setter=callable) -> int
+        self.find_intersection_index_nearest(interval, lower=int, upper=int) -> int
+
         Return the (inclusive) index of the nearest intersecting 
         IntervalList member, or -1 if none. Returns the left-most 
         index when members are equidistant to the query interval.
@@ -1047,6 +1481,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 350), Interval("Chr", 350, 475)])
+        >>> index = ilist.find_intersection_index_nearest(Interval("Chr", 280, 351))
+        >>> print(index)
+        0
         """
         node = self._set(interval, setter, False)
         index = self.find_index_nearest(node.interval, lower, upper, remit)
@@ -1058,6 +1497,9 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def find_intersection_index_range(self, intervals, setter=None):
         """
+        self.find_intersection_index_range(intervals) -> generator
+        self.find_intersection_index_range(intervals, setter=callable) -> generator
+
         An homage to the `range()` callable. Perform an IntervalList 
         overlap search with one or more query interval objects and 
         return a generator object that produces a sequence of integer
@@ -1071,6 +1513,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> indices = ilist.find_intersection_index_range(Interval("Chr", 280, 400))
+        >>> print(list(indices))
+        [0, 1]
         """
         nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
         
@@ -1087,6 +1534,9 @@ class IntervalList(BaseIntervalCollection, _deque):
             
     def find_intersection_index_slice(self, intervals, setter=None):
         """
+        self.find_intersection_index_slice(intervals) -> slice
+        self.find_intersection_index_slice(intervals, setter=callable) -> slice
+
         Perform an IntervalList overlap search with one or more query
         interval objects and return a slice object containing the
         Pythonic range of intersecting items, or `slice(-1, -1)` if
@@ -1098,6 +1548,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> index_slice = ilist.find_intersection_index_slice(Interval("Chr", 280, 400))
+        >>> print(index_slice)
+        slice(0, 2, None)
         """
         if not intervals:
             return slice(-1, -1)
@@ -1128,6 +1583,9 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def find_intersecting_pairs(self, intervals, setter=None):
         """
+        self.find_intersecting_pairs(intervals) -> generator
+        self.find_intersecting_pairs(intervals, setter=callable) -> generator
+
         Perform an overlap search of IntervalList with one or more
         query interval objects and return a generator object producing
         2-tuples of each query interval and its intersecting 
@@ -1139,6 +1597,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
+        >>> pairs = ilist.find_intersecting_pairs(Interval("Chr", 40, 90))
+        >>> print(list(pairs))
+        [(Chr:40-90, Chr:20-60), (Chr:40-90, Chr:80-100)]
         """
         nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
         nodes = sorted(nodes, key=_node_pos)
@@ -1152,6 +1615,9 @@ class IntervalList(BaseIntervalCollection, _deque):
     
     def find_intersecting(self, intervals, setter=None):
         """
+        self.find_intersecting(intervals) -> generator
+        self.find_intersecting(intervals, setter=callable) -> generator
+
         Perform an overlap search of IntervalList with one or more
         query interval objects and return a generator object producing
         IntervalList members intersecting the input interval record(s).
@@ -1162,6 +1628,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
         argument and outputs a single Interval-descendant object.
+
+        >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
+        >>> intersecting = ilist.find_intersecting(Interval("Chr", 40, 90))
+        >>> print(list(intersecting))
+        [Chr:20-60, Chr:80-100]
         """
         return map(self.__getitem__, self.find_intersection_index_range(intervals, setter=setter))
 
@@ -1185,7 +1656,8 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def intersection_length(self, intervals, setter=None):
         """
-        self.intersection_length(other) -> value
+        self.intersection_length(other) -> int
+        self.intersection_length(other, setter=callable) -> int
 
         Returns the intersection length between two intervals.
 
@@ -1220,9 +1692,15 @@ class IntervalList(BaseIntervalCollection, _deque):
     def intersection_fraction(self, intervals, query=False, setter=None):
         """
         self.intersection_fraction(other) -> float
+        self.intersection_fraction(other, query=bool) -> float
+        self.intersection_fraction(other, query=bool, setter=callable) -> float
 
         Returns the fraction of overlap a query interval or 
         IntervalList object has with the calling IntervalList object.
+
+        The `query` keyword argument specifies whether to use the length
+        of the input intervals as the numerator (True) or the calling 
+        IntervalList as the numerator (False). The default is False.
 
         The `setter` keyword argument accepts a callable used to 
         extract/construct from the input object an Interval-descendant
@@ -3026,7 +3504,14 @@ class IntervalSet(BaseIntervalCollection):
 
 # NOTES:
 # - builtin numeric types all have a .real, .imag, and conjugate attributes
-
+#
+# Performance:
+#  1. A collections.deque() is implemented in C and supports O(1) 
+#     insert()s and pop()s on either end, and is therefore faster 
+#     than a builtin.list() (which is O(n) performance b/c of re-allocs). 
+#     See:
+#     https://stackoverflow.com/questions/23487307/python-deque-vs-list-performance-comparison
+#
 # Resources:
 # 1. https://github.com/python/cpython/tree/main/Modules
 #
