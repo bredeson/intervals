@@ -1,6 +1,9 @@
 # Name
 `intervals` - Pure Python implementation of data structures for interval operations
 
+
+# Table of Contents
+
 - [Description](#description)
   - [Terminology](#terminology)
 - [Installation](#installation)
