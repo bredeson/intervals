@@ -14,6 +14,11 @@ _BAD_OPERAND_TYPE = (
     "'{1.__class__.__name__}' and '{2.__class__.__name__}'"
 ).format
 
+_BAD_SETTER_TYPE = (
+    "unsupported setter method argument or return type(s) for "
+    "{0.__class__.__name__}.{1}(): '{2.__class__.__name__}'"
+).format
+
 _ILL_DEFINED = (
     "Result is ill-defined, use {0}() instead"
 ).format

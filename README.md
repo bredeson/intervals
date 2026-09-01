@@ -1,28 +1,63 @@
 # Name
 `intervals` - Pure Python implementation of data structures for interval operations
 
+- [Description](#description)
+  - [Terminology](#terminology)
+- [Installation](#installation)
+- [API](#api)
+  - [Generic Intervals](#generic-intervals)
+    - [The BaseInterval class](the-baseinterval-class)
+      - [BaseInterval variables and methods](BaseInterval-variables-and-methods)
+    - [The LeftClosedInterval subclass](#the-leftclosedinterval-subclass)
+    - [The Interval subclass](#the-interval-subclass)
+      - [Interval  examples](#interval-examples)
+    - [The LeftClosedPoint subclass](#the-leftclosedpoint-subclass)
+    - [The Point subclass](#the-point-subclass)
+    - [The ClosedInterval subclass](#the-closedinterval-subclass)
+    - [The ClosedPoint subclass](#the-closedpoint-subclass)
+  - [Interval collections](#Interval-collections)
+    - [The IntervalList class](#the-intervallist-class)
+      - [IntervalList variables and methods](#IntervalList-variables-and-methods)
+      - [IntervalList examples](#intervallist-examples)
+    - [The IntervalSet class](#the-intervalset-class)
+
+
 # Description
 
-The `intervals` module implements classes for performing arithmetic, `set`-like, and search operations on one or collections of one-dimensionale interval(s). 
+The `intervals` module implements classes for performing arithmetic, `set`-like, and search operations on one or a collection of one-dimensionale interval(s). 
 
 ### Terminology
 
 - **namespace**: Optional, depending on class. Namespace can represent axes (*e.g.*, `X`), contig names (*e.g.*, `Chr1`), etc. Interval methods operate only between instances in the same namespace. The default namespace is `None`.
-
+  
 - **null**: an interval without both start *and* stop coordinate values. Null coordinates are implemented as `nan` values and null namespace as `None`.
-
+  
 - **empty**: an interval that is null or with distance (length) between beginning and end coordinates less-than or equal-to zero units long.
 
 
 # Installation
 
-Currently, only installation on Unix-/Linux-like systems from source using `make` is supported:
+Currently, only installation on Unix-/Linux-like (including macOS) systems from source using `make` is supported (installing on macOS futher requires [Xcode Command Line Tools](https://developer.apple.com/download) to be installed):
 
 ```bash
 $ git clone https://github.com/bredeson/intervals.git
 $ cd intervals
 $ make install PREFIX=/full/path/to/install/prefix
 ```
+The above will install the `intervals` module into the subdirectory heirarchy `$(PREFIX)/lib/pythonX.X/site-packages` (default `$(PREFIX)` is `/usr/local`). The above works well for installing into Conda/Mamba environments. Assuming the user has an environment named `pyenv` with the python interpreter installed, the following command will install `intervals` into the right location:
+
+```bash
+$ mamba activate pyenv
+$ make install PREFIX=${CONDA_PREFIX}
+```
+
+To install the `intervals` module into a non-standard user-location, use the `$(INSTALL_PATH)` variable with `make`:
+
+```bash
+$ make install INSTALL_PATH=/full/path/to/install/prefix
+```
+This will install the `intervals` module into the `$(PREFIX)`dirctory directly (without the additional subdirectory heirarchy).
+
 
 # Documentation
 
@@ -46,57 +81,21 @@ After proper installation, there are two ways of getting the complete documentat
     >>> help(Interval.isintersecting)
     ```
 
-# Examples
 
-## `Interval` objects
+# API
 
-```python
->>> from intervals import Interval
+## Generic Intervals
 
->>> i1 = Interval("chr1", 100, 1000)
->>> i2 = Interval("chr1", 750, 2000)
+### The BaseInterval class
 
->>> i1 & i2
-Interval(chr1:750-1000)
+Base class representing generic one-dimensional intervals. Not meant to be used directly. Instead, users are encouraged to use any of `BaseInterval`'s child classes.
 
->>> i1 | i2
-Interval(chr1:100-2000)
+The `self.namespace` attribute provides an abstraction allowing this module access to a stable id or name and enable comparions between objects in potentially different namespaces (X, Y, or Z dimensions, sequence names, etc.).
 
->>> i1 ^ i2
-(Interval(chr1:100-750), Interval(chr1:1000-2000))
 
->>> i1.isintersecting(i2)
-True
+#### BaseInterval variables and methods
 
->>> i1.isintersecting_start(i2)
-True
-
->>> i1.isintersecting_end(i2)
-False
-
->>> i1.intersection_length(i2)
-250
-
->>> i1.name
-'chr1'
-
->>> i1.start
-100
-
->>> i2.end = 1000
->>> i1.issuperset(i2)
-True
-
->>> i2 in i1
-True
-
->>> i1 in i2
-False
-```
-
-### `BaseInterval` variables and methods
-
-In the following table, `self` and `other` represent an instance of `BaseInterval` or one of its subclasses.
+In the following table, `self` and `other` both represent instances of `BaseInterval` or one of its subclasses.
 
 | Attribute                                 | Description                                                  |
 | ----------------------------------------- | ------------------------------------------------------------ |
@@ -148,42 +147,106 @@ In the following table, `self` and `other` represent an instance of `BaseInterva
 |                                           |                                                               |
 
 
+### The LeftClosedInterval subclass
+
+Class representing a generic left-closed, right-open continuous interval; *i.e.*, start and end coordinates may be floating-point values, with start inclusive in interval intersection and exclusive end. Inherits from the `BaseInterval` class.
+
+The `self.namespace` attribute provides an abstraction allowing this module access to a stable id or name and enable comparions between objects in potentially different namespaces (X, Y, or Z dimensions, sequence names, etc.).
+
+
+### The Interval subclass
+
+Class representing a generic left-closed, right-open discrete interval; *i.e.*, start and end coordinates only permit integer values, with start (0-based) inclusive in interval intersection and exclusive end (1-based). Inherits from the `LeftClosedInterval` subclass.
+
+The primary simple interval object type for genomic applications is the `Interval`. It inherits from `BaseInterval` and enforces integer `start` and`end` bound variables. It's first argument is the `name` (*i.e.*, the `namespace`) of the sequence for which the interval spans.
+
+
+#### Interval examples:
+
+```python
+>>> from intervals import Interval
+
+>>> i1 = Interval("chr1", 100, 1000)
+>>> i2 = Interval("chr1", 750, 2000)
+
+>>> i1 & i2
+Interval(chr1:750-1000)
+
+>>> i1 | i2
+Interval(chr1:100-2000)
+
+>>> i1 ^ i2
+(Interval(chr1:100-750), Interval(chr1:1000-2000))
+
+>>> i1.isintersecting(i2)
+True
+
+>>> i1.isintersecting_start(i2)
+True
+
+>>> i1.isintersecting_end(i2)
+False
+
+>>> i1.intersection_length(i2)
+250
+
+>>> i1.name
+'chr1'
+
+>>> i1.start
+100
+
+>>> i2.end = 1000
+>>> i1.issuperset(i2)
+True
+
+>>> i2 in i1
+True
+
+>>> i1 in i2
+False
+```
+
+### The LeftClosedPoint subclass
+
+Class representing a generic left-closed, right-open continuous point.  Inherits from the `LeftClosedInterval` subclass.
+
+
+### The Point subclass
+
+Class representing a generic left-closed, right-open discrete point.  Inherits from the `LeftClosedPoint` subclass.
+
+
+### The ClosedInterval subclass
+
+Class representing a generic fully-closed continuous interval; *i.e.*, start and end coordinates may be floating-point values, and are inclusive in interval intersection. Inherits from the `BaseInterval` class.
+
+The `self.namespace` attribute provides an abstraction allowing this module access to a stable id or name and enable comparions between objects in potentially different namespaces (X, Y, or Z dimensions, sequence names, etc.).
+
+
+### The ClosedPoint subclass
+
+Class representing a generic fully-closed continuous point.  Inherits from the `ClosedInterval` class.
+
 
 ## Interval collections: 
 
-### `IntervalList`
+### The IntervalList class
 
-```python
->>> from intervals import Interval, IntervalList
+ A list of BaseInterval-descendant objects, sorted by start position. IntervalList inherits from `collections.deque()` but requires all `BaseBaseInterval`-descendant object members to be of the same namespace, or a ValueError is raised. 
+    
+For many functions to work as expected, the user is required to maintain IntervalList members in sorted order (which is not  enforced by the class) or risk incorrect behavior. As such, the  user is recommended to use the `insort()` and `insortleft()`  methods to insert new members into the IntervalList in proper order. The `update()` and `updateleft()` methods are provided to insert multiple members at once. Methods such as `append()`, `appendleft()`, `extend()`, and `extendleft()` are provided for convenience and API consistency with `collections.deque()`, but the user is responsible for ensuring sort order is maintained when using these methods. Unlike the `deque()` class,however,  an in-place `list()`-like `sort()` method is provided.
 
->>> ilist = IntervalList([Interval("chr1",0,100),Interval("chr1",150,350)])
+Use the `find_index()` method to find the index of a member equal to a given interval.
 
->>> ilist.append(Interval("chr1",500,750))
+Use `find_index_beg()` and `find_index_end()` methods to find the indices of the first and last members that intersect a given interval, respectively, or the indices between existing members when no intersection is found. 
 
->>> ilist.insort(Interval("chr1",125,145))
+`find_intersection_index_beg()` and `find_intersection_index_end()`  methods are intended to find the indices of the first and last  members intersecting a given interval, respectively, or return -1 when no intersection is found.
 
->>> ilist
-IntervalList([Interval(chr1:0-100),
-              Interval(chr1:125-145),
-              Interval(chr1:150-350),
-              Interval(chr1:500-750)])
-	      
->>> ilist.find_index_beg(Interval("chr1",170,300))
-2
-
->>> ilist.find_index_end(Interval("chr1",170,300))
-3
-
->>> for interval in ilist.find_intersecting(Interval("chr1",140,300)):
-...     print(interval)
-...
-chr1:125-145
-chr1:150-350
-```
+Use `find_insertion_index_beg()` and `find_insertion_index_end()` methods to find the indices where new members should be inserted that will maintain sort order.
 
 
-
-#### `IntervalList` variables and methods
+#### IntervalList variables and methods
 
 In the following table, `self` represents an `IntervalList` instance, `interval` an instance of `BaseInterval` or one of its subclasses, and `iterable` is an iterable object containing zero or more interval objects as queries for searching.
 
@@ -240,6 +303,36 @@ In the following table, `self` represents an `IntervalList` instance, `interval`
 | `self.update(iterable)`                     | Callable. Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the right of existing ones. |
 | `self.updateleft(iterable)`                 | Callable. Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the left of existing ones. |
 
+#### IntervalList Examples:
+
+```python
+>>> from intervals import Interval, IntervalList
+
+>>> ilist = IntervalList([Interval("chr1",0,100),Interval("chr1",150,350)])
+
+>>> ilist.append(Interval("chr1",500,750))
+
+>>> ilist.insort(Interval("chr1",125,145))
+
+>>> ilist
+IntervalList([Interval(chr1:0-100),
+              Interval(chr1:125-145),
+              Interval(chr1:150-350),
+              Interval(chr1:500-750)])
+	      
+>>> ilist.find_index_beg(Interval("chr1",170,300))
+2
+
+>>> ilist.find_index_end(Interval("chr1",170,300))
+3
+
+>>> for interval in ilist.find_intersecting(Interval("chr1",140,300)):
+...     print(interval)
+...
+chr1:125-145
+chr1:150-350
+```
+
 The `IntervalList` constructor and its methods taking `interval` or `iterable` arguments as input provide a `setter` keyword argument, which accepts a function used to extract/construct from the input object a `BaseInterval`-descendant class instance for setting the `IntervalList`. This is useful when the inputs are not of the same object class/interface as the members of `IntervalList`. The `setter` argument function must accept one (and only one) positional input argument and output a single `BaseInterval`-descendant object.
 
 ```python
@@ -271,7 +364,9 @@ chr1:1000000-1500000 chr2:1100000-1600000
 ```
 
 
-### `IntervalSet`
+### The IntervalSet class
+
+***WARNING*: Still under development, not yet recommended for use.**
 
 Inspired by and implemented as a [Nested Containment List](https://doi.org/10.1093/bioinformatics/btl647). 
 

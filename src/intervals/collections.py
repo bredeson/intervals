@@ -12,9 +12,9 @@ from .constants import NULL_NAMESPACE as _NULL_NAME
 from .constants import NULL_POSITION as _NULL_POS
 from .constants import POS_INF as _POS_INF
 from .constants import NEG_INF as _NEG_INF
-from .intervals import LeftClosedInterval
+from .intervals import BaseInterval, LeftClosedInterval
 from .intervals import _IntervalSetInterface, _IntervalIdentityInterface
-from .errors import _BAD_METHOD_NAMESPACE, _NO_METHOD, _NOT_IN
+from .errors import _BAD_METHOD_NAMESPACE, _BAD_OPERAND_NAMESPACE, _BAD_SETTER_TYPE, _NO_METHOD, _NOT_IN
 
 
 __all__ = (
@@ -26,6 +26,10 @@ __all__ = (
 
 
 def _caller(level):
+    """PRIVATE
+    Return the name of the calling function at the given stack level. Does
+    not return the function of the calling function if it is a property.
+    """
     return sys._getframe(level).f_code.co_name
 
 
@@ -97,7 +101,9 @@ class _Node(object):
         """
         Create a _Node for an object instance.
         """
-        self.instance = interval if instance is None else instance
+        assert isinstance(interval, BaseInterval), \
+            "interval must be a BaseBaseInterval-descendant object"
+        self.instance = instance or interval
         self.interval = interval
         self.sublist = sublist
         self.max = max or interval.end
@@ -147,48 +153,48 @@ class BaseIntervalCollection(
 
     @property
     def namespace(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'namespace'))
 
     
     @namespace.setter
     def namespace(self, namespace):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'namespace'))    
 
     
     @property
     def beg(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'beg'))
 
     
     @property
     def start(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         return self.beg
 
 
     @property
     def mid(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'mid'))
 
 
     @property
     def end(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'end'))
 
     
     @property
     def stop(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         return self.end
 
     
     def clear(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'clear'))
 
     
@@ -202,22 +208,22 @@ class BaseIntervalCollection(
 
     
     def empty(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'empty'))
 
     
     def null(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'null'))
 
     
     def pop(self):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'pop'))
 
     
     def remove(self, interval):
-        """Raise NotImplementedError."""
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'remove'))
 
     
@@ -266,10 +272,12 @@ class BaseIntervalCollection(
     
 
     def __contains__(self, interval):
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'__contains__'))
 
 
     def __eq__(self):
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'__eq__'))
     
     
@@ -286,10 +294,12 @@ class BaseIntervalCollection(
 
     
     def __iter__(self):
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'__iter__'))
 
     
     def __len__(self):
+        """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'__len__'))    
 
     
@@ -311,11 +321,22 @@ class BaseIntervalCollection(
             node = interval
         else:
             setter = setter or self._setter or remit
-            node = _Node(setter(interval), interval)
+            try:
+                # catches when setter:
+                #  1. is not a callable
+                #  2. does not accept an input argument
+                #  3. does not return a BaseBaseInterval-descendant object
+                node = _Node(setter(interval), interval)
+            except:
+                raise TypeError(
+                    _BAD_SETTER_TYPE(self, _caller(2), interval)
+                ) from None
         if strict and \
            self.namespace is not _NULL_NAME and \
            self.namespace != node.interval.namespace:
-            raise ValueError(_BAD_METHOD_NAMESPACE(_caller(2),self,node.interval))
+            raise ValueError(
+                _BAD_METHOD_NAMESPACE(_caller(2), self, node.interval)
+            )
         return node
 
 
@@ -387,39 +408,54 @@ class BaseIntervalCollection(
 
 class IntervalList(BaseIntervalCollection, _deque):
     """
-    A list of Interval-descendant objects, sorted by start position.
+    A list of BaseInterval-descendant objects, sorted by start position.
 
     IntervalList inherits from `collections.deque()` but requires all
-    BaseInterval-descendant object members to be of the same namespace,
+    BaseBaseInterval-descendant object members to be of the same namespace,
     or a ValueError is raised. 
     
-    For many functions to work correctly, the user is required to maintain
-    IntervalList members in sorted order (which is not enforced by the 
-    class) or risk incorrect behavior. As such, the user is recommended
-    to use the `insort()` and `insortleft()` methods to insert new members
-    into the IntervalList in proper order. The `update()` and `updateleft()`
-    methods are also provided to insert multiple members. Methods such as
-    `append()`, `appendleft()`, `extend()`, and `extendleft()` are provided
-    for convenience, but the user is responsible for ensuring sorted order
-    is maintained when using these methods. Unlike the `deque()` class, 
-    however, an in-place `list()`-like `sort()` method is provided.
+    For many functions to work as expected, the user is required to
+    maintain IntervalList members in sorted order (which is not 
+    enforced by the class) or risk incorrect behavior. As such, the 
+    user is recommended to use the `insort()` and `insortleft()` 
+    methods to insert new members into the IntervalList in proper
+    order. The `update()` and `updateleft()` methods are provided to
+    insert multiple members at once. Methods such as `append()`,
+    `appendleft()`, `extend()`, and `extendleft()` are provided for
+    convenience and API consistency with `collections.deque()`, but
+    the user is responsible for ensuring sort order is maintained
+    when using these methods. Unlike the `deque()` class,however, 
+    an in-place `list()`-like `sort()` method is provided.
 
-    The `find_*()` methods are provided to search for members of the 
-    IntervalList. These methods return the index of the found member. When 
-    a member is not found, the `find_index()` and `find_intersection_index_*()`
-    methods return `-1`, while `find_index_*()` and `find_insertion_index*()`
-    methods return the index where a new member should be inserted to maintain
-    sorted order.
+    Use the `find_index()` method to find the index of a member equal
+    to a given interval.
 
-    The `lower` and `upper` keyword parameters can be used to restrict the
-    search space when the lower and upper bounds are known.
+    Use `find_index_beg()` and `find_index_end()` methods to find
+    the indices of the first and last members that intersect a given
+    interval, respectively, or the indices between existing members
+    when no intersection is found. 
 
-    The `setter` keyword parameter accepts a callable used to extract or
-    construct from a method's input object an Interval-descendant class 
-    instance for querying or storing the IntervalList. This is useful
-    when the input is not of the same object class as the members of 
-    IntervalList. The callable must accept one (and only one) argument and
-    outputs a single Interval-descendant object.
+    `find_intersection_index_beg()` and `find_intersection_index_end()` 
+    methods are intended to find the indices of the first and last 
+    members intersecting a given interval, respectively, or return 
+    -1 when no intersection is found.
+    
+    Use `find_insertion_index_beg()` and `find_insertion_index_end()`
+    methods to find the indices where new members should be inserted
+    that will maintain sort order.
+
+    All `find_*()` methods return -1 when the given interval is not
+    of the same namespace as existing members of the IntervalList.
+
+    The `lower` and `upper` keyword parameters can be used to restrict
+    the search space when the lower and upper bounds are known.
+
+    The `setter` keyword parameter accepts a callable used to extract
+    or construct from a method's input object a BaseInterval-descendant
+    class instance for querying or storing the IntervalList. This is
+    useful when the input is not of the same object class as the
+    members of IntervalList. The callable must accept one (and only 
+    one) argument and outputs a single BaseInterval-descendant object.
     """
     def __init__(self, intervals=[], setter=None):
         BaseIntervalCollection.__init__(self, setter or remit)
@@ -438,10 +474,6 @@ class IntervalList(BaseIntervalCollection, _deque):
 
     def _set_node(self, index, node):
         return _deque.__setitem__(self, index, node)
-
-
-    def _copy_node(self, node):
-        return _Node(node.interval, node.instance, node.max, node.sublist)
 
 
     def _reset_node_max(self, node):
@@ -465,15 +497,15 @@ class IntervalList(BaseIntervalCollection, _deque):
             index += 1
 
     
-    def __add__(self, intervals):
+    def __add__(self, intervals, setter=None):
         """
         self + intervals -> IntervalList
 
         Return a new IntervalList containing the elements of self and
         the elements of intervals.
         """
-        copy = self.copy()
-        copy.extend(intervals)
+        copy = self.__copy__()
+        copy.__iadd__(intervals, setter=setter)
         return copy
 
     
@@ -486,23 +518,26 @@ class IntervalList(BaseIntervalCollection, _deque):
         return bool(len(self))
 
     
-    def __contains__(self, interval):
+    def __contains__(self, interval, setter=None):
         """
         interval in self -> bool
         self.__contains__(interval) -> bool
 
         Check if an interval is in the IntervalList.
         """
-        return not (self.find_index(interval) < 0)
+        return not (self.find_index(interval, setter=setter) < 0)
 
     
     def __copy__(self):
         """
+        self.copy() -> IntervalList
         self.__copy__() -> IntervalList
 
         Create a shallow copy of the IntervalList.
         """
-        return self.copy()
+        copy = self.__class__(setter=self._setter)
+        copy.__iadd__(self._copy_nodes(), setter=remit)
+        return copy
 
     
     def __delitem__(self, index):
@@ -527,25 +562,34 @@ class IntervalList(BaseIntervalCollection, _deque):
         return self._get(_deque.__getitem__(self, index))
 
 
-    def __iadd__(self, intervals):
+    def __iadd__(self, intervals, setter=None):
         """
-        self += intervals -> IntervalList
+        self += intervals
+        self.__iadd__(intervals)
 
         Extend the IntervalList in-place with the elements of intervals.
         """
-        self.extend(intervals)
+        prev = self._get_node(-1) if self else None
+        for interval in _iter(intervals):
+            node = self._set(interval, setter)
+            if prev and node.interval.end < prev.max:
+                node.max = prev.max
+            _deque.append(self, node)
+            prev = node
         return self
 
     
     def __imul__(self, value):
         """
-        self *= value -> IntervalList
-        self.__imul__(value) -> IntervalList
+        self *= value
+        self.__imul__(value)
 
         Extend the IntervalList in-place with the elements of self
         repeated value times.
         """
-        self.__init__(list(self) * value, setter=self._setter)
+        setter = self._setter
+        self.__init__(list(self.iter_nodes()) * value, setter=remit)
+        self._setter = setter
         return self
 
     
@@ -578,7 +622,9 @@ class IntervalList(BaseIntervalCollection, _deque):
         Return a new IntervalList containing the elements of self
         repeated value times.
         """
-        return self.__class__(list(self) * value, setter=self._setter)
+        copy = self.__class__(list(self.iter_nodes()) * value, setter=remit)
+        copy._setter = self._setter
+        return copy
 
     
     def __reversed__(self):
@@ -603,14 +649,14 @@ class IntervalList(BaseIntervalCollection, _deque):
         return self.__mul__(value)
     
     
-    def __setitem__(self, index, interval):
+    def __setitem__(self, index, interval, setter=None):
         """
         self[index] = interval
         self.__setitem__(index, interval)
 
         Set the interval at the given index.
         """
-        node = self._set(interval)
+        node = self._set(interval, setter)
         stop = max(self._get_node(index).max, node.max)
         _deque.__setitem__(self, index, node)
         self._update_node_max(index, stop)
@@ -650,7 +696,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         """
         self.start -> value
 
-        Read only.Alias for the `beg` attribute.
+        Read only. Alias for the `beg` attribute.
         
         >>> ilist = IntervalList([Interval("Chr", 350, 475)])
         >>> print(ilist.start)
@@ -726,11 +772,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         Append interval to the right side of IntervalList.
 
         The `setter` keyword argument accepts a callable used to
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300)])
         >>> ilist.append(Interval("Chr", 350, 475))
@@ -751,11 +797,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         Append interval to the left side of IntervalList.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 350, 475)])
         >>> ilist.appendleft(Interval("Chr", 50, 300))
@@ -779,13 +825,11 @@ class IntervalList(BaseIntervalCollection, _deque):
     def copy(self):
         """
         self.copy() -> IntervalList
+        self.__copy__() -> IntervalList
 
-        Create a copy of the IntervalList.
+        Create a shallow copy of the IntervalList.
         """
-        # self is already sorted, avoid a re-sort
-        copy = self.__class__(setter=self._setter)
-        copy.extend(map(self._copy_node, self._iter_nodes()), setter=remit)
-        return copy
+        return self.__copy__()
         
 
     def count(self, interval, setter=None):
@@ -794,13 +838,16 @@ class IntervalList(BaseIntervalCollection, _deque):
         self.count(interval, setter=callable) -> int
 
         Count the number of elements equal to interval.
+
+        Requires the objects in the IntervalList to have an __eq__()
+        method defined or the objects cannot be compared.
         
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([
         ...     Interval("Chr", 50, 300),
@@ -824,26 +871,18 @@ class IntervalList(BaseIntervalCollection, _deque):
         the iterable.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the inputs are not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList()
         >>> ilist.extend([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> print(ilist)
         [Chr:50-300, Chr:350-475]
         """
-        prev = None
-        if self:
-            prev = self._get_node(-1)
-        for interval in _iter(intervals):
-            node = self._set(interval, setter)
-            if prev and node.interval.end < prev.max:
-                node.max = prev.max
-            _deque.append(self, node)
-            prev = node
+        self.__iadd__(intervals, setter=setter)
             
 
     def extendleft(self, intervals, setter=None):
@@ -855,11 +894,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         the iterable.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the inputs are not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList()
         >>> ilist.extendleft([Interval("Chr", 350, 475), Interval("Chr", 50, 300)])
@@ -880,33 +919,41 @@ class IntervalList(BaseIntervalCollection, _deque):
             index += 1
     
             
-    def index(self, interval, start=0, stop=-1, setter=None):
+    def index(self, interval, setter=None, lower=0, upper=-1, start=None, stop=None):
         """
         self.index(interval) -> int
+        self.index(interval, setter=callable) -> int
         self.index(interval, start=int, stop=int) -> int
-        self.index(interval, start=int, stop=int, setter=callable) -> int
+        self.index(interval, lower=int, upper=int) -> int
 
         Return the first index of interval. 
         
         Raises ValueError if the interval is not present.
         
+        The `lower` and `upper` keywords can be used to restrict the
+        search space when the lower and upper bounds are known. The
+        equivalent `start` and `stop` keywords are provided for backward
+        compatibility.
+
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> ilist.index(Interval("Chr", 350, 475))
         1
         """
+        lower = lower if start is None else start
+        upper = upper if stop is None else stop
         index = \
             self.find_index(
                 interval,
-                lower=start,
-                upper=stop,
-                setter=setter
+                setter=setter,
+                lower=lower, 
+                upper=upper
             )
         if 0 <= index < len(self):
             return index
@@ -921,12 +968,15 @@ class IntervalList(BaseIntervalCollection, _deque):
 
         Insert interval before index
 
+        The `lower` and `upper` keywords can be used to restrict the
+        search space when the lower and upper bounds are known.
+
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> ilist.insert(1, Interval("Chr", 300, 350))
@@ -938,21 +988,24 @@ class IntervalList(BaseIntervalCollection, _deque):
         self._update_node_max(index, node.max)
 
         
-    def insort(self, interval, lower=0, upper=-1, setter=None):
+    def insort(self, interval, setter=None, lower=0, upper=-1):
         """
         self.insort(interval) -> int
+        self.insort(interval, setter=callable) -> int
         self.insort(interval, lower=int, upper=int) -> int
-        self.insort(interval, lower=int, upper=int, setter=callable) -> int
 
         Insert an interval into its sorted position, with identical
         intervals inserted to the right of existing ones.
 
+        The `lower` and `upper` keywords can be used to restrict the
+        search space when the lower and upper bounds are known.
+
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> ilist.insort(Interval("Chr", 300, 350))
@@ -962,29 +1015,32 @@ class IntervalList(BaseIntervalCollection, _deque):
         index = \
             self.find_insertion_index_end(
                 interval,
+                setter=setter,
                 lower=lower,
-                upper=upper,
-                setter=setter
+                upper=upper
             )
         self.insert(index, interval, setter)
         return index
         
 
-    def insortleft(self, interval, lower=0, upper=-1, setter=None):
+    def insortleft(self, interval, setter=None, lower=0, upper=-1):
         """
         self.insortleft(interval) -> int
+        self.insortleft(interval, setter=callable) -> int
         self.insortleft(interval, lower=int, upper=int) -> int
-        self.insortleft(interval, lower=int, upper=int, setter=callable) -> int
 
         Insert an interval into its sorted position, with identical
         intervals inserted to the left of existing ones.
 
+        The `lower` and `upper` keywords can be used to restrict the
+        search space when the lower and upper bounds are known.
+
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> ilist.insortleft(Interval("Chr", 300, 350))
@@ -994,9 +1050,9 @@ class IntervalList(BaseIntervalCollection, _deque):
         index = \
             self.find_insertion_index_beg(
                 interval,
+                setter=setter,
                 lower=lower,
-                upper=upper,
-                setter=setter
+                upper=upper
             )
         self.insert(index, interval, setter)
         return index
@@ -1010,11 +1066,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         `insort()` a collection of intervals
         
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the inputs are not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300)])
         >>> ilist.update([Interval("Chr", 350, 475), Interval("Chr", 300, 350)])
@@ -1034,11 +1090,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         `insortleft()` a collection of intervals
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the inputs are not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300)])
         >>> ilist.updateleft([Interval("Chr", 350, 475), Interval("Chr", 300, 350)])
@@ -1093,11 +1149,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         the removed interval.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr",280,400), Interval("Chr", 350, 475)])
         >>> index = ilist.remove(Interval("Chr",280,400))
@@ -1131,13 +1187,12 @@ class IntervalList(BaseIntervalCollection, _deque):
         >>> print(ilist)
         [Chr:50-300, Chr:350-475]
         """
-        if self:
-            nodes = sorted(self._iter_nodes())
-            self.clear()
-            self.extend(map(self._reset_node_max, nodes), setter=remit)
+        nodes = sorted(self._iter_nodes())
+        self.clear()
+        self.extend(map(self._reset_node_max, nodes), setter=remit)
 
         
-    def find_index_beg(self, interval, lower=0, upper=-1, setter=None):
+    def find_index_beg(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_index_beg(interval) -> int
         self.find_index_beg(interval, setter=callable) -> int
@@ -1154,22 +1209,26 @@ class IntervalList(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index = ilist.find_index_beg(Interval("Chr", 280,400))
         >>> print(index)
         0
         """
-        node = self._set(interval, setter, False)
         if not (0 <= lower < len(self)):
             lower = 0
         if not (0 <= upper < len(self)):
             upper = len(self)
+
+        node = self._set(interval, setter, False)
+        if self.namespace is not _NULL_NAME and \
+           self.namespace != node.interval.namespace:
+            return -1
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self._get_node(middle).max <= node.interval.beg:
@@ -1179,7 +1238,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         return lower
 
     
-    def find_index_end(self, interval, lower=0, upper=-1, setter=None):
+    def find_index_end(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_index_end(interval) -> int
         self.find_index_end(interval, setter=callable) -> int
@@ -1198,22 +1257,26 @@ class IntervalList(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index = ilist.find_index_end(Interval("Chr", 280,400))
         >>> print(index)
         2
         """
-        node = self._set(interval, setter, False)
         if not (0 <= lower < len(self)):
             lower = 0
         if not (0 <= upper < len(self)):
             upper = len(self)
+
+        node = self._set(interval, setter, False)
+        if self.namespace is not _NULL_NAME and \
+           self.namespace != node.interval.namespace:
+            return -1
         if self._get_node(len(self) - 1).interval.beg < node.interval.end:
             return len(self)  # - 1  # <=[makes inclusive]
         while lower < upper:
@@ -1225,47 +1288,54 @@ class IntervalList(BaseIntervalCollection, _deque):
         return lower  # - 1  # <=[makes inclusive]
 
 
-    def find_index(self, interval, lower=0, upper=-1, setter=None):
+    def find_index(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_index(interval) -> int
         self.find_index(interval, setter=callable) -> int
         self.find_index(interval, lower=int, upper=int) -> int
 
-        Return the index for the input interval, or -1 if it doesn't
-        exist.
+        Return the left-most index for equivalent intervals to the
+        input interval, or -1 if none. Requires the objects in the 
+        IntervalList to have an __eq__() method defined or the 
+        objects cannot be compared.
 
         The `lower` and `upper` keywords can be used to restrict the
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index = ilist.find_index(Interval("Chr", 350, 475))
         >>> print(index)
         1
         """
-        node = self._set(interval, setter, False)
         if not (0 <= lower < len(self)):
             lower = 0
         if not (0 <= upper < len(self)):
             upper = len(self)
-        while lower < upper:
-            middle = lower + (upper - lower) // 2
-            if self._get_node(middle).interval == node.interval:
-                return middle
-            elif self._get_node(middle).interval < node.interval:
-                lower = middle + 1
-            else:
-                upper = middle
+
+        node = self._set(interval, setter, False)
+        index = \
+            self.find_insertion_index_beg(
+                node,
+                setter=remit,
+                lower=lower,
+                upper=upper
+            )
+        while lower <= index < upper and \
+            self._get_node(index).interval == node.interval:
+            if self._get_node(index).instance == node.instance:
+                return index
+            index += 1
         return -1
+
     
-    
-    def find_index_nearest(self, interval, lower=0, upper=-1, setter=None):
+    def find_index_nearest(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_index_nearest(interval) -> int
         self.find_index_nearest(interval, setter=callable) -> int
@@ -1280,22 +1350,26 @@ class IntervalList(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index = ilist.find_index_nearest(Interval("Chr", 301,302))
         >>> print(index)
         0 
         """
-        node = self._set(interval, setter, False)
         if not (0 <= lower < len(self)):
             lower = 0
         if not (0 <= upper < len(self)):
             upper = len(self) - 1
+
+        node = self._set(interval, setter, False)
+        if self.namespace is not _NULL_NAME and \
+           self.namespace != node.interval.namespace:
+            return -1
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self._get_node(middle).interval < node.interval:
@@ -1325,7 +1399,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         return lower
 
     
-    def find_insertion_index_beg(self, interval, lower=0, upper=-1, setter=None):
+    def find_insertion_index_beg(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_insertion_index_beg(interval) -> int
         self.find_insertion_index_beg(interval, setter=callable) -> int
@@ -1335,23 +1409,30 @@ class IntervalList(BaseIntervalCollection, _deque):
         its sorted position, with identical intervals inserted to the 
         beginning/left of existing ones.
 
+        The `lower` and `upper` keywords can be used to restrict the
+        search space when the lower and upper bounds are known.
+
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index = ilist.find_insertion_index_beg(Interval("Chr", 280, 350))
         >>> print(index)
         1
         """
-        node = self._set(interval, setter)
         if not (0 <= lower < len(self)):
             lower = 0
         if not (0 <= upper < len(self)):
             upper = len(self)
+
+        node = self._set(interval, setter)
+        if self.namespace is not _NULL_NAME and \
+           self.namespace != node.interval.namespace:
+            return -1
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self._get_node(middle).interval < node.interval:
@@ -1361,7 +1442,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         return lower
 
 
-    def find_insertion_index_end(self, interval, lower=0, upper=-1, setter=None):
+    def find_insertion_index_end(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_insertion_index_end(interval) -> int
         self.find_insertion_index_end(interval, setter=callable) -> int
@@ -1371,23 +1452,30 @@ class IntervalList(BaseIntervalCollection, _deque):
         its sorted position, with identical intervals inserted to the 
         end/right of existing ones.
 
+        The `lower` and `upper` keywords can be used to restrict the
+        search space when the lower and upper bounds are known.
+
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for setting the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index = ilist.find_insertion_index_end(Interval("Chr", 280, 350))
         >>> print(index)
         2
         """
-        node = self._set(interval, setter)
         if not (0 <= lower < len(self)):
             lower = 0
         if not (0 <= upper < len(self)):
             upper = len(self)
+
+        node = self._set(interval, setter)
+        if self.namespace is not _NULL_NAME and \
+           self.namespace != node.interval.namespace:
+            return -1
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if node.interval < self._get_node(middle).interval:
@@ -1397,7 +1485,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         return lower
     
 
-    def find_intersection_index_beg(self, interval, lower=0, upper=-1, setter=None):
+    def find_intersection_index_beg(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_intersection_index_beg(interval) -> int
         self.find_intersection_index_beg(interval, setter=callable) -> int
@@ -1410,26 +1498,37 @@ class IntervalList(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index = ilist.find_intersection_index_beg(Interval("Chr", 280, 400))
         >>> print(index)
         0
         """
+        if not (0 <= lower < len(self)):
+            lower = 0
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+
         node = self._set(interval, setter, False)
-        index = self.find_index_beg(node.interval, lower, upper, remit)
+        index = \
+            self.find_index_beg(
+                node, 
+                setter=remit, 
+                lower=lower, 
+                upper=upper
+            )
         return index \
-            if 0 <= index < len(self) and \
-               self._get_node(index).interval.isintersecting(node.interval) \
+            if ((lower <= index < upper) and \
+                (self._get_node(index).interval.isintersecting(node.interval))) \
             else -1
 
 
-    def find_intersection_index_end(self, interval, lower=0, upper=-1, setter=None):
+    def find_intersection_index_end(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_intersection_index_end(interval) -> int
         self.find_intersection_index_end(interval, setter=callable) -> int
@@ -1443,26 +1542,37 @@ class IntervalList(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index = ilist.find_intersection_index_end(Interval("Chr", 280, 400))
         >>> print(index)
         2
         """
+        if not (0 <= lower < len(self)):
+            lower = 0
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+
         node = self._set(interval, setter, False)
-        index = self.find_index_end(node.interval, lower, upper, remit)
+        index = \
+            self.find_index_end(
+                node, 
+                setter=remit, 
+                lower=lower, 
+                upper=upper
+            )
         return index \
-            if 0 < index <= len(self) and \
-               self._get_node(index - 1).interval.isintersecting(node.interval) \
+            if ((lower < index <= upper) and \
+                (self._get_node(index - 1).interval.isintersecting(node.interval))) \
             else -1
     
 
-    def find_intersection_index_nearest(self, interval, lower=0, upper=-1, setter=None):
+    def find_intersection_index_nearest(self, interval, setter=None, lower=0, upper=-1):
         """
         self.find_intersection_index_nearest(interval) -> int
         self.find_intersection_index_nearest(interval, setter=callable) -> int
@@ -1476,26 +1586,37 @@ class IntervalList(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 350), Interval("Chr", 350, 475)])
         >>> index = ilist.find_intersection_index_nearest(Interval("Chr", 280, 351))
         >>> print(index)
         0
         """
+        if not (0 <= lower < len(self)):
+            lower = 0
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+
         node = self._set(interval, setter, False)
-        index = self.find_index_nearest(node.interval, lower, upper, remit)
+        index = \
+            self.find_index_nearest(
+                node, 
+                setter=remit,
+                lower=lower, 
+                upper=upper
+            )
         return index \
-            if 0 <= index < len(self) and \
-               self._get_node(index).interval.isintersecting(node.interval) \
+            if ((lower <= index < upper) and \
+                (self._get_node(index).interval.isintersecting(node.interval))) \
             else -1
 
 
-    def find_intersection_index_range(self, intervals, setter=None):
+    def find_intersection_index_range(self, intervals, setter=None, lower=0, upper=-1):
         """
         self.find_intersection_index_range(intervals) -> generator
         self.find_intersection_index_range(intervals, setter=callable) -> generator
@@ -1508,31 +1629,41 @@ class IntervalList(BaseIntervalCollection, _deque):
         indices may not be contiguous. 
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> indices = ilist.find_intersection_index_range(Interval("Chr", 280, 400))
         >>> print(list(indices))
         [0, 1]
         """
+        if not (0 <= lower < len(self)):
+            lower = 0
+        if not (0 <= upper < len(self)):
+            upper = len(self)            
+
+        start = lower
         nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
-        
-        upper = 0
         for node in _filter_nested(nodes, sort=_node_pos_nested):
-            index = self.find_index_beg(node.interval, lower=upper, setter=remit)
-            while index < len(self) and \
-                  self._get_node(index).interval.beg < node.interval.end:
+            index = \
+                self.find_index_beg(
+                    node, 
+                    setter=remit, 
+                    lower=start, 
+                    upper=upper
+                )
+            while ((lower <= index < upper) and \
+                   (self._get_node(index).interval.beg < node.interval.end)):
                 if self._get_node(index).interval.isintersecting(node.interval):
                     yield index
                 index += 1
-            upper = index
+            start = index
         
             
-    def find_intersection_index_slice(self, intervals, setter=None):
+    def find_intersection_index_slice(self, intervals, setter=None, lower=0, upper=-1):
         """
         self.find_intersection_index_slice(intervals) -> slice
         self.find_intersection_index_slice(intervals, setter=callable) -> slice
@@ -1543,11 +1674,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         none.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
         >>> index_slice = ilist.find_intersection_index_slice(Interval("Chr", 280, 400))
@@ -1572,8 +1703,20 @@ class IntervalList(BaseIntervalCollection, _deque):
         else:
             interval = self._set(intervals, setter, False).interval
             
-        lower = self.find_intersection_index_beg(interval, setter=remit)
-        upper = self.find_intersection_index_end(interval, setter=remit)
+        lower = \
+            self.find_intersection_index_beg(
+                interval, 
+                setter=remit, 
+                lower=lower, 
+                upper=upper
+            )
+        upper = \
+            self.find_intersection_index_end(
+                interval, 
+                setter=remit, 
+                lower=lower, 
+                upper=upper
+            )
 
         if lower < 0 or upper < lower:
             lower = -1
@@ -1581,60 +1724,78 @@ class IntervalList(BaseIntervalCollection, _deque):
         return slice(lower, upper)
 
 
-    def find_intersecting_pairs(self, intervals, setter=None):
+    def find_intersecting_pairs(self, intervals, setter=None, lower=0, upper=-1):
         """
         self.find_intersecting_pairs(intervals) -> generator
         self.find_intersecting_pairs(intervals, setter=callable) -> generator
 
-        Perform an overlap search of IntervalList with one or more
-        query interval objects and return a generator object producing
-        2-tuples of each query interval and its intersecting 
-        IntervalList member.
+        Return a generator object producing 2-tuples for each input 
+        interval and each intersecting IntervalList member.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
         >>> pairs = ilist.find_intersecting_pairs(Interval("Chr", 40, 90))
         >>> print(list(pairs))
         [(Chr:40-90, Chr:20-60), (Chr:40-90, Chr:80-100)]
         """
+        if not (0 <= lower < len(self)):
+            lower = 0
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+
+        start = lower
         nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
         nodes = sorted(nodes, key=_node_pos)
         for node in nodes:
-            index = self.find_intersection_index_beg(node.interval, setter=remit)
-            while ((0 <= index < len(self)) and
+            index = \
+                self.find_intersection_index_beg(
+                    node, 
+                    setter=remit, 
+                    lower=start, 
+                    upper=upper
+                )
+            while ((lower <= index < upper) and
                    (self._get_node(index).interval.isintersecting(node.interval))):
                 yield (node.instance, self._get_node(index).instance)
                 index += 1
+            start = index - 1
         
     
-    def find_intersecting(self, intervals, setter=None):
+    def find_intersecting(self, intervals, setter=None, lower=0, upper=-1):
         """
         self.find_intersecting(intervals) -> generator
         self.find_intersecting(intervals, setter=callable) -> generator
 
-        Perform an overlap search of IntervalList with one or more
-        query interval objects and return a generator object producing
-        IntervalList members intersecting the input interval record(s).
+        Return a generator object producing IntervalList members 
+        intersected by the input interval object(s).
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
         >>> intersecting = ilist.find_intersecting(Interval("Chr", 40, 90))
         >>> print(list(intersecting))
         [Chr:20-60, Chr:80-100]
         """
-        return map(self.__getitem__, self.find_intersection_index_range(intervals, setter=setter))
+        return map(
+            self.__getitem__, 
+            self.find_intersection_index_range(
+                intervals, 
+                setter=setter, 
+                lower=lower, 
+                upper=upper
+            )
+        )
 
     
     find_insertion_index_start = find_insertion_index_beg
@@ -1659,17 +1820,15 @@ class IntervalList(BaseIntervalCollection, _deque):
         self.intersection_length(other) -> int
         self.intersection_length(other, setter=callable) -> int
 
-        Returns the intersection length between two intervals.
-
-        Returns the length of intersects a query interval or 
+        Return the length of intersects the input interval or 
         IntervalList object has with the calling IntervalList object.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
         >>> ilist.intersection_length(Interval("Chr", 40, 70))
@@ -1680,9 +1839,9 @@ class IntervalList(BaseIntervalCollection, _deque):
         upper = 0
         intersection_length = 0
         for node in _filter_nested(nodes, sort=_node_pos_nested):
-            index = self.find_index_beg(node.interval, lower=upper, setter=remit)
-            while index < len(self) and \
-                  self._get_node(index).interval.beg < node.interval.end:
+            index = self.find_index_beg(node, lower=upper, setter=remit)
+            while ((0 <= index < len(self)) and \
+                   (self._get_node(index).interval.beg < node.interval.end)):
                 intersection_length += self._get_node(index).interval.intersection_length(node.interval)
                 index += 1
             upper = index
@@ -1695,7 +1854,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         self.intersection_fraction(other, query=bool) -> float
         self.intersection_fraction(other, query=bool, setter=callable) -> float
 
-        Returns the fraction of overlap a query interval or 
+        Return the fraction of overlap the input interval or 
         IntervalList object has with the calling IntervalList object.
 
         The `query` keyword argument specifies whether to use the length
@@ -1703,11 +1862,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         IntervalList as the numerator (False). The default is False.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalList. This is useful
         when the input is not of the same object class as the members
         of IntervalList. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
 
         >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
         >>> ilist.intersection_fraction(Interval("Chr", 40, 70))
@@ -1826,18 +1985,17 @@ class _Sublist(BaseIntervalCollection, _deque):
         Return the left-most start (inclusive) index for a query 
         interval. IntervalSet members may not necessarily overlap the
         query interval. Guarenteed to return an index 0:L, where L is
-        the length. Returns `-1` if the query is in the wrong 
-        namespace.
+        the length. Returns -1 if the query is in the wrong namespace.
 
         The `lower` and `upper` keywords can be used to restrict the
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful 
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         if self.length < 1 or \
            self[0].interval.namespace != node.interval.namespace:
@@ -1859,18 +2017,18 @@ class _Sublist(BaseIntervalCollection, _deque):
         """
         Return the right-most end (exclusive) index for a query
         interval; i.e., the index of the first non-intersecting 
-        IntervalSet member. Returns `-1` if the query is in the wrong
+        IntervalSet member. Returns -1 if the query is in the wrong
         namespace.
 
         The `lower` and `upper` keywords can be used to restrict the
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         if self.length < 1 or \
            self[0].interval.namespace != node.interval.namespace:
@@ -1893,17 +2051,17 @@ class _Sublist(BaseIntervalCollection, _deque):
     def find_index(self, node, lower=0, upper=-1):
         """
         Return the index for a query interval, or -1 if it doesn't 
-        exist. Returns `-1` if the query is in the wrong namespace.
+        exist. Returns -1 if the query is in the wrong namespace.
 
         The `lower` and `upper` keywords can be used to restrict the
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         if self.length < 1 or \
            self[0].interval.namespace != node.interval.namespace:
@@ -1933,11 +2091,11 @@ class _Sublist(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         if self.length < 1 or \
            self[0].interval.namespace != node.interval.namespace:
@@ -1971,11 +2129,11 @@ class _Sublist(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful 
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         index = self.find_index_beg(node, lower, upper)
         return index \
@@ -1994,11 +2152,11 @@ class _Sublist(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         index = self.find_index_end(node, lower, upper)
         return index \
@@ -2017,11 +2175,11 @@ class _Sublist(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         index = self.find_index_nearest(node, lower, upper)
         return index \
@@ -2040,11 +2198,11 @@ class _Sublist(BaseIntervalCollection, _deque):
         is inputted, indices may not be contiguous. 
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         upper = 0
         for node in _filter_nested(_iter(nodes), sort=_node_pos_nested):
@@ -2063,11 +2221,11 @@ class _Sublist(BaseIntervalCollection, _deque):
         Pythonic range of intersecting items, or `(-1, -1)` if none.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         lower = -1
         upper = -1
@@ -2093,11 +2251,11 @@ class _Sublist(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         if self.length < 1 or \
            self[0].interval.namespace != node.interval.namespace:
@@ -2128,11 +2286,11 @@ class _Sublist(BaseIntervalCollection, _deque):
         search space when the lower and upper bounds are known.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         if self.length < 1 or \
            self[0].interval.namespace != node.interval.namespace:
@@ -2192,11 +2350,11 @@ class IntervalSet(BaseIntervalCollection):
         Multiple references to the same object(s) are silently ignored.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         BaseIntervalCollection.__init__(self, setter)
         self._set_ncls(map(self._set, intervals))  # calls clear()
@@ -2572,11 +2730,11 @@ class IntervalSet(BaseIntervalCollection):
         nothing.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         try:
             self.remove(interval, setter)
@@ -2589,11 +2747,11 @@ class IntervalSet(BaseIntervalCollection):
         Add member object to IntervalSet in sorted position.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         node = self._set(interval, setter)
         index = self._toplist.find_index_beg(node)
@@ -2618,11 +2776,11 @@ class IntervalSet(BaseIntervalCollection):
         object. If the interval is not a member, raise a KeyError.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         self._remove(self._set(interval, setter))
 
@@ -2712,11 +2870,11 @@ class IntervalSet(BaseIntervalCollection):
         IntervalList object has with this IntervalSet object.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         raise NotImplementedError(_NO_METHOD(self,'intersection_length'))
 
@@ -2729,11 +2887,11 @@ class IntervalSet(BaseIntervalCollection):
         respect to the query length.        
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         raise NotImplementedError(_NO_METHOD(self,'intersection_fraction'))
 
@@ -2746,11 +2904,11 @@ class IntervalSet(BaseIntervalCollection):
         IntervalSet member.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         nodes = sorted(
             map(lambda i: self._set(i, setter), _iter(intervals)),
@@ -2768,11 +2926,11 @@ class IntervalSet(BaseIntervalCollection):
         object(s).
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         nodes = _filter_nested(
             map(lambda n: self._set(n, setter), _iter(intervals)),
@@ -3057,11 +3215,11 @@ class IntervalSet(BaseIntervalCollection):
         other are returned.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         raise NotImplementedError(_NO_METHOD(self,'difference'))
 
@@ -3072,11 +3230,11 @@ class IntervalSet(BaseIntervalCollection):
         other are returned.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         self._copy_state(self.difference(other, pairwise, setter))
 
@@ -3092,11 +3250,11 @@ class IntervalSet(BaseIntervalCollection):
         other are returned.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         other = self._coerce_class(other, setter)
         ncls = self.__class__(setter=setter)
@@ -3158,11 +3316,11 @@ class IntervalSet(BaseIntervalCollection):
         other are returned.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """        
         self._copy_state(self.intersection(other, pairwise, setter))
 
@@ -3173,11 +3331,11 @@ class IntervalSet(BaseIntervalCollection):
         are returned.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         raise NotImplementedError(_NO_METHOD(self,'symmetric_difference'))
 
@@ -3188,11 +3346,11 @@ class IntervalSet(BaseIntervalCollection):
         are returned.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         self._copy_state(self.symmetric_difference(other, pairwise, setter))
 
@@ -3257,11 +3415,11 @@ class IntervalSet(BaseIntervalCollection):
         are returned.
 
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and output a single Interval-descendant object.
+        argument and output a single BaseInterval-descendant object.
         """
         other = self._coerce_class(other, setter)
         # I independently re-invented an algorithm similar to fjoin:
@@ -3340,11 +3498,11 @@ class IntervalSet(BaseIntervalCollection):
     def union_update(self, other, abutting=False, pairwise=True, setter=None):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         self._copy_state(self.union(other, abutting, pairwise, setter))
 
@@ -3365,11 +3523,11 @@ class IntervalSet(BaseIntervalCollection):
     def difference_set(self, other, setter=None):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         other = self._coerce_class(other, setter)
         ncls = self.__class__(setter=self._setter)
@@ -3382,11 +3540,11 @@ class IntervalSet(BaseIntervalCollection):
     def difference_update_set(self, other):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         self._copy_state(self.difference_set(other))
             
@@ -3394,11 +3552,11 @@ class IntervalSet(BaseIntervalCollection):
     def intersection_set(self, other, setter=None):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         other = self._coerce_class(other, setter)
         ncls = self.__class__(setter=self._setter)
@@ -3411,11 +3569,11 @@ class IntervalSet(BaseIntervalCollection):
     def intersection_update_set(self, other):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         self._copy_state(self.intersection_set(other))
 
@@ -3423,11 +3581,11 @@ class IntervalSet(BaseIntervalCollection):
     def symmetric_difference_set(self, other, setter=None):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the
         members of IntervalSet. The callable must accept one (and only
-        one) argument and outputs a single Interval-descendant object.
+        one) argument and outputs a single BaseInterval-descendant object.
         """
         other = self._coerce_class(other, setter)
         ncls = self.__class__(setter=self._setter)
@@ -3440,11 +3598,11 @@ class IntervalSet(BaseIntervalCollection):
     def symmetric_difference_update_set(self, other):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         self._copy_state(self.symmetric_difference_set(other))
 
@@ -3452,11 +3610,11 @@ class IntervalSet(BaseIntervalCollection):
     def union_set(self, other, setter=None):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members 
         of IntervalSet. The callable must accept one (and only one)
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         other = self._coerce_class(other, setter)
         ncls = self.__class__(setter=self._setter)
@@ -3469,11 +3627,11 @@ class IntervalSet(BaseIntervalCollection):
     def union_update_set(self, other):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members 
         of IntervalSet. The callable must accept one (and only one) 
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         self._copy_state(self.union_set(other))
 
@@ -3481,11 +3639,11 @@ class IntervalSet(BaseIntervalCollection):
     def update(self, intervals, setter=None):
         """
         The `setter` keyword argument accepts a callable used to 
-        extract/construct from the input object an Interval-descendant
+        extract/construct from the input object a BaseInterval-descendant
         class instance for querying the IntervalSet. This is useful
         when the input is not of the same object class as the members 
         of IntervalSet. The callable must accept one (and only one) 
-        argument and outputs a single Interval-descendant object.
+        argument and outputs a single BaseInterval-descendant object.
         """
         self.union_update_set(intervals, setter)
 
