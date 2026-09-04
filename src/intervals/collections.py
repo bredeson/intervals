@@ -309,8 +309,41 @@ class BaseIntervalCollection(
 
     def __str__(self):
         return '[%s]' % ', '.join(map(str, self))
+
+
+    def _copy_nodes(self):
+        """PRIVATE
+
+        Return a generator object returning copies of the underlying
+        _Node objects.
+        """
+        return map(_Node.copy, self._iter_nodes())
+
     
+    def _get(self, node):
+        """PRIVATE
+
+        Return the user object instance from _Node
+        """
+        return node.instance
+
+
+    def _get_node(self, index):
+        """PRIVATE
+
+        Return the underlying _Node object at the given index
+        """
+        raise NotImplementedError(_NO_METHOD(self,'_get_node'))
+
+
+    def _iter_nodes(self, lower=0, upper=-1):
+        """PRIVATE
+        
+        Iterate over the underlying _Node objects
+        """
+        raise NotImplementedError(_NO_METHOD(self,'_iter_nodes'))
     
+
     def _set(self, interval, setter=None, strict=True):
         """PRIVATE
         
@@ -346,39 +379,6 @@ class BaseIntervalCollection(
         Set a _Node object containing user data at the given index
         """
         raise NotImplementedError(_NO_METHOD(self,'_set_node'))
-    
-
-    def _get(self, node):
-        """PRIVATE
-
-        Return the user object instance from _Node
-        """
-        return node.instance
-
-
-    def _get_node(self, index):
-        """PRIVATE
-
-        Return the underlying _Node object at the given index
-        """
-        raise NotImplementedError(_NO_METHOD(self,'_get_node'))
-
-
-    def _iter_nodes(self, lower=0, upper=-1):
-        """PRIVATE
-        
-        Iterate over the underlying _Node objects
-        """
-        raise NotImplementedError(_NO_METHOD(self,'_iter_nodes'))
-    
-
-    def _copy_nodes(self):
-        """PRIVATE
-
-        Return a generator object returning copies of the underlying
-        _Node objects.
-        """
-        return map(_Node.copy, self._iter_nodes())
 
 
     def hull(self, other=None):

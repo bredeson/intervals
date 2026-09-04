@@ -38,7 +38,7 @@ def _nulls(x):
 
 
 def _0div(x):
-    raise ZeroDivisionError("denominator an empty interval")
+    raise ZeroDivisionError("denominator an empty interval") from None
 
 
 def _int(x):
@@ -56,7 +56,320 @@ def _floor(x, y):
     return x if _isinf(x) else x // y
 
 
+def _rvalue_get(self, other, op=None, i=_0s):
+    if isinstance(other, _IntervalIdentityInterface):
+        # if _isnull(other.beg) or _isnull(other.end):
+        #     return i(other)
+        if self.namespace != other.namespace:
+            raise ValueError(
+                _BAD_OPERAND_NAMESPACE(op, other, self)
+            ) from None
+        beg, end = (other.end, other.beg) \
+            if   (other.end < other.beg) \
+            else (other.beg, other.end)
+    elif isinstance(other, (float, int)):
+        beg = end = other
+    else:
+        raise TypeError(
+            _BAD_OPERAND_TYPE(op, other, self)
+        ) from None
+    return (beg, end)
 
+
+def _lvalue_get(self, other, op=None, i=_0s):
+    if isinstance(other, _IntervalIdentityInterface):
+        # if _isnull(other.beg) or _isnull(other.end):
+        #     return i(other)
+        if self.namespace != other.namespace:
+            raise ValueError(
+                _BAD_OPERAND_NAMESPACE(op, self, other)
+            ) from None
+        beg, end = (other.end, other.beg) \
+            if   (other.end < other.beg) \
+            else (other.beg, other.end)
+    elif isinstance(other, (float, int)):
+        beg = end = other
+    else:
+        raise TypeError(
+            _BAD_OPERAND_TYPE(op, self, other)
+        ) from None
+    return (beg, end)
+
+
+
+class _IntervalIdentityInterface(object):
+    __slots__ = ()
+    
+    def __bool__(self):
+        """
+        bool(self) -> bool
+
+        Return a boolean indicating whether self is non-empty.
+        
+        >>> bool(Interval("Chr", 350, 475))
+        True
+        >>> bool(Interval())
+        False
+        """
+        return (self.beg < self.end)
+
+
+    def __hash__(self):
+        """
+        hash(self) -> int
+
+        Return a runtime-unique id for self.
+        
+        >>> hash(Interval("Chr", 350, 475))
+        4465105936
+        """
+        return id(self)
+        
+
+    def __repr__(self):
+        """
+        repr(self) -> str
+
+        Return a string representation of self.
+        
+        >>> repr(Interval("Chr", 350, 475))
+        'BaseInterval([350, 475, namespace=Chr])'
+        """
+        return "%s(%s)" % (self.__class__.__name__, str(self))
+
+    
+    def __str__(self):
+        """
+        str(self) -> str
+
+        Return a string representation of self.
+        
+        >>> str(Interval("Chr", 350,475))
+        '[350, 475, namespace=None]'
+        """
+        return "[%s, %s, namespace=%s]" %(
+            str(self.beg), str(self.end), str(self.namespace)
+        )
+
+    
+    def __eq__(self, other):
+        """
+        self == other -> bool
+
+        Return a boolean indicating whether self is positionally equal
+        to other. Null objects are always non-equal. If self and other
+        are in different namespaces, return False.
+        """
+        if isinstance(other, _IntervalIdentityInterface):
+            return ((self.namespace == other.namespace) and 
+                    (self.beg == other.beg) and
+                    (self.end == other.end))
+        return False
+    
+
+    def __gt__(self, other):
+        """
+        self > other -> bool
+
+        Return a boolean indicating whether self is positionally 
+        greater-than other. If self and other are in different 
+        namespaces, return False.
+        """
+        if isinstance(other, _IntervalIdentityInterface):
+            return ((self.namespace == other.namespace) and
+                    ((self.beg > other.beg) or
+                    (self.beg == other.beg) and
+                    (self.end > other.end)))
+        return False
+
+
+    def __ge__(self, other):
+        """
+        self >= other -> bool
+
+        Return a boolean indicating whether self is positionally 
+        greater-than or equal-to other. If self and other are in
+        different namespaces, return False.
+        """
+        return self == other or self > other
+    
+
+    def __lt__(self, other):
+        """
+        self < other -> bool
+
+        Return a boolean indicating whether self is positionally 
+        less-than other. If self and other are in different 
+        namespaces, return False.
+        """
+        if isinstance(other, _IntervalIdentityInterface):
+            return ((self.namespace == other.namespace) and
+                    ((self.beg < other.beg) or
+                    (self.beg == other.beg) and
+                    (self.end < other.end)))
+        return False
+
+
+    def __le__(self, other):
+        """
+        self <= other -> bool
+
+        Return a boolean indicating whether self is positionally 
+        less-than or equal-to other. If self and other are in different 
+        namespaces, return False.
+        """
+        return self == other or self < other
+
+
+    def __ne__(self, other):
+        """
+        self != other -> bool
+
+        Return a boolean indicating whether self is not positionally
+        equal to other. If self and other are in different namespaces,
+        return True.
+        """
+        return not (self == other)
+
+
+    @property
+    def beg(self):
+        """
+        self.beg -> value
+
+        Return self's start numeric value (0-based).
+
+        >>> interval.beg = 350
+        >>> print(interval.beg)
+        350
+        """
+        return self._beg
+
+
+    @beg.setter
+    def beg(self, beg):
+        self._beg = beg
+
+
+    @property
+    def start(self):
+        """
+        self.start -> value
+
+        Return self's start numeric value (0-based).
+        
+        >>> interval.start = 350
+        >>> print(interval.start)
+        350
+        """
+        return self._beg
+
+
+    @start.setter
+    def start(self, start):
+        self._beg = start
+
+
+    @property
+    def mid(self):
+        """
+        self.mid -> value
+
+        Return self's midpoint value.
+        
+        >>> print(self.mid)
+        412.5
+        """
+        return _NULL_POS \
+            if   self.isempty() \
+            else (self.beg + (self.end - self.beg) / 2.0)
+
+
+    @property
+    def end(self):
+        """
+        self.end -> value
+
+        Return self's end value (1-based).
+        
+        >>> interval.end = 500
+        >>> print(interval.end)
+        500
+        """
+        return self._end
+
+
+    @end.setter
+    def end(self, end):
+        self._end = end
+
+
+    @property
+    def stop(self):
+        """
+        self.stop -> value
+        
+        Return self's end value (1-based).
+        
+        >>> interval.stop = 500
+        >>> print(interval.stop)
+        500
+        """
+        return self._end
+
+
+    @stop.setter
+    def stop(self, stop):
+        self._end = stop
+        
+
+    def __len__(self):
+        """
+        len(self) -> value
+
+        Return the length of the interval.
+        """
+        return 0 if self.isempty() else (self.end - self.beg)   
+
+    
+    def copy(self, deep=False):
+        """
+        self.copy() -> interval
+        self.copy(deep=True) -> interval
+
+        Return a copy of self.
+
+        If `deep=False`, return a shallow copy of the interval object.
+        If `deep=True`, return a deep copy of the interval object.
+
+        >>> interval = Interval("Chr", 350, 475)
+        >>> interval.copy() is interval
+        False
+        """
+        return _deepcopy(self) if deep else _copy(self)
+    
+
+    def to_slice(self):
+            """
+            self.to_slice() -> slice
+    
+            Return the interval as a slice object for use with lists, 
+            strings, or other list-like objects. Returns `slice(-1, -1)`
+            if null.
+            
+            >>> string = 'abcdefghijklmnopqrstuvwxyz'
+            >>> interval = Interval("Chr", 2, 10)
+            >>> print(string[interval.to_slice()])
+            cdefghij
+            """
+            return slice(self.beg, self.end) if self else slice(-1, -1)
+    
+
+    def to_string(self):
+        return self.__str__()
+
+
+    
 class _IntervalIndexInterface(object):
     __slots__ = ()
     
@@ -137,47 +450,21 @@ class _IntervalIndexInterface(object):
 class _IntervalArithmeticInterface(object):
     __slots__ = ()
     
-    def __rvalue_get(self, other, op=None, i=_0s):
-        if isinstance(other, BaseInterval):
-            if other.isnull():
-                return i(other)
-            if self.namespace != other.namespace:
-                raise ValueError(_BAD_OPERAND_NAMESPACE(op, other, self)) \
-                    from None
-            beg = other.beg
-            end = other.end
-        elif isinstance(other, (float, int)):
-            beg = end = other
-        else:
-            raise TypeError(_BAD_OPERAND_TYPE(op, other, self)) from None
-        return (beg, end)
-
-
-    def __lvalue_get(self, other, op=None, i=_0s):
-        if isinstance(other, BaseInterval):
-            if other.isnull():
-                return i(other)
-            if self.namespace != other.namespace:
-                raise ValueError(_BAD_OPERAND_NAMESPACE(op, self, other)) \
-                    from None
-            beg = other.beg
-            end = other.end
-        elif isinstance(other, (float, int)):
-            beg = end = other
-        else:
-            raise TypeError(_BAD_OPERAND_TYPE(op, self, other)) from None
-        return (beg, end)
-    
-
     def __abs__(self):
         """
         abs(self) -> interval
 
         Return a copy of self with absolute start and end values.
         """
+        s1 = abs(self.beg)
+        s2 = abs(self.end)
         copy = self.copy()
-        copy.beg = min(abs(self.beg),abs(self.end))
-        copy.end = max(abs(self.beg),abs(self.end))
+        if s1 > s2:
+            copy.beg = s2
+            copy.end = s1
+        else:
+            copy.beg = s1
+            copy.end = s2
         return copy
     
 
@@ -190,10 +477,13 @@ class _IntervalArithmeticInterface(object):
         argument is a numeric primitive or BaseInterval-descendant
         class instance.
         """
+        o1, o2 = _lvalue_get(self, value, op='+', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='+', i=_0s)
-        copy.beg = self.beg + beg
-        copy.end = self.end + end
+        copy.beg = s1 + o1
+        copy.end = s2 + o2
         return copy
 
 
@@ -203,9 +493,12 @@ class _IntervalArithmeticInterface(object):
 
         Return a copy of self with start and end values ceilinged.
         """
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        copy.beg = _ceil(self.beg)
-        copy.end = _ceil(self.end)
+        copy.beg = _ceil(s1)
+        copy.end = _ceil(s2)
         return copy
 
 
@@ -216,9 +509,12 @@ class _IntervalArithmeticInterface(object):
         Return a copy of self with start and end values cast to 
         floating-point values.
         """
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        copy.beg *= 1.0
-        copy.end *= 1.0
+        copy.beg = float(s1)
+        copy.end = float(s2)
         return copy
     
 
@@ -228,9 +524,12 @@ class _IntervalArithmeticInterface(object):
 
         Return a copy of self with start and end values floored.
         """
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        copy.beg = _floor(self.beg, 1)
-        copy.end = _floor(self.end, 1)
+        copy.beg = _floor(s1, 1)
+        copy.end = _floor(s2, 1)
         return copy
     
 
@@ -243,21 +542,28 @@ class _IntervalArithmeticInterface(object):
         the value argument is a numeric primitive or BaseInterval
         -descendant class instance.
         """
+        o1, o2 = _lvalue_get(self, value, op='//', i=_1s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='//', i=_1s)
-        if beg == 0 and end == 0:
-            raise ZeroDivisionError("division by zero")
-        elif beg == 0:
-            copy.beg = min(self.beg / end, self.end / end)
+        if o1 == 0 and o2 == 0:
+            raise ZeroDivisionError("division by zero") from None
+        elif o1 == 0:
+            copy.beg = min(s1 / o2, s2 / o2)
             copy.end = _POS_INF
-        elif end == 0:
+        elif o2 == 0:
             copy.beg = _NEG_INF
-            copy.end = max(self.beg / beg, self.end / beg)
+            copy.end = max(s1 / o1, s2 / o1)
         else:
-            copy.beg = min(self.beg / beg, self.end / beg,
-                           self.beg / end, self.end / end)
-            copy.end = max(self.beg / beg, self.end / beg,
-                           self.beg / end, self.end / end)
+            # When minmax is necessary, it's faster to precompute
+            # the possible combinations once:
+            x1 = s1 / o1
+            x2 = s2 / o1
+            x3 = s1 / o2
+            x4 = s2 / o2
+            copy.beg = min(x1, x2, x3, x4)
+            copy.end = max(x1, x2, x3, x4)
         copy.beg = _floor(copy.beg, 1)
         copy.end = _floor(copy.end, 1)
         return copy
@@ -272,9 +578,12 @@ class _IntervalArithmeticInterface(object):
         argument is a numeric primitive or BaseInterval-descendant
         class instance.
         """
-        beg, end = self.__lvalue_get(value, op='+=', i=_0s)
-        self.beg += beg
-        self.end += end
+        o1, o2 = _lvalue_get(self, value, op='+=', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
+        self.beg = s1 + o1
+        self.end = s2 + o2
         return self
     
 
@@ -287,13 +596,15 @@ class _IntervalArithmeticInterface(object):
         argument is a numeric primitive or BaseInterval-descendant
         class instance.
         """
-        beg, end = self.__lvalue_get(value, op='*=', i=_0s)
-        _beg = min(self.beg * beg, self.beg * end,
-                   self.end * beg, self.end * end)
-        _end = max(self.beg * beg, self.beg * end,
-                   self.end * beg, self.end * end)
-        self.beg = _beg
-        self.end = _end
+        o1, o2 = _lvalue_get(self, value, op='*=', i=_0s)
+        # When minmax is necessary, it's faster to precompute
+        # the possible combinations once:
+        x1 = self.beg * o1
+        x2 = self.beg * o2
+        x3 = self.end * o1
+        x4 = self.end * o2
+        self.beg = min(x1, x2, x3, x4)
+        self.end = max(x1, x2, x3, x4)
         return self
             
 
@@ -304,9 +615,12 @@ class _IntervalArithmeticInterface(object):
         Return a copy of self with start and end values cast to integer
         values.
         """
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        copy.beg = _int(self.beg)
-        copy.end = _int(self.end)
+        copy.beg = _int(s1)
+        copy.end = _int(s2)
         return copy
 
     
@@ -319,9 +633,12 @@ class _IntervalArithmeticInterface(object):
         argument is a numeric primitive or BaseInterval-descendant
         class instance.
         """
-        beg, end = self.__lvalue_get(value, op='-=', i=_0s)
-        self.beg -= beg
-        self.end -= end
+        o1, o2 = _lvalue_get(self, value, op='-=', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
+        self.beg = s1 - o2
+        self.end = s2 - o1
         return self
             
 
@@ -334,10 +651,13 @@ class _IntervalArithmeticInterface(object):
         argument is a numeric primitive or BaseInterval-descendant class
         instance.
         """
+        o1, o2 = _lvalue_get(self, value, op='<<', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='<<', i=_0s)
-        copy.beg = self.beg << beg
-        copy.end = self.end << end
+        copy.beg = s1 << o1
+        copy.end = s2 << o2
         return copy
 
 
@@ -349,12 +669,16 @@ class _IntervalArithmeticInterface(object):
         amount given via the input value argument, where the value argument
         is a numeric primitive or BaseInterval-descendant class instance.
         """
+        o1, o2 = _lvalue_get(self, value, op='%', i=_0s)
+        # When minmax is necessary, it's faster to precompute
+        # the possible combinations once:
+        x1 = self.beg % o1
+        x2 = self.beg % o2
+        x3 = self.end % o1
+        x4 = self.end % o2
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='<<', i=_0s)
-        copy.beg = min(self.beg % beg, self.beg % end,
-                       self.end % beg, self.end % end)
-        copy.end = min(self.beg % beg, self.beg % end,
-                       self.end % beg, self.end % end)
+        copy.beg = min(x1, x2, x3, x4)
+        copy.end = max(x1, x2, x3, x4)
         return copy
     
     
@@ -366,12 +690,16 @@ class _IntervalArithmeticInterface(object):
         amount given via the input value argument, where the value argument
         is a numeric primitive or BaseInterval-descendant class instance.
         """
+        o1, o2 = _lvalue_get(self, value, op='*', i=_0s)
+        # When minmax is necessary, it's faster to precompute
+        # the possible combinations once:
+        x1 = self.beg * o1
+        x2 = self.beg * o2
+        x3 = self.end * o1
+        x4 = self.end * o2
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='*', i=_0s)
-        copy.beg = min(self.beg * beg, self.beg * end,
-                       self.end * beg, self.end * end)
-        copy.end = max(self.beg * beg, self.beg * end,
-                       self.end * beg, self.end * end)
+        copy.beg = min(x1, x2, x3, x4)
+        copy.end = max(x1, x2, x3, x4)
         return copy
 
 
@@ -382,9 +710,12 @@ class _IntervalArithmeticInterface(object):
         Return a copy of self with the numeric signs of start and end values
         negated.
         """
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        copy.beg = -1 * self.end
-        copy.end = -1 * self.beg
+        copy.beg = -1 * s2
+        copy.end = -1 * s1
         return copy
 
 
@@ -395,7 +726,7 @@ class _IntervalArithmeticInterface(object):
         Return a copy of self with the numeric signs of start and end values
         unchanged.
         """
-        return self.copy()
+        return 1 * self
 
 
     def __pow__(self, value):
@@ -411,12 +742,16 @@ class _IntervalArithmeticInterface(object):
         values and the exponent is a non-integer, in which case a ValueError
         is raised.
         """
+        o1, o2 = _lvalue_get(self, value, op='**', i=_0s)
+        # When minmax is necessary, it's faster to precompute
+        # the possible combinations once:
+        x1 = pow(self.beg, o1)
+        x2 = pow(self.beg, o2)
+        x3 = pow(self.end, o1)
+        x4 = pow(self.end, o2)
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='*', i=_0s)
-        copy.beg = min(pow(self.beg, beg), pow(self.beg, end),
-                       pow(self.end, beg), pow(self.end, end))
-        copy.end = max(pow(self.beg, beg), pow(self.beg, end),
-                       pow(self.end, beg), pow(self.end, end))
+        copy.beg = min(x1, x2, x3, x4)
+        copy.end = max(x1, x2, x3, x4)
         return copy
 
     
@@ -428,16 +763,19 @@ class _IntervalArithmeticInterface(object):
         values shifted by the amount given via the input value argument,
         where the value argument is a numeric primitive.
         """
+        value, _ = _rvalue_get(self, value, op='+', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        beg, end = self.__rvalue_get(value, op='+', i=_0s)
-        copy.beg = beg + self.beg
-        copy.end = end + self.end
+        copy.beg = value + s1
+        copy.end = value + s2
         return copy
     
 
     def __rfloordiv__(self, value):
         """
-        value // self -> Interval
+        value // self -> interval
 
         Right-side floor division. Return a copy of self with the start
         and end values divided by the amount given via the input value
@@ -447,19 +785,26 @@ class _IntervalArithmeticInterface(object):
         The result is ill-defined if self contains 0, in which case a
         ZeroDivisionError is raised.
         """
+        value, _ = _rvalue_get(self, value, op='//', i=_nulls)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        value, _ = self.__rvalue_get(value, op='//', i=_nulls)
-        if self.beg == 0 and self.end == 0:
-            raise ZeroDivisionError("division by zero")
-        elif self.beg == 0:
-            copy.beg = value / self.end
+        if s1 == 0 and s2 == 0:
+            raise ZeroDivisionError("division by zero") from None
+        elif s1 == 0:
+            copy.beg = value / s2
             copy.end = _POS_INF
-        elif self.end == 0:
+        elif s2 == 0:
             copy.beg = _NEG_INF
-            copy.end = value / self.beg
+            copy.end = value / s1
         else:
-            copy.beg = min(value / self.beg, value / self.end)
-            copy.end = max(value / self.beg, value / self.end)
+            # When minmax is necessary, it's faster to precompute
+            # the possible combinations once:
+            x1 = value / s1
+            x2 = value / s2
+            copy.beg = min(x1, x2)
+            copy.end = max(x1, x2)
         copy.beg = _floor(copy.beg, 1)
         copy.end = _floor(copy.end, 1)
         return copy
@@ -472,11 +817,14 @@ class _IntervalArithmeticInterface(object):
         Right-side bitwise left-shift. Return a copy of self with the input
         value argument bitwise left-shifted by the amount of self's start
         and end values, where the value argument is a numeric primitive.
-        """        
+        """
+        value, _ = _rvalue_get(self, value, op='<<', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        beg, end = self.__rvalue_get(value, op='<<', i=_0s)
-        copy.beg = beg << self.beg
-        copy.end = end << self.end
+        copy.beg = value << s1
+        copy.end = value << s2
         return copy
 
 
@@ -488,10 +836,14 @@ class _IntervalArithmeticInterface(object):
         and end values multiplied by the amount given via the input value
         argument, where the value argument is a numeric primitive.
         """
+        value, _ = _rvalue_get(self, value, op='*', i=_0s)
+        # When minmax is necessary, it's faster to precompute
+        # the possible combinations once:
+        x1 = value * self.beg
+        x2 = value * self.end
         copy = self.copy()
-        value, _ = self.__rvalue_get(value, op='*', i=_0s)
-        copy.beg = min(value * self.beg, value * self.end)
-        copy.end = max(value * self.beg, value * self.end)
+        copy.beg = min(x1, x2)
+        copy.end = max(x1, x2)
         return copy
 
 
@@ -503,10 +855,14 @@ class _IntervalArithmeticInterface(object):
         argument module'd by the amount of self's start and end values,
         where the value argument is a numeric primitive.
         """
+        value, _ = _rvalue_get(self, value, op='%', i=_0s)
+        # When minmax is necessary, it's faster to precompute
+        # the possible combinations once:
+        x1 = value % self.beg
+        x2 = value % self.end
         copy = self.copy()
-        value, _ = self.__rvalue_get(value, op='%', i=_0s)
-        copy.beg = min(value % self.beg, value % self.end)
-        copy.end = max(value % self.beg, value % self.end)
+        copy.beg = min(x1, x2)
+        copy.end = max(x1, x2)
         return copy
     
 
@@ -517,9 +873,12 @@ class _IntervalArithmeticInterface(object):
         Return a copy of self with the start and end values rounded to 
         ndigits. Performs banker's rounding, same as built-in `round()`.
         """
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        copy.beg = round(self.beg, ndigits)
-        copy.end = round(self.end, ndigits)
+        copy.beg = round(s1, ndigits)
+        copy.end = round(s2, ndigits)
         return copy
 
     
@@ -531,10 +890,13 @@ class _IntervalArithmeticInterface(object):
         value argument bitwise right-shifted by the amount of self's start
         and end values, where the value argument is a numeric primitive.
         """
+        value, _ = _rvalue_get(self, value, op='>>', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        value, _ = self.__rvalue_get(value, op='>>', i=_0s)
-        copy.beg = min(value >> self.beg, value >> self.end)
-        copy.end = max(value >> self.beg, value >> self.end)
+        copy.beg = value >> s2
+        copy.end = value >> s1
         return copy
     
 
@@ -547,10 +909,13 @@ class _IntervalArithmeticInterface(object):
         value argument is a numeric primitive or BaseInterval-descendant class
         instance.
         """
+        o1, o2 = _lvalue_get(self, value, op='>>', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='>>', i=_0s)
-        copy.beg = self.beg >> beg
-        copy.end = self.end >> end
+        copy.beg = s1 >> o2
+        copy.end = s2 >> o1
         return copy
 
 
@@ -562,10 +927,13 @@ class _IntervalArithmeticInterface(object):
         end values subtracted from the input value argument, where the
         value argument is a numeric primitive.
         """        
+        value, _ = _rvalue_get(self, value, op='-', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        value, _ = self.__rvalue_get(value, op='-', i=_0s)
-        copy.beg = min(value - self.beg, value - self.end)
-        copy.end = max(value - self.beg, value - self.end)
+        copy.beg = value - s2
+        copy.end = value - s1
         return copy
 
 
@@ -578,18 +946,23 @@ class _IntervalArithmeticInterface(object):
         value argument is a numeric primitive.
         """
         copy = self.copy()
-        value, _ = self.__rvalue_get(value, op='/', i=_nulls)
-        if self.beg == 0 and self.end == 0:
-            raise ZeroDivisionError("division by zero")
-        elif self.beg == 0:
-            copy.beg = value / self.end
+        value, _ = _rvalue_get(self, value, op='/', i=_nulls)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
+        if s1 == 0 and s2 == 0:
+            raise ZeroDivisionError("division by zero") from None
+        elif s2 == 0:
+            copy.beg = value / s1
             copy.end = _POS_INF
-        elif self.end == 0:
+        elif s1 == 0:
             copy.beg = _NEG_INF
-            copy.end = value / self.beg
+            copy.end = value / s2
         else:
-            copy.beg = min(value / self.beg, value / self.end)
-            copy.end = max(value / self.beg, value / self.end)
+            x1 = value / s1
+            x2 = value / s2
+            copy.beg = min(x1, x2)
+            copy.end = max(x1, x2)
         return copy
     
 
@@ -601,10 +974,13 @@ class _IntervalArithmeticInterface(object):
         the amount given via the input value argument, where input value
         is a numeric primitive or an BaseInterval-descendant class instance.
         """
+        o1, o2 = _lvalue_get(self, value, op='-', i=_0s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='-', i=_0s)
-        copy.beg = self.beg - end
-        copy.end = self.end - beg
+        copy.beg = s1 - o2
+        copy.end = s2 - o1
         return copy
 
 
@@ -619,21 +995,28 @@ class _IntervalArithmeticInterface(object):
         The result is ill-defined if the input value contains 0, in which
         case a ZeroDivisionError is raised.
         """
+        o1, o2 = _lvalue_get(self, value, op='/', i=_1s)
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        beg, end = self.__lvalue_get(value, op='/', i=_1s)
-        if beg == 0 and end == 0:
-            raise ZeroDivisionError("division by zero")
-        elif beg == 0:
-            copy.beg = min(self.beg / end, self.end / end)
+        if o1 == 0 and o2 == 0:
+            raise ZeroDivisionError("division by zero") from None
+        elif o1 == 0:
+            copy.beg = min(s1 / o2, s2 / o2)
             copy.end = _POS_INF
-        elif end == 0:
+        elif o2 == 0:
             copy.beg = _NEG_INF
-            copy.end = max(self.beg / beg, self.end / beg)
+            copy.end = max(s1 / o1, s2 / o1)
         else:
-            copy.beg = min(self.beg / beg, self.end / beg,
-                           self.beg / end, self.end / end)
-            copy.end = max(self.beg / beg, self.end / beg,
-                           self.beg / end, self.end / end)
+            # When minmax is necessary, it's faster to precompute
+            # the possible combinations once:
+            x1 = s1 / o1
+            x2 = s2 / o1
+            x3 = s1 / o2
+            x4 = s2 / o2
+            copy.beg = min(x1, x2, x3, x4)
+            copy.end = max(x1, x2, x3, x4)
         return copy
 
 
@@ -642,9 +1025,12 @@ class _IntervalArithmeticInterface(object):
         Return a copy of self with the start and end values truncated to
         the Integral closest to x between 0 and x.
         """
+        s1, s2 = (self.end, self.beg) \
+            if   (self.end < self.beg) \
+            else (self.beg, self.end)
         copy = self.copy()
-        copy.beg = _int(self.beg)
-        copy.end = _int(copy.end)
+        copy.beg = _int(s1)
+        copy.end = _int(s2)
         return copy
 
 
@@ -713,7 +1099,7 @@ class _IntervalSetInterface(object):
 
     def __rand__(self, other):
         """Raises TypeError"""
-        raise TypeError(_BAD_OPERAND_TYPE('&',other,self))
+        raise TypeError(_BAD_OPERAND_TYPE('&',other,self)) from None
         
 
     def __contains__(self, other):
@@ -752,7 +1138,7 @@ class _IntervalSetInterface(object):
 
     def __ror__(self, other):
         """Raises TypeError"""
-        raise TypeError(_BAD_OPERAND_TYPE('|',other,self))
+        raise TypeError(_BAD_OPERAND_TYPE('|',other,self)) from None
         
         
     def __xor__(self, other):
@@ -781,7 +1167,7 @@ class _IntervalSetInterface(object):
 
     def __rxor__(self, other):
         """Raises TypeError"""
-        raise TypeError(_BAD_OPERAND_TYPE('^',other,self))
+        raise TypeError(_BAD_OPERAND_TYPE('^',other,self)) from None
 
         
     def isabutting(self, other):
@@ -1080,7 +1466,7 @@ class _IntervalSetInterface(object):
 
     def difference_update(self, other):
         """Raises NotImplementedError."""
-        raise NotImplementedError(_ILL_DEFINED('difference'))
+        raise NotImplementedError(_ILL_DEFINED('difference')) from None
         
 
     def hull(self, other=None):
@@ -1168,7 +1554,7 @@ class _IntervalSetInterface(object):
 
     def symmetric_difference_update(self, other):
         """Raises NotImplementedError."""
-        raise NotImplementedError(_ILL_DEFINED('symmetric_difference'))
+        raise NotImplementedError(_ILL_DEFINED('symmetric_difference')) from None
     
 
     def union(self, other, abutting=False):
@@ -1205,7 +1591,7 @@ class _IntervalSetInterface(object):
 
     def union_update(self, other):
         """Raises NotImplementedError."""
-        raise NotImplementedError(_ILL_DEFINED('union'))
+        raise NotImplementedError(_ILL_DEFINED('union')) from None
 
     
     def isdisjoint(self, other):
@@ -1241,7 +1627,7 @@ class _IntervalSetInterface(object):
         """
         return _isfinite(self.beg) and _isfinite(self.end)
 
-    
+
     def isnull(self):
         """
         self.isnull() -> bool
@@ -1279,140 +1665,6 @@ class _IntervalSetInterface(object):
     update = union_update
 
     
-
-class _IntervalIdentityInterface(object):
-    __slots__ = ()
-    
-    def __bool__(self):
-        """
-        bool(self) -> bool
-
-        Return a boolean indicating whether self is non-empty.
-        
-        >>> bool(Interval("Chr", 350, 475))
-        True
-        >>> bool(Interval())
-        False
-        """
-        return (self.beg < self.end)
-
-
-    def __hash__(self):
-        """
-        hash(self) -> int
-
-        Return a runtime-unique id for self.
-        
-        >>> hash(Interval("Chr", 350, 475))
-        4465105936
-        """
-        return id(self)
-        
-
-    def __repr__(self):
-        """
-        repr(self) -> str
-
-        Return a string representation of self.
-        
-        >>> repr(Interval("Chr", 350, 475))
-        'BaseInterval([350, 475, namespace=Chr])'
-        """
-        return "%s(%s)" % (self.__class__.__name__, str(self))
-
-    
-    def __str__(self):
-        """
-        str(self) -> str
-
-        Return a string representation of self.
-        
-        >>> str(Interval("Chr", 350,475))
-        '[350, 475, namespace=None]'
-        """
-        return "[%s, %s, namespace=%s]" %(
-            str(self.beg), str(self.end), str(self.namespace)
-        )
-
-    
-    def __eq__(self, other):
-        """
-        self == other -> bool
-
-        Return a boolean indicating whether self is positionally equal
-        to other. Null objects are always non-equal. If self and other
-        are in different namespaces, return False.
-        """
-        return ((self.namespace == other.namespace) and
-                (self.beg == other.beg) and
-                (self.end == other.end))
-    
-
-    def __gt__(self, other):
-        """
-        self > other -> bool
-
-        Return a boolean indicating whether self is positionally 
-        greater-than other. If self and other are in different 
-        namespaces, return False.
-        """
-        return ((self.namespace == other.namespace) and
-                ((self.beg > other.beg) or
-                 (self.beg == other.beg) and
-                 (self.end > other.end)))
-
-
-    def __ge__(self, other):
-        """
-        self >= other -> bool
-
-        Return a boolean indicating whether self is positionally 
-        greater-than or equal-to other. If self and other are in
-        different namespaces, return False.
-        """
-        return self == other or self > other
-    
-
-    def __lt__(self, other):
-        """
-        self < other -> bool
-
-        Return a boolean indicating whether self is positionally 
-        less-than other. If self and other are in different 
-        namespaces, return False.
-        """
-        return ((self.namespace == other.namespace) and
-                ((self.beg < other.beg) or
-                 (self.beg == other.beg) and
-                 (self.end < other.end)))
-
-
-    def __le__(self, other):
-        """
-        self <= other -> bool
-
-        Return a boolean indicating whether self is positionally 
-        less-than or equal-to other. If self and other are in different 
-        namespaces, return False.
-        """
-        return self == other or self < other
-
-
-    def __ne__(self, other):
-        """
-        self != other -> bool
-
-        Return a boolean indicating whether self is not positionally
-        equal to other. If self and other are in different namespaces,
-        return True.
-        """
-        return not (self == other)
-
-
-    def to_string(self):
-        return self.__str__()
-
-
     
 class BaseInterval(
         _IntervalSetInterface,
@@ -1435,140 +1687,7 @@ class BaseInterval(
         self.namespace = namespace
         self.beg = beg  # sets self._beg
         self.end = end  # sets self._end
-
-
-    @property
-    def beg(self):
-        """
-        self.beg -> value
-
-        Return self's start numeric value (0-based).
-
-        >>> interval.beg = 350
-        >>> print(interval.beg)
-        350
-        """
-        return self._beg
-
-
-    @beg.setter
-    def beg(self, beg):
-        self._beg = beg
-
-
-    @property
-    def start(self):
-        """
-        self.start -> value
-
-        Return self's start numeric value (0-based).
         
-        >>> interval.start = 350
-        >>> print(interval.start)
-        350
-        """
-        return self._beg
-
-
-    @start.setter
-    def start(self, start):
-        self._beg = start
-
-
-    @property
-    def mid(self):
-        """
-        self.mid -> value
-
-        Return self's midpoint value.
-        
-        >>> print(self.mid)
-        412.5
-        """
-        return _NULL_POS \
-            if   self.isempty() \
-            else (self.beg + (self.end - self.beg) / 2.0)
-
-
-    @property
-    def end(self):
-        """
-        self.end -> value
-
-        Return self's end value (1-based).
-        
-        >>> interval.end = 500
-        >>> print(interval.end)
-        500
-        """
-        return self._end
-
-
-    @end.setter
-    def end(self, end):
-        self._end = end
-
-
-    @property
-    def stop(self):
-        """
-        self.stop -> value
-        
-        Return self's end value (1-based).
-        
-        >>> interval.stop = 500
-        >>> print(interval.stop)
-        500
-        """
-        return self._end
-
-
-    @stop.setter
-    def stop(self, stop):
-        self._end = stop
-        
-
-    def __len__(self):
-        """
-        len(self) -> value
-
-        Return the length of the interval.
-        """
-        return 0 if self.isempty() else (self.end - self.beg)
-
-        
-    def copy(self, deep=False):
-        """
-        self.copy() -> interval
-        self.copy(deep=True) -> interval
-
-        Return a copy of self.
-
-        If `deep=False`, return a shallow copy of the interval object.
-        If `deep=True`, return a deep copy of the interval object.
-
-        >>> interval = Interval("Chr", 350, 475)
-        >>> interval.copy() is interval
-        False
-        """
-        return _deepcopy(self) if deep else _copy(self)
-        
-
-    def to_slice(self):
-        """
-        self.to_slice() -> slice
-
-        Return the interval as a slice object for use with lists, 
-        strings, or other list-like objects. Returns `slice(-1, -1)`
-        if null.
-        
-        >>> string = 'abcdefghijklmnopqrstuvwxyz'
-        >>> interval = Interval("Chr", 2, 10)
-        >>> print(string[interval.to_slice()])
-        cdefghij
-        """
-        return slice(self.beg, self.end) if self else slice(-1, -1)
-   
 
     
 class ClosedInterval(BaseInterval):

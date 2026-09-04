@@ -84,7 +84,7 @@ $(INSTALL_PATH):
 
 check: test
 test: $(LIB_PATH)/$(LIBRARY) $(BUILD_TARGETS)
-	PYTHONPATH="$(LIB_PATH)" $(PYTHON) -m unittest discover test -v
+	PYTHONPATH="$(LIB_PATH)" $(PYTHON) -m unittest discover --verbose --failfast --start-directory test
 
 
 

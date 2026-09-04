@@ -535,7 +535,7 @@ class TestCase007_BaseInterval(TestCase):
         self.assertEqual(i.beg, 5)
         self.assertEqual(i.end, 15)
 
-    def test__abs__2(self):  ###
+    def test__abs__2(self):
         i = abs(self.interval8)
         self.assertIsInstance(i, self.constructor)
         self.assertIs(i.namespace, self.interval8.namespace)
@@ -549,13 +549,20 @@ class TestCase007_BaseInterval(TestCase):
 
     def test__add__2(self):
         i = self.interval0 + self.interval1
+        x1 = self.interval0.beg + self.interval1.beg
+        x2 = self.interval0.beg + self.interval1.end
+        x3 = self.interval0.end + self.interval1.beg
+        x4 = self.interval0.end + self.interval1.end
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg,  75)
-        self.assertEqual(i.end, 175)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__add__3(self):  ###
         i = self.interval8 + 100
         self.assertIsInstance(i, self.constructor)
+        self.assertTrue(i.isnull())
         self.assertTrue(i.isempty())
 
     def test__add__4(self):
@@ -613,6 +620,7 @@ class TestCase007_BaseInterval(TestCase):
         import math
         i = math.ceil(self.interval8)
         self.assertIsInstance(i, self.constructor)
+        self.assertTrue(i.isnull())
         self.assertTrue(i.isempty())
         
     def test__contains__1(self):
@@ -701,59 +709,93 @@ class TestCase007_BaseInterval(TestCase):
         self.assertIsNot(self.interval0, copy(self.interval0))
 
     def test__iadd__1(self):
+        x1 = self.interval0.beg + 10
+        x2 = self.interval0.beg + 10
+        x3 = self.interval0.end + 10
+        x4 = self.interval0.end + 10
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 += 10
-        self.assertEqual(self.interval0.beg,  60)
-        self.assertEqual(self.interval0.end, 110)
+        self.assertEqual(self.interval0.beg, beg)
+        self.assertEqual(self.interval0.end, end)
 
     def test__iadd__2(self):
+        x1 = self.interval0.beg + self.interval1.beg
+        x2 = self.interval0.beg + self.interval1.end
+        x3 = self.interval0.end + self.interval1.beg
+        x4 = self.interval0.end + self.interval1.end
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 += self.interval1
         self.assertIsInstance(self.interval0, self.constructor)
-        self.assertEqual(self.interval0.beg,  75)
-        self.assertEqual(self.interval0.end, 175)
+        self.assertEqual(self.interval0.beg, beg)
+        self.assertEqual(self.interval0.end, end)
 
     def test__iadd__3(self):
         with self.assertRaises(ValueError):
             self.interval0 += self.interval9
         
     def test__imul__1(self):
+        x1 = self.interval0.beg * 5
+        x2 = self.interval0.beg * 5
+        x3 = self.interval0.end * 5
+        x4 = self.interval0.end * 5
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 *= 5
         self.assertIsInstance(self.interval0, self.constructor)
-        self.assertEqual(self.interval0.beg, 250)
-        self.assertEqual(self.interval0.end, 500)
+        self.assertEqual(self.interval0.beg, beg)
+        self.assertEqual(self.interval0.end, end)
 
     def test__imul__2(self):
+        x1 = self.interval0.beg * self.interval3.beg
+        x2 = self.interval0.beg * self.interval3.end
+        x3 = self.interval0.end * self.interval3.beg
+        x4 = self.interval0.end * self.interval3.end
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 *= self.interval3
         self.assertIsInstance(self.interval0, self.constructor)
-        self.assertEqual(self.interval0.beg, 2500)
-        self.assertEqual(self.interval0.end, 7500)
+        self.assertEqual(self.interval0.beg, beg)
+        self.assertEqual(self.interval0.end, end)
 
     def test__imul__3(self):
         with self.assertRaises(ValueError):
             self.interval0 *= self.interval9
         
     def test__isub__1(self):
+        x1 = self.interval0.beg - 50
+        x2 = self.interval0.end - 50
+        beg = min(x1, x2)
+        end = max(x1, x2)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 -= 50
         self.assertIsInstance(self.interval0, self.constructor)
-        self.assertEqual(self.interval0.beg,  0)
-        self.assertEqual(self.interval0.end, 50)
+        self.assertEqual(self.interval0.beg, beg)
+        self.assertEqual(self.interval0.end, end)
 
     def test__isub__2(self):
+        x1 = self.interval0.beg - self.interval3.beg
+        x2 = self.interval0.beg - self.interval3.end
+        x3 = self.interval0.end - self.interval3.beg
+        x4 = self.interval0.end - self.interval3.end
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         self.interval0 -= self.interval3
         self.assertIsInstance(self.interval0, self.constructor)
-        self.assertEqual(self.interval0.beg,  0)
-        self.assertEqual(self.interval0.end, 25)
+        self.assertEqual(self.interval0.beg, beg)
+        self.assertEqual(self.interval0.end, end)
 
     def test__isub__3(self):
         with self.assertRaises(ValueError):
@@ -786,33 +828,55 @@ class TestCase007_BaseInterval(TestCase):
         
     def test__lshift__1(self):
         j = self.constructor( 2, 4)
+        x1 = j.beg << 1
+        x2 = j.end << 1
+        beg = min(x1, x2)
+        end = max(x1, x2)
         i = j << 1
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, 4)
-        self.assertEqual(i.end, 8)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__lshift__2(self):
         j = self.constructor( 2, 4)
-        i = j << self.constructor( 1, 2)
+        k = self.constructor( 1, 2)
+        x1 = j.beg << k.beg
+        x2 = j.beg << k.end
+        x3 = j.end << k.beg
+        x4 = j.end << k.end
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
+        i = j << k
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg,  4)
-        self.assertEqual(i.end, 16)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
         
     def test__mul__1(self):
+        x1 = self.interval0.beg * 5
+        x2 = self.interval0.end * 5
+        beg = min(x1, x2)
+        end = max(x1, x2)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         i = self.interval0 * 5
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, 250)
-        self.assertEqual(i.end, 500)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__mul__2(self):
+        j = self.constructor( 2, 5)
+        x1 = self.interval0.beg * j.beg
+        x2 = self.interval0.beg * j.end
+        x3 = self.interval0.end * j.beg
+        x4 = self.interval0.end * j.end
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
-        i = self.interval0 * self.constructor( 2, 5)
+        i = self.interval0 * j
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, 100)
-        self.assertEqual(i.end, 500)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
         
     def test__ne__1(self):
         self.assertNotEqual(self.interval0, self.interval1)
@@ -911,72 +975,125 @@ class TestCase007_BaseInterval(TestCase):
         self.assertEqual(i[1], self.interval9)        
         
     def test__radd__1(self):
+        x1 = 5 + self.interval0.beg
+        x2 = 5 + self.interval0.end
+        beg = min(x1, x2)
+        end = max(x1, x2)
         self.assertEqual(self.interval0.beg,  50)
         self.assertEqual(self.interval0.end, 100)
         i = 5 + self.interval0
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg,  55)
-        self.assertEqual(i.end, 105)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__rfloordiv__1(self):
+        x1 = 1000000 // self.interval0.beg
+        x2 = 1000000 // self.interval0.end
+        beg = min(x1, x2)
+        end = max(x1, x2)
         i = 1000000 // self.interval0
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, 10000)
-        self.assertEqual(i.end, 20000)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
         
     def test__rlshift__1(self):
-        i = 1 << self.constructor(2,4)
+        j = self.constructor(2,4)
+        x1 = 1 << j.beg
+        x2 = 1 << j.end
+        beg = min(x1, x2)
+        end = max(x1, x2)
+        i = 1 << j
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg,  4)
-        self.assertEqual(i.end, 16)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
         
     def test__rmul__1(self):
+        x1 = 5 * self.interval0.beg
+        x2 = 5 * self.interval0.end
+        beg = min(x1, x2)
+        end = max(x1, x2)
         i = 5 * self.interval0
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, 250)
-        self.assertEqual(i.end, 500)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__rshift__1(self):
-        i = self.constructor( 2, 16) >> 1
+        j = self.constructor( 2, 16)
+        x1 = j.beg >> 1
+        x2 = j.end >> 1
+        beg = min(x1, x2)
+        end = max(x1, x2)
+        i = j >> 1
+        self.assertEqual(j.beg, 2)
+        self.assertEqual(j.end, 16)
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, 1)
-        self.assertEqual(i.end, 8)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__rsub__1(self):
-        i = 10000 - self.constructor( 1000, 10000)
+        j = self.constructor( 1000, 10000)
+        x1 = 10000 - j.beg
+        x2 = 10000 - j.end
+        beg = min(x1, x2)
+        end = max(x1, x2)
+        i = 10000 - j
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, 0)
-        self.assertEqual(i.end, 9000)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__rtruediv__1(self):
-        i = 5.0 / self.constructor( 2.0, 5.0)
+        j = self.constructor( 2.0, 5.0)
+        x1 = 5.0 / j.beg
+        x2 = 5.0 / j.end
+        beg = min(x1, x2)
+        end = max(x1, x2)
+        i = 5.0 / j
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, 1)
-        self.assertEqual(i.end, 2.5)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__sub__1(self):
+        x1 = self.interval0.beg - 50
+        x2 = self.interval0.end - 50
+        beg = min(x1, x2)
+        end = max(x1, x2)
         i = self.interval0 - 50
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg,  0)
-        self.assertEqual(i.end, 50)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
 
     def test__sub__2(self):
+        x1 = self.interval0.beg - self.interval3.beg
+        x2 = self.interval0.beg - self.interval3.end
+        x3 = self.interval0.end - self.interval3.beg
+        x4 = self.interval0.end - self.interval3.end
+        beg = min(x1, x2, x3, x4)
+        end = max(x1, x2, x3, x4)
         i = self.interval0 - self.interval3
         self.assertIsInstance(i, self.constructor)
-        self.assertEqual(i.beg, -25)
-        self.assertEqual(i.end, 50)
+        self.assertEqual(i.beg, beg)
+        self.assertEqual(i.end, end)
         
     def test__truediv__1(self):
+        x1 = self.interval1.beg / 100.0
+        x2 = self.interval1.end / 100.0
+        beg = min(x1, x2)
+        end = max(x1, x2)
         i = self.interval1 / 100.0
         self.assertIsInstance(i, self.interval1.__class__)
-        self.assertAlmostEqual(i.beg, 0.25)
-        self.assertAlmostEqual(i.end, 0.75)
+        self.assertAlmostEqual(i.beg, beg)
+        self.assertAlmostEqual(i.end, end)
 
     def test__truediv__2(self):
-        i = self.interval1 / self.constructor(100.0, 100.0)
+        j = self.constructor(100.0, 100.0)
+        x1 = self.interval1.beg / j.beg
+        x2 = self.interval1.end / j.end
+        beg = min(x1, x2)
+        end = max(x1, x2)
+        i = self.interval1 / j
         self.assertIsInstance(i, self.interval1.__class__)
-        self.assertAlmostEqual(i.beg, 0.25)
-        self.assertAlmostEqual(i.end, 0.75)
+        self.assertAlmostEqual(i.beg, beg)
+        self.assertAlmostEqual(i.end, end)
 
     def test__truediv__3(self):
         with self.assertRaises(ValueError):
@@ -1948,8 +2065,8 @@ class TestCase008_ClosedInterval(TestCase007_BaseInterval):
         self.assertEqual(self.interval0.end, 100)
         self.interval0 -= Interval("Chr1", 50, 75)
         self.assertIsInstance(self.interval0, self.constructor)
-        self.assertEqual(self.interval0.beg,  0)
-        self.assertEqual(self.interval0.end, 25)
+        self.assertEqual(self.interval0.beg, -25)
+        self.assertEqual(self.interval0.end,  50)
 
     def test__lshift__1(self):
         j = self.constructor(2, 4, "Chr1")
