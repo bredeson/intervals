@@ -12,7 +12,7 @@ from .constants import NULL_NAMESPACE as _NULL_NAME
 from .constants import NULL_POSITION as _NULL_POS
 from .constants import POS_INF as _POS_INF
 from .constants import NEG_INF as _NEG_INF
-from .intervals import BaseInterval, LeftClosedInterval
+from .intervals import LeftClosedInterval
 from .intervals import _IntervalSetInterface, _IntervalIdentityInterface
 from .errors import _BAD_METHOD_NAMESPACE, _BAD_OPERAND_NAMESPACE, _BAD_SETTER_TYPE, _NO_METHOD, _NOT_IN
 
@@ -101,8 +101,8 @@ class _Node(object):
         """
         Create a _Node for an object instance.
         """
-        assert isinstance(interval, BaseInterval), \
-            "interval must be a BaseBaseInterval-descendant object"
+        assert isinstance(interval, _IntervalIdentityInterface), \
+            "interval must be an _IntervalIdentityInterface object"
         self.instance = instance or interval
         self.interval = interval
         self.sublist = sublist
@@ -1080,6 +1080,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         nodes = map(lambda i: self._set(i, setter), intervals)
         for node in sorted(nodes, key=_node_pos):
             self.insort(node, setter=setter)
+        #TODO: Improve performance by restricting lower pointer
 
 
     def updateleft(self, intervals, setter=None):
