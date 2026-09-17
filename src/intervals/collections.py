@@ -1730,8 +1730,8 @@ class IntervalList(BaseIntervalCollection, _deque):
         self.find_intersecting_pairs(intervals) -> generator
         self.find_intersecting_pairs(intervals, setter=callable) -> generator
 
-        Return a generator object producing 2-tuples for each input 
-        interval and each intersecting IntervalList member.
+        Return a generator object producing 2-tuples for each 
+        intersecting IntervalList member and query interval(s).
 
         The `setter` keyword argument accepts a callable used to 
         extract/construct from the input object a BaseInterval-descendant
@@ -1743,7 +1743,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         >>> ilist = IntervalList([Interval("Chr", 20, 60), Interval("Chr", 80, 100)])
         >>> pairs = ilist.find_intersecting_pairs(Interval("Chr", 40, 90))
         >>> print(list(pairs))
-        [(Chr:40-90, Chr:20-60), (Chr:40-90, Chr:80-100)]
+        [(Chr:20-60, Chr:40-90), (Chr:80-100, Chr:40-90)]
         """
         if not (0 <= lower < len(self)):
             lower = 0
@@ -1763,7 +1763,7 @@ class IntervalList(BaseIntervalCollection, _deque):
                 )
             while ((lower <= index < upper) and
                    (self._get_node(index).interval.isintersecting(node.interval))):
-                yield (node.instance, self._get_node(index).instance)
+                yield (self._get_node(index).instance, node.instance)
                 index += 1
             start = index - 1
         

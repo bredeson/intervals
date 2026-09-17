@@ -436,7 +436,7 @@ In the python REPL, call `help()` on the class or instance method to learn more 
 | `self.find_intersection_index_slice(iterable)`   | Callable. Perform an intersect search with one or more query interval objects in `iterable` and return a `slice` object containing the Pythonic range of intersecting items, or `slice(-1, -1)` if none. |
 | `self.find_intersection_index_start(interval)`   | Callable. Alias for `find_intersection_index_beg()`. |
 | `self.find_intersection_index_stop(interval)`    | Callable. Alias for `find_intersection_index_end()`. |
-| `self.find_intersection_pairs(iterable)`         | Callable. Preform an intersect search of `self` with one or more interval objects in `iterable` and return a generator object producing a 2-tuple for each interval in `iterable` and its intersecting member in `self`. |
+| `self.find_intersecting_pairs(iterable)`         | Callable. Preform an intersect search of `self` with one or more interval objects in `iterable` and return a generator object producing a 2-tuple for each interval in `iterable` and its intersecting member in `self`. Tuple yielded is ordered `(self_member, iterable_member)`.  |
 | `self.find_intersecting(iterable)`              | Callable. Perform an intersect search of `self` with an `iterable` of interval objects and return an generator object producing members of `self` that intersect. |
 | `self.index(interval)`                      | Callable. Alias of `find_index()`. |
 | `self.insert(index, interval)`              | Callable. Insert `interval` into `self` before `index`. |
