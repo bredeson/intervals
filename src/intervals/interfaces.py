@@ -6,9 +6,15 @@ from copy import copy as _copy
 from copy import deepcopy as _deepcopy
 from .constants import POS_INF as _POS_INF
 from .constants import NEG_INF as _NEG_INF
-from .errors import _BAD_OPERAND_TYPE, _BAD_OPERAND_NAMESPACE, _ILL_DEFINED
 from .constants import NULL_NAMESPACE as _NULL_NAME
 from .constants import NULL_POSITION as _NULL_POS
+from .errors import (
+    _BAD_METHOD_NAMESPACE,
+    _BAD_OPERAND_NAMESPACE,
+    _BAD_OPERAND_TYPE,
+    _BAD_METHOD_TYPE,
+    _ILL_DEFINED
+)
 
 
 def _0s(x):
@@ -51,6 +57,15 @@ def _ceil(x):
 
 def _floor(x, y):
     return x if _isinf(x) else x // y
+
+
+def _caller(level):
+    """PRIVATE
+    Return the name of the calling function at the given stack level. Does
+    not return the function of the calling function if it is a property.
+    """
+    import sys
+    return sys._getframe(level).f_code.co_name
 
 
 def _rvalue_get(self, other, op=None, i=_0s):
@@ -363,7 +378,32 @@ class _IntervalIdentityInterface(object):
         Return a boolean indicating whether self is a singleton interval.
         """
         return self.width() == 1
-    
+
+
+    def span(self, other=None):
+        """
+        self.span() -> interval
+        self.span(other) -> interval
+
+        Return an interval object the same type as self represeting the
+        smallest interval closure of self (and, optionally, other). 
+        """
+        copy = self.copy()
+        if other:
+            if isinstance(other, _IntervalIdentityInterface):
+                if self.namespace == other.namespace:
+                    copy.beg = other.beg if other.beg < copy.beg else copy.beg
+                    copy.end = other.end if other.end > copy.end else copy.end
+                    return copy
+                raise ValueError(
+                    _BAD_METHOD_NAMESPACE(_caller(2), self, other)
+                )
+            else:
+                raise TypeError(
+                    _BAD_METHOD_TYPE(_caller(2), self, other)
+                )
+        return copy
+
 
     def width(self):
         """
@@ -1503,21 +1543,6 @@ class _IntervalSetInterface(object):
     def difference_update(self, other):
         """Raises NotImplementedError."""
         raise NotImplementedError(_ILL_DEFINED('difference')) from None
-        
-
-    def hull(self, other=None):
-        """
-        self.hull() -> interval
-        self.hull(other) -> interval
-
-        Return an interval object the same type as self represeting the
-        smallest interval closure of self (and, optionally, other). 
-        """
-        copy = self.copy()
-        if other and self.namespace == other.namespace:
-            copy.beg = min(copy.beg, other.beg)
-            copy.end = max(copy.end, other.end)
-        return copy
     
         
     def intersection(self, other):

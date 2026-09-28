@@ -5,18 +5,20 @@ efficient insertion, deletion, and iteration while maintaining sorted order.
 
 """
 
-import sys
-
 from collections import deque as _deque
 from .constants import NULL_NAMESPACE as _NULL_NAME
 from .constants import NULL_POSITION as _NULL_POS
 from .constants import POS_INF as _POS_INF
 from .constants import NEG_INF as _NEG_INF
 from .intervals import LeftClosedInterval
-from .interfaces import _IntervalSetInterface, _IntervalIdentityInterface
+from .interfaces import (
+    _IntervalIdentityInterface, 
+    _IntervalSetInterface, 
+    _caller
+)
 from .errors import (
-    _BAD_METHOD_NAMESPACE, 
-    _BAD_OPERAND_NAMESPACE,
+    _BAD_METHOD_NAMESPACE,
+    _BAD_METHOD_TYPE,
     _BAD_SETTER_TYPE, 
     _NO_METHOD, 
     _NOT_IN
@@ -31,12 +33,6 @@ __all__ = (
 )
 
 
-def _caller(level):
-    """PRIVATE
-    Return the name of the calling function at the given stack level. Does
-    not return the function of the calling function if it is a property.
-    """
-    return sys._getframe(level).f_code.co_name
 
 
 def _interval_pos(interval):
@@ -175,112 +171,6 @@ class BaseIntervalCollection(
         self._setter = setter
 
 
-    @property
-    def namespace(self):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'namespace'))
-
-    
-    @namespace.setter
-    def namespace(self, namespace):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'namespace'))    
-
-    
-    @property
-    def beg(self):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'beg'))
-
-    
-    @property
-    def start(self):
-        """Raises NotImplementedError."""
-        return self.beg
-
-
-    @property
-    def mid(self):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'mid'))
-
-
-    @property
-    def end(self):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'end'))
-
-    
-    @property
-    def stop(self):
-        """Raises NotImplementedError."""
-        return self.end
-
-    
-    def clear(self):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'clear'))
-
-    
-    def copy(self):
-        """
-        self.copy() -> IntervalList
-
-        Create a copy of self.
-        """
-        return self.__class__(self, setter=self._setter)
-
-    
-    def empty(self):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'empty'))
-
-    
-    def null(self):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'null'))
-
-    
-    def pop(self):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'pop'))
-
-    
-    def remove(self, interval):
-        """Raises NotImplementedError."""
-        raise NotImplementedError(_NO_METHOD(self,'remove'))
-
-    
-    def to_slice(self):
-        """
-        self.to_slice() -> slice
-
-        Return the interval as a slice object for use with lists, 
-        strings, or other list-like objects. Returns `slice(-1, -1)`
-        if null.
-        
-        >>> string = 'abcdefghijklmnopqrstuvwxyz'
-        >>> interval = Interval("Chr", 2, 10)
-        >>> print(string[interval.to_slice()])
-        cdefghij
-        """
-        return slice(self.beg, self.end) if self else slice(-1, -1)
-
-
-    def to_string(self):
-        """
-        self.to_string() -> str
-
-        Return a string representation of the interval.
-
-        >>> interval = Interval("Chr", 350, 475)
-        >>> print(interval.to_string())
-        [Chr, 350, 475]
-        """
-
-        return str(self)
-    
-
     def __bool__(self):
         """
         bool(self) -> bool
@@ -405,6 +295,96 @@ class BaseIntervalCollection(
         raise NotImplementedError(_NO_METHOD(self,'_set_node'))
 
 
+    @property
+    def namespace(self):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'namespace'))
+
+    
+    @namespace.setter
+    def namespace(self, namespace):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'namespace'))    
+
+    
+    @property
+    def beg(self):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'beg'))
+
+    
+    @property
+    def start(self):
+        """Raises NotImplementedError."""
+        return self.beg
+
+
+    @property
+    def mid(self):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'mid'))
+
+
+    @property
+    def end(self):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'end'))
+
+    
+    @property
+    def stop(self):
+        """Raises NotImplementedError."""
+        return self.end
+
+    
+    def clear(self):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'clear'))
+
+    
+    def copy(self):
+        """
+        self.copy() -> IntervalList
+
+        Create a copy of self.
+        """
+        return self.__class__(self, setter=self._setter)
+
+    
+    def empty(self):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'empty'))
+
+    
+    def null(self):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'null'))
+
+    
+    def pop(self):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'pop'))
+
+    
+    def remove(self, interval):
+        """Raises NotImplementedError."""
+        raise NotImplementedError(_NO_METHOD(self,'remove'))
+
+
+    def to_string(self):
+        """
+        self.to_string() -> str
+
+        Return a string representation of the interval.
+
+        >>> interval = Interval("Chr", 350, 475)
+        >>> print(interval.to_string())
+        [Chr, 350, 475]
+        """
+
+        return str(self)
+    
+
     def span(self, other=None):
         """
         self.span() -> Interval
@@ -419,13 +399,22 @@ class BaseIntervalCollection(
             end=self.end
         )
         if this.isempty():
-            this.clear()
+            this.beg = _NULL_POS
+            this.end = _NULL_POS
+            return this
         if other:
-            if other.isempty():
-                other = LeftClosedInterval()
-            if this.namespace == other.namespace:
-                this.beg = min(this.beg, other.beg)
-                this.end = max(this.end, other.end)
+            if isinstance(other, _IntervalIdentityInterface):
+                if self.namespace == other.namespace:
+                    this.beg = other.beg if other.beg < this.beg else this.beg
+                    this.end = other.end if other.end > this.end else this.end
+                    return this
+                raise ValueError(
+                    _BAD_METHOD_NAMESPACE(_caller(2), self, other)
+                )
+            else:
+                raise TypeError(
+                    _BAD_METHOD_TYPE(_caller(2), self, other)
+                )
         return this
 
 

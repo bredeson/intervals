@@ -9,6 +9,11 @@ _BAD_OPERAND_NAMESPACE = (
     "'{1.namespace}' and '{2.namespace}'"
 ).format
 
+_BAD_METHOD_TYPE = (
+    "unsupported type(s) for method {0:s}: "
+    "'{1.__class__.__name__}' and '{2.__class__.__name__}'"
+).format
+
 _BAD_OPERAND_TYPE = (
     "unsupported type(s) for operand {0:s}: "
     "'{1.__class__.__name__}' and '{2.__class__.__name__}'"

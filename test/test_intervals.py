@@ -3756,6 +3756,22 @@ class TestCase016_IntervalList(TestCase):
         ]
         self.assertEqual(observed_max, expected_max)
 
+    def test_span_1(self):
+        expected = LeftClosedInterval(
+            namespace=self.interval1.namespace,
+            beg=self.interval1.beg,
+            end=self.interval5.end
+        )
+        self.assertEqual(self.instance2.span(), expected)
+
+    def test_span_2(self):
+        expected = LeftClosedInterval(
+            namespace=self.interval1.namespace,
+            beg=self.interval1.beg,
+            end=self.interval11.end
+        )
+        self.assertEqual(self.instance4.span(), expected)
+
     def test_width_1(self):
         self.assertEqual(self.instance1.width(), 0)
 
