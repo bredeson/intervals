@@ -244,6 +244,9 @@ class TestCase000_BaseInterval(TestCase):
     def test_issubinterval_0(self):
         self.assertTrue(hasattr(self.constructor(), 'issubinterval'))
 
+    def test_width_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'width'))
+
 
         
 class TestCase001_ClosedInterval(TestCase000_BaseInterval):
@@ -811,10 +814,17 @@ class TestCase007_BaseInterval(TestCase):
         self.assertLessEqual(self.interval0, self.interval0)
 
     def test__len__1(self):
+        # see also test_width_1
         self.assertEqual(len(self.interval0), 50)
         self.assertEqual(len(self.interval1), 50)
         self.assertEqual(len(self.interval2),  5)
         self.assertEqual(len(self.interval3), 25)
+
+    def test_width_1(self):
+        self.assertEqual(self.interval0.width(), 50)
+        self.assertEqual(self.interval1.width(), 50)
+        self.assertEqual(self.interval2.width(),  5)
+        self.assertEqual(self.interval3.width(), 25)
 
     def test__lt__1(self):
         self.assertLess(self.interval1, self.interval0)
@@ -2807,8 +2817,8 @@ class TestCase015_IntervalList(TestCase):
     def test_extendleft_0(self):
         self.assertTrue(hasattr(self.constructor(), 'extendleft'))
 
-    def test_hull_0(self):
-        self.assertTrue(hasattr(self.constructor(), 'hull'))
+    def test_span_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'span'))
         
     def test_index_0(self):
         self.assertTrue(hasattr(self.constructor(), 'index'))
@@ -2924,6 +2934,9 @@ class TestCase015_IntervalList(TestCase):
     def test_find_intersecting_0(self):
         self.assertTrue(hasattr(self.constructor(), 'find_intersecting'))
 
+    def test_find_intersecting_pairs_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'find_intersecting_pairs'))
+
 
         
 class TestCase016_IntervalList(TestCase):
@@ -2951,14 +2964,28 @@ class TestCase016_IntervalList(TestCase):
             self.interval5   # Chr:20-35
         ])
         self.instance3 = self.constructor([
-            self.interval0,  # 0-4
-            self.interval1,  # 1-5
-            self.interval8,  # 5-15
-            self.interval4,  # 25-50
-            self.interval11, # 40-100
-            self.interval6,  # 45-95
-            self.interval7   # 100-110
+            self.interval0,  # Chr:0-4
+            self.interval1,  # Chr:1-5
+            self.interval8,  # Chr:5-15
+            self.interval4,  # Chr:25-50
+            self.interval11, # Chr:40-100
+            self.interval6,  # Chr:45-95
+            self.interval7   # Chr:100-110
         ])
+        self.instance4 = self.constructor([
+            self.interval1,  # Chr:1-5
+            self.interval3,  # Chr:10-25
+            self.interval5,  # Chr:20-35
+            self.interval11, # Chr:40-100
+            self.interval6   # Chr:45-95
+        ])
+        self.instance5 = self.constructor([
+            self.interval0,  # Chr:0-4
+            self.interval3,  # Chr:10-25
+            self.interval4,  # Chr:25-50
+            self.interval7   # Chr:100-110
+        ])
+        
 
     def tearDown(self):
         del(self.interval0)
@@ -3029,6 +3056,13 @@ class TestCase016_IntervalList(TestCase):
     def test__init__5(self):
         with self.assertRaises(ValueError):
             self.constructor([self.interval0, self.interval13])
+
+    def test__len__1(self):
+        self.assertEqual(len(self.instance1), 0)
+        self.assertEqual(len(self.instance2), 3)
+        self.assertEqual(len(self.instance3), 7)
+        self.assertEqual(len(self.instance4), 5)
+        self.assertEqual(len(self.instance5), 4)
 
     def test__setitem__0(self):
         num_items = len(self.instance2)
@@ -3119,6 +3153,37 @@ class TestCase016_IntervalList(TestCase):
             str(self.interval5)
         )
         self.assertEqual(str(self.instance2), string)
+
+    def test_namespace_0(self):
+        self.assertEqual(self.instance1.namespace, None)
+
+    def test_namespace_1(self):
+        self.assertEqual(self.instance2.namespace, "Chr")
+
+    def test_beg_0(self):
+        self.assertTrue(isnan(self.instance1.beg))
+
+    def test_beg_1(self):
+        self.assertEqual(self.instance2.beg, 1)
+        
+    def test_beg_2(self):
+        self.assertEqual(self.instance2.beg, 1)
+        self.instance2[0].beg = 0
+        self.assertEqual(self.instance2.beg, 0)
+
+    def test_end_0(self):
+        self.assertTrue(isnan(self.instance1.end))
+
+    def test_end_1(self):
+        self.assertEqual(self.instance2.end, 35)
+
+    def test_end_2(self):
+        self.assertEqual(self.instance2.end, 35)
+        self.instance2[-1].end = 40
+        self.assertEqual(self.instance2.end, 40)
+
+    def test_end_3(self):
+        self.assertEqual(self.instance4.end, 100)
         
     def test_append_0(self):
         num_items = len(self.instance1)
@@ -3690,6 +3755,18 @@ class TestCase016_IntervalList(TestCase):
             for i in range(len(ilist))
         ]
         self.assertEqual(observed_max, expected_max)
+
+    def test_width_1(self):
+        self.assertEqual(self.instance1.width(), 0)
+
+    def test_width_2(self):
+        self.assertEqual(self.instance2.width(), 34)
+
+    def test_width_3(self):
+        self.assertEqual(self.instance3.width(), 110)
+
+    def test_width_4(self):
+        self.assertEqual(self.instance4.width(), 99)
         
     def test_find_index_beg_1(self):
         index = self.instance2.find_index_beg(Interval("Chr", 0, 1))
@@ -4239,6 +4316,7 @@ class TestCase016_IntervalList(TestCase):
         length = self.instance2.intersection_length(Interval("Chr", 0, 5))
         self.assertEqual(length, 4)
 
+    #TODO: Add tests for intersection_length method with overlapping intervals
     def test_intersection_length_2(self):
         length = self.instance2.intersection_length(Interval("Chr", 2, 4))
         self.assertEqual(length, 2)
@@ -4250,7 +4328,8 @@ class TestCase016_IntervalList(TestCase):
     def test_intersection_length_4(self):
         length = self.instance2.intersection_length(Interval("Chr", 10, 50))
         self.assertEqual(length, 30)
-        
+
+    #TODO: Add tests for intersection_fraction method with overlapping intervals
     def test_intersection_fraction_1(self):
         length = self.instance2.intersection_fraction(Interval("Chr", 0, 5))
         self.assertAlmostEqual(length, 4/34.0, 2)
@@ -4294,6 +4373,72 @@ class TestCase016_IntervalList(TestCase):
     def test_find_intersecting_6(self):
         intersections = list(self.instance2.find_intersecting(Interval("Chr", 40, 50)))
         self.assertEqual(intersections, [])
+
+    def test_find_intersecting_pairs_1(self):
+        interval = Interval("Chr", 2, 4)
+        intersections = list(self.instance1.find_intersecting_pairs(interval))
+        self.assertEqual(intersections, [])
+
+    def test_find_intersecting_pairs_2(self):
+        interval = Interval("Chr", 10, 42)
+        expected = [
+            (self.interval8, interval),
+            (self.interval4, interval),
+            (self.interval11, interval)
+        ]
+        intersections = list(self.instance3.find_intersecting_pairs(interval))
+        self.assertEqual(intersections, expected)
+
+    def test_find_intersecting_pairs_3(self):
+        interval = Interval("Chr", 0, 1)
+        intersections = list(self.instance4.find_intersecting_pairs(interval))
+        self.assertEqual(intersections, [])
+
+    def test_find_intersecting_pairs_4(self):
+            interval = Interval("Chr", 100, 110)
+            intersections = list(self.instance4.find_intersecting_pairs(interval))
+            self.assertEqual(intersections, [])
+
+    def test_find_intersecting_pairs_5(self):
+        expected = [
+            (self.interval0, self.interval0),
+            (self.interval3, self.interval3),
+            (self.interval4, self.interval4),
+            (self.interval7, self.interval7)
+        ]
+        intersections = list(self.instance5.find_intersecting_pairs(self.instance5))
+        self.assertEqual(intersections, expected)
+
+    def test_find_intersecting_pairs_6(self):
+        expected = [
+            (self.interval0, self.interval1),
+            (self.interval1, self.interval1),
+            (self.interval8, self.interval3),
+            (self.interval4, self.interval5)    
+        ]
+        intersections = list(self.instance3.find_intersecting_pairs(self.instance2))
+        self.assertEqual(intersections, expected)
+
+    def test_find_intersecting_pairs_7(self):
+        expected = [
+            (self.interval0, self.interval0),
+            (self.interval1, self.interval0),
+            (self.interval0, self.interval1),
+            (self.interval1, self.interval1),
+            (self.interval8, self.interval8),
+            (self.interval4, self.interval4),
+            (self.interval11, self.interval4),
+            (self.interval6, self.interval4),
+            (self.interval4, self.interval11),
+            (self.interval11, self.interval11),
+            (self.interval6, self.interval11),
+            (self.interval4, self.interval6),
+            (self.interval11, self.interval6),
+            (self.interval6, self.interval6),
+            (self.interval7, self.interval7)
+        ]
+        intersections = list(self.instance3.find_intersecting_pairs(self.instance3))
+        self.assertEqual(intersections, expected)
 
 
 

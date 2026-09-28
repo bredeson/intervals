@@ -13,8 +13,14 @@ from .constants import NULL_POSITION as _NULL_POS
 from .constants import POS_INF as _POS_INF
 from .constants import NEG_INF as _NEG_INF
 from .intervals import LeftClosedInterval
-from .intervals import _IntervalSetInterface, _IntervalIdentityInterface
-from .errors import _BAD_METHOD_NAMESPACE, _BAD_OPERAND_NAMESPACE, _BAD_SETTER_TYPE, _NO_METHOD, _NOT_IN
+from .interfaces import _IntervalSetInterface, _IntervalIdentityInterface
+from .errors import (
+    _BAD_METHOD_NAMESPACE, 
+    _BAD_OPERAND_NAMESPACE,
+    _BAD_SETTER_TYPE, 
+    _NO_METHOD, 
+    _NOT_IN
+)
 
 
 __all__ = (
@@ -115,6 +121,17 @@ class _Node(object):
             self.instance == other.instance
 
 
+    def __gt__(self, other):
+        return self.interval > other.interval
+
+    
+    def __ge__(self, other):
+        return \
+            self.interval > other.interval or \
+            self.interval == other.interval and \
+            self.instance == other.instance
+
+    
     def __ne__(self, other):
         return \
             self.interval != other.interval or \
@@ -123,6 +140,13 @@ class _Node(object):
 
     def __lt__(self, other):
         return self.interval < other.interval
+
+
+    def __le__(self, other):
+        return \
+            self.interval < other.interval or \
+            self.interval == other.interval and \
+            self.instance == other.instance
     
 
     def __hash__(self):
@@ -276,7 +300,7 @@ class BaseIntervalCollection(
         raise NotImplementedError(_NO_METHOD(self,'__contains__'))
 
 
-    def __eq__(self):
+    def __eq__(self, other):
         """Raises NotImplementedError."""
         raise NotImplementedError(_NO_METHOD(self,'__eq__'))
     
@@ -381,10 +405,10 @@ class BaseIntervalCollection(
         raise NotImplementedError(_NO_METHOD(self,'_set_node'))
 
 
-    def hull(self, other=None):
+    def span(self, other=None):
         """
-        self.hull() -> Interval
-        self.hull(other) -> Interval
+        self.span() -> Interval
+        self.span(other) -> Interval
 
         Returns the smallest interval closure of self (and, optionally,
         other).
@@ -551,7 +575,57 @@ class IntervalList(BaseIntervalCollection, _deque):
         _deque.__delitem__(self, index)
         self._update_node_max(index, node.max)
 
+        
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            # self and other can only be equal if they are
+            # instances of the same class
+            return _deque.__eq__(self, other)
+        return False
+    
 
+    def __gt__(self, other):
+        if isinstance(other, self.__class__):
+            return _deque.__gt__(self, other)
+        elif isinstance(other, _IntervalIdentityInterface):
+            return _IntervalIdentityInterface.__gt__(self, other)
+        return False
+    
+
+    def __ge__(self, other):
+        if isinstance(other, self.__class__):
+            return _deque.__ge__(self, other)
+        elif isinstance(other, _IntervalIdentityInterface):
+            # if self and other are not instances of the same
+            # class, then they cannot be equal. Only eval gt:
+            return _IntervalIdentityInterface.__gt__(self, other)
+        return False
+
+
+    def __lt__(self, other):
+        if isinstance(other, self.__class__):
+            return _deque.__lt__(self, other)
+        elif isinstance(other, _IntervalIdentityInterface):
+            return _IntervalIdentityInterface.__lt__(self, other)
+        return False
+    
+
+    def __le__(self, other):
+        if isinstance(other, self.__class__):
+            return _deque.__le__(self, other)
+        elif isinstance(other, _IntervalIdentityInterface):
+            # if self and other are not instances of the same
+            # class, then they cannot be equal. Only eval lt: 
+            return _IntervalIdentityInterface.__lt__(self, other)
+        return False
+
+
+    def __ne__(self, other):
+        if isinstance(other, self.__class__):
+            return _deque.__ne__(self, other)
+        return True
+    
+    
     def __getitem__(self, index):
         """
         self[index] -> interval
@@ -716,7 +790,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         >>> print(ilist.mid)
         412.5
         """
-        return self.beg + (self.end - self.beg) / 2.0
+        return self.beg + self.width() / 2.0
     
 
     @property
@@ -730,9 +804,11 @@ class IntervalList(BaseIntervalCollection, _deque):
         >>> print(ilist.end)
         475
         """
-        return _NULL_POS \
-            if   self.isnull() \
-            else self._get_node(-1).interval.end
+        if self.isnull():
+            return _NULL_POS
+        if self._get_node(-1).max < self._get_node(-1).interval.end:
+            self._get_node(-1).max = self._get_node(-1).interval.end
+        return self._get_node(-1).max
 
 
     @property
@@ -1231,7 +1307,7 @@ class IntervalList(BaseIntervalCollection, _deque):
            self.namespace != node.interval.namespace:
             return -1
         while lower < upper:
-            middle = lower + (upper - lower) // 2
+            middle = lower + ((upper - lower) >> 1)
             if self._get_node(middle).max <= node.interval.beg:
                 lower = middle + 1
             else:
@@ -1281,7 +1357,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         if self._get_node(len(self) - 1).interval.beg < node.interval.end:
             return len(self)  # - 1  # <=[makes inclusive]
         while lower < upper:
-            middle = lower + (upper - lower) // 2
+            middle = lower + ((upper - lower) >> 1)
             if node.interval.end <= self._get_node(middle).interval.beg:
                 upper = middle
             else:
@@ -1372,7 +1448,7 @@ class IntervalList(BaseIntervalCollection, _deque):
            self.namespace != node.interval.namespace:
             return -1
         while lower < upper:
-            middle = lower + (upper - lower) // 2
+            middle = lower + ((upper - lower) >> 1)
             if self._get_node(middle).interval < node.interval:
                 lower = middle + 1
             else:
@@ -1435,7 +1511,7 @@ class IntervalList(BaseIntervalCollection, _deque):
            self.namespace != node.interval.namespace:
             return -1
         while lower < upper:
-            middle = lower + (upper - lower) // 2
+            middle = lower + ((upper - lower) >> 1)
             if self._get_node(middle).interval < node.interval:
                 lower = middle + 1
             else:
@@ -1478,7 +1554,7 @@ class IntervalList(BaseIntervalCollection, _deque):
            self.namespace != node.interval.namespace:
             return -1
         while lower < upper:
-            middle = lower + (upper - lower) // 2
+            middle = lower + ((upper - lower) >> 1)
             if node.interval < self._get_node(middle).interval:
                 upper = middle
             else:
@@ -1754,18 +1830,19 @@ class IntervalList(BaseIntervalCollection, _deque):
         nodes = map(lambda i: self._set(i, setter, False), _iter(intervals))
         nodes = sorted(nodes, key=_node_pos)
         for node in nodes:
-            index = \
+            start = \
                 self.find_intersection_index_beg(
                     node, 
                     setter=remit, 
                     lower=start, 
                     upper=upper
                 )
-            while ((lower <= index < upper) and
-                   (self._get_node(index).interval.isintersecting(node.interval))):
-                yield (self._get_node(index).instance, node.instance)
+            index = start
+            while ((lower <= index < upper) and \
+                    (self._get_node(index).interval.beg < node.interval.end)):
+                if self._get_node(index).interval.isintersecting(node.interval):
+                    yield (self._get_node(index).instance, node.instance)
                 index += 1
-            start = index - 1
         
     
     def find_intersecting(self, intervals, setter=None, lower=0, upper=-1):

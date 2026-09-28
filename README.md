@@ -178,7 +178,6 @@ The following methods are available on interval values, where `self` and `other`
 | `self.difference_update(other)`           | Callable. Update `self` with the result of `difference()`.   |
 | `self.empty()`                            | Callable. Set the `self` start and end coordinates both to zero. |
 | `self.end`                                | Bound variable. Return the end/stop coordinate (0-based, exclusive) of `self`. |
-| `self.hull()` or `self.hull(other)`       | Callable. Return an Interval representing the hull of `self` or, optionally, `self` and `other`. |
 | `self.inner_distance(other)`              | Callable. Return the numeric inner distance between two `self` and `other`. |
 | `self.intersection(other)`                | Callable. Return an Interval representing the set intersection between `self` and `other`. |
 | `self.intersection_update(other)`         | Update the `self` with the result of `intersection()`.       |
@@ -208,6 +207,7 @@ The following methods are available on interval values, where `self` and `other`
 | `self.outer_distance(other)`              | Callable. Return the outer distance between `self` and `other`. |
 | `self.intersection_fraction(other)`       | Callable. Return the intersection fraction as relative to length of `self`. |
 | `self.intersection_length(other)`         | Callable. Return the length of intersection betwen `self` and `other`. |
+| `self.span()` or `self.span(other)`       | Callable. Return an Interval representing the span of `self` or, optionally, `self` and `other`. |
 | `self.start`                              | Bound variable. Alias for `beg`.                             |
 | `self.stop`                               | Bound variable. Alias for `end`.                             |
 | `self.symmetric_difference(other)`        | Callable. Return 2-tuple representing the symmetric difference (XOR) between `self` and `other`. |
@@ -216,7 +216,8 @@ The following methods are available on interval values, where `self` and `other`
 | `self.to_string()`                        | Callable. Return string representatio of `self`. Same as `str(self)`. |
 | `self.union(other)`                       | Callable. Return an Interval object representing the union of `self` and `other`. |
 | `self.union_update(other)`                | Callable. Update `self` with the result of `union()`.        |
-|                                           |                                                              |
+| `self.width()`                            | Callable. Return the length/width of the interval.           |
+
 
 
 
@@ -408,7 +409,7 @@ In the python REPL, call `help()` on the class or instance method to learn more 
 
 | Operation  | Description |
 |---------------------------------------------|------------------------------|
-|  `len(self)`                                                                           |  Return the count of intervals contained in `self` |
+|  `len(self)`                                |  Return the count of intervals contained in `self` |
 | `self.append(interval)`                     | Callable. Add an interval to the right side of `self`. |
 | `self.appendleft(interval)`                 | Callable. Add an interval to the left side of `self`. |
 | `self.beg`                                  | Bound variable. Read only. Return the begin/start coordinate (0-based, inclusive) of the first interval in `self`, or `nan` if empty. |
@@ -455,10 +456,13 @@ In the python REPL, call `help()` on the class or instance method to learn more 
 | `self.reverse()`                            | Callable. Reverse in place the order of interval members in `self.` |
 | `self.rotate(int)`                          | Callable. Rotate `self` n steps to the right (default n=1). If n is negative, rotates left. |
 | `self.sort()`                               | Callable. Sort `self` in-place. |
+| `self.span()` or `self.span(other)`         | Callable. Return an Interval representing the span of `self` or, optionally, `self` and `other`. |
 | `self.start`                                | Bound variable. Read only. Alias for `beg`. |
 | `self.stop`                                 | Bound variable. Read only. Alias for `end`. |
 | `self.update(iterable)`                     | Callable. Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the right of existing ones. |
 | `self.updateleft(iterable)`                 | Callable. Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the left of existing ones. |
+| `self.width()`                            | Callable. Return the length/width of the interval.           |
+
 
 
 
@@ -492,7 +496,9 @@ chr1:125-145
 chr1:150-350
 ```
 
-The `IntervalList` constructor and its methods taking `interval` or `iterable` arguments as input provide a `setter` keyword parameter, which accepts a callable used to extract/construct from the input object a `BaseInterval`-descendant class instance for setting the `IntervalList`. This is useful when the inputs are not of the same object class/interface as the members of `IntervalList`. The `setter` argument function must accept one (and only one) positional input argument and output a single `BaseInterval`-descendant object.
+The `IntervalList` constructor and its methods taking `interval` or `iterable` arguments as input provide a `setter` keyword parameter, which accepts a callable used to extract/construct from the input object a `BaseInterval`-descendant class instance for setting the `IntervalList`. This is useful when the inputs are not of the same object class/interface as the members of `IntervalList`. The `setter` argument function must accept one (and only one) positional input argument and return a single `BaseInterval`-descendant object.
+
+> NOTE: To perform comparison operations on between `IntervalList`s containing non-`BaseInterval`-descendant elements, that class must define the appropriate double-underscore methods (*e.g.*, sorting requires the `__lt__` method be defined).
 
 ```python
 >>> class Alignment(object):
@@ -522,7 +528,7 @@ The `IntervalList` constructor and its methods taking `interval` or `iterable` a
 chr1:1000000-1500000 chr2:1100000-1600000
 ```
 
-The constructed `IntervalList` instance assumes all method arguments will be of the same class/interface as that given at construction. Methods with the `setter` keyword parameter allow the user to temporarily override the constructor's `setter` parameter argument, permitting `IntervalList` instances to contain or interoperate with objects of different class. 
+The constructed `IntervalList` instance assumes all method arguments will be of the same class/interface as that given at construction. Methods with the `setter` keyword parameter allow the user to temporarily override the constructor's `setter` parameter argument, permitting `IntervalList` instances to contain or interoperate with objects of different classes. 
 
 The following example passes `setter` a lambda function, allowing the input `Interval` object to be accessed as is:
 
