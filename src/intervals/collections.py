@@ -779,7 +779,7 @@ class IntervalList(BaseIntervalCollection, _deque):
         >>> print(ilist.mid)
         412.5
         """
-        return self.beg + self.width() / 2.0
+        return self.beg + self.length() / 2.0
     
 
     @property
@@ -827,6 +827,23 @@ class IntervalList(BaseIntervalCollection, _deque):
         # intervals containing nan values are sorted to the end of the list, 
         # so check the last interval for nullity:
         return len(self) < 1 or self._get_node(-1).interval.isnull()
+
+
+    def length(self):
+        """
+        self.length() -> value
+
+        Return the total length of all intervals in the IntervalList. To get the
+        length of the closure of self, use the `span()` method and then call 
+        `length` on the resulting interval.
+
+        >>> ilist = IntervalList([Interval("Chr", 50, 300), Interval("Chr", 350, 475)])
+        >>> print(ilist.length())
+        375
+        >>> ilist.span().length()
+        425
+        """
+        return sum(node.interval.length() for node in self._iter_nodes())
 
     
     def append(self, interval, setter=None):
@@ -1956,13 +1973,11 @@ class _Sublist(BaseIntervalCollection, _deque):
             _deque.__init__(self)
         else:
             _deque.__init__(self, nodes)
-        self.length = len(self)
         self.index = index
 
 
     def __delitem__(self, index):
         _deque.__delitem__(self, index)
-        self.length -= 1
 
 
     def __repr__(self):
@@ -2004,47 +2019,38 @@ class _Sublist(BaseIntervalCollection, _deque):
     
     def append(self, node):
         _deque.append(self, node)
-        self.length += 1
 
 
     def appendleft(self, node):
         _deque.appendleft(self, node)
-        self.length += 1
 
 
     def clear(self):
         _deque.clear(self)
-        self.length = 0
 
 
     def extend(self, nodes):
         _deque.extend(self, nodes)
-        self.length += len(nodes)
 
 
     def extendleft(self, nodes):
         _deque.extendleft(self, nodes)
-        self.length += len(nodes)
 
 
     def insert(self, index, node):
         _deque.insert(self, index, node)
-        self.length += 1
 
 
     def pop(self):
-        self.length -= 1
         return _deque.pop(self)
 
 
     def popleft(self):
-        self.length -= 1
         return _deque.popleft(self)
 
 
     def remove(self, node):
         _deque.remove(self, node)
-        self.length -= 1
 
 
     def find_index_beg(self, node, lower=0, upper=-1):
@@ -2064,13 +2070,13 @@ class _Sublist(BaseIntervalCollection, _deque):
         of IntervalSet. The callable must accept one (and only one)
         argument and outputs a single BaseInterval-descendant object.
         """
-        if self.length < 1 or \
+        if len(self) < 1 or \
            self[0].interval.namespace != node.interval.namespace:
             return -1            
-        if not (0 <= lower < self.length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self.length):
-            upper = self.length
+        if not (0 <= upper < len(self)):
+            upper = len(self)
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self[middle].interval.end <= node.interval.beg:
@@ -2097,15 +2103,15 @@ class _Sublist(BaseIntervalCollection, _deque):
         of IntervalSet. The callable must accept one (and only one)
         argument and outputs a single BaseInterval-descendant object.
         """
-        if self.length < 1 or \
+        if len(self) < 1 or \
            self[0].interval.namespace != node.interval.namespace:
             return -1            
-        if not (0 <= lower < self.length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self.length):
-            upper = self.length
-        if self[self.length-1].interval.beg < node.interval.end:
-            return self.length  # - 1  # <=[makes inclusive]
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+        if self[len(self)-1].interval.beg < node.interval.end:
+            return len(self)  # - 1  # <=[makes inclusive]
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if node.interval.end <= self[middle].interval.beg:
@@ -2130,13 +2136,13 @@ class _Sublist(BaseIntervalCollection, _deque):
         of IntervalSet. The callable must accept one (and only one)
         argument and outputs a single BaseInterval-descendant object.
         """
-        if self.length < 1 or \
+        if len(self) < 1 or \
            self[0].interval.namespace != node.interval.namespace:
             return -1
-        if not (0 <= lower < self.length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self.length):
-            upper = self.length
+        if not (0 <= upper < len(self)):
+            upper = len(self)
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self[middle].instance == node.instance:
@@ -2164,20 +2170,20 @@ class _Sublist(BaseIntervalCollection, _deque):
         of IntervalSet. The callable must accept one (and only one)
         argument and outputs a single BaseInterval-descendant object.
         """
-        if self.length < 1 or \
+        if len(self) < 1 or \
            self[0].interval.namespace != node.interval.namespace:
             return -1            
-        if not (0 <= lower < self.length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self.length):
-            upper = self.length
+        if not (0 <= upper < len(self)):
+            upper = len(self)
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self[middle].interval < node.interval:
                 lower = middle + 1
             else:
                 upper = middle
-        if 0 < lower and upper < self.length:
+        if 0 < lower and upper < len(self):
             l = ((abs(self[lower-1].interval.inner_distance(node.interval))) or
                  (-self[lower-1].interval.intersection_length(node.interval)))
             u = ((abs(self[lower].interval.inner_distance(node.interval))) or
@@ -2204,7 +2210,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         """
         index = self.find_index_beg(node, lower, upper)
         return index \
-            if 0 <= index < self.length and \
+            if 0 <= index < len(self) and \
                self[index].interval.isintersecting(node.interval) \
             else -1
 
@@ -2227,7 +2233,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         """
         index = self.find_index_end(node, lower, upper)
         return index \
-            if 0 < index <= self._toplist.length and \
+            if 0 < index <= len(self._toplist) and \
                self[index-1].interval.isintersecting(node.interval) \
             else -1
     
@@ -2250,7 +2256,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         """
         index = self.find_index_nearest(node, lower, upper)
         return index \
-            if 0 <= index < self._toplist.length and \
+            if 0 <= index < len(self._toplist) and \
                self[index].interval.isintersecting(node.interval) \
             else -1
  
@@ -2274,7 +2280,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         upper = 0
         for node in _filter_nested(_iter(nodes), sort=_node_pos_nested):
             index = self.find_index_beg(node, lower=upper)
-            while 0 <= index < self.length and \
+            while 0 <= index < len(self) and \
                   node.interval.isintersecting(self[index].interval):
                 yield index
                 index += 1
@@ -2298,7 +2304,7 @@ class _Sublist(BaseIntervalCollection, _deque):
         upper = -1
         for node in _filter_nested(_iter(nodes), sort=_node_pos_nested):
             index = self.find_index_beg(node, lower=upper)
-            while 0 <= index < self.length and \
+            while 0 <= index < len(self) and \
                   node.interval.isintersecting(self[index].interval):
                 if lower < 0:
                     lower = index
@@ -2324,15 +2330,15 @@ class _Sublist(BaseIntervalCollection, _deque):
         of IntervalSet. The callable must accept one (and only one)
         argument and outputs a single BaseInterval-descendant object.
         """
-        if self.length < 1 or \
+        if len(self) < 1 or \
            self[0].interval.namespace != node.interval.namespace:
             return -1            
-        if not (0 <= lower < self.length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self.length):
-            upper = self.length
-        if self[self.length-1].interval.beg < node.interval.end:
-            return self.length  # - 1  # <=[makes inclusive]
+        if not (0 <= upper < len(self)):
+            upper = len(self)
+        if self[len(self)-1].interval.beg < node.interval.end:
+            return len(self)  # - 1  # <=[makes inclusive]
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if node.interval.beg <= self[middle].interval.beg:
@@ -2359,13 +2365,13 @@ class _Sublist(BaseIntervalCollection, _deque):
         of IntervalSet. The callable must accept one (and only one)
         argument and outputs a single BaseInterval-descendant object.
         """
-        if self.length < 1 or \
+        if len(self) < 1 or \
            self[0].interval.namespace != node.interval.namespace:
             return -1
-        if not (0 <= lower < self.length):
+        if not (0 <= lower < len(self)):
             lower = 0
-        if not (0 <= upper < self.length):
-            upper = self.length
+        if not (0 <= upper < len(self)):
+            upper = len(self)
         while lower < upper:
             middle = lower + (upper - lower) // 2
             if self[middle].interval.end <= node.interval.end:
@@ -2459,7 +2465,7 @@ class IntervalSet(BaseIntervalCollection):
                 
                 if nodes[i].interval.issubinterval(nodes[i-1].interval, strict=True):
                     # if the parent is not already in the stack, add it:
-                    if ((parents.length < 1) or (parents[0] != i-1)):
+                    if ((len(parents) < 1) or (parents[0] != i-1)):
                         parents.appendleft(i-1)
                     p = parents[0]
                 self._insert_sublist(nodes[p])
@@ -2467,7 +2473,7 @@ class IntervalSet(BaseIntervalCollection):
                 visited.add(hash(nodes[i]))
                 i += 1
                 
-            elif parents.length:
+            elif len(parents):
                 p = parents.popleft()
             else:
                 toplist.append(nodes[i])
@@ -2487,10 +2493,10 @@ class IntervalSet(BaseIntervalCollection):
     def _iter_nodes(self, lower=0, upper=-1):
         if self._length < 1:
             return
-        if not (0 <= lower < self._toplist.length):
+        if not (0 <= lower < len(self._toplist)):
             lower = 0
-        if not (0 <= upper < self._toplist.length):
-            upper = self._toplist.length
+        if not (0 <= upper < len(self._toplist)):
+            upper = len(self._toplist)
             
         toplists = self._toplist
         sublists = self._sublist
@@ -2506,10 +2512,10 @@ class IntervalSet(BaseIntervalCollection):
             if lower <= toplist.index < upper:
                 yield toplist[toplist.index]
 
-                if 0 <= toplist[toplist.index].sublist < sublists.length:
+                if 0 <= toplist[toplist.index].sublist < len(sublists):
                     sublist = sublists[toplist[toplist.index].sublist]
                     sublist.index = 0
-                    rangedeque.appendleft((0, sublist.length))
+                    rangedeque.appendleft((0, len(sublist)))
                     listdeque.appendleft(sublist)
                 toplist.index += 1
             else:
@@ -2543,7 +2549,7 @@ class IntervalSet(BaseIntervalCollection):
             listdeque.append(toplist)
             while listdeque:
                 toplist = listdeque[0]
-                if ((0 <= toplist.index < toplist.length) and
+                if ((0 <= toplist.index < len(toplist)) and
                     (node.interval.isintersecting(toplist[toplist.index].interval))):
                     # The interval intersects another, return result if 
                     # non-redundant (if we haven't seen its hash value)
@@ -2554,10 +2560,10 @@ class IntervalSet(BaseIntervalCollection):
                     
                     yield get(node, toplist[toplist.index])
 
-                    if 0 <= toplist[toplist.index].sublist < sublists.length:
+                    if 0 <= toplist[toplist.index].sublist < len(sublists):
                         sublist = sublists[toplist[toplist.index].sublist]
                         sublist.index = sublist.find_intersection_index_beg(node)
-                        if 0 <= sublist.index < sublist.length:
+                        if 0 <= sublist.index < len(sublist):
                             listdeque.appendleft(sublist)
                     toplist.index += 1
                 else:
@@ -2673,7 +2679,7 @@ class IntervalSet(BaseIntervalCollection):
         sublists = self._sublist
         subslots = self._subslot
 
-        if toplists.length and \
+        if len(toplists) and \
            toplists[0].interval.namespace != node.interval.namespace:
             raise ValueError("Cannot construct mixed namespace IntervalSet")
         
@@ -2688,13 +2694,13 @@ class IntervalSet(BaseIntervalCollection):
             node = nodedeque[0]  # query node
             toplist = listdeque[0]
             if toplist.index < 0 or \
-               toplist.length < 1 or \
-               toplist.length <= toplist.index:
+               len(toplist) < 1 or \
+               len(toplist) <= toplist.index:
                 toplist.append(node)
                 nodedeque.popleft()
                 listdeque.popleft()
 
-            elif ((toplist.index+1 < toplist.length) and
+            elif ((toplist.index+1 < len(toplist)) and
                   ((toplist[toplist.index].interval.beg == toplist[toplist.index+1].interval.beg) and 
                    (toplist[toplist.index].interval.end == toplist[toplist.index+1].interval.end))):
                 # list contains equivalents; shift right to maintain
@@ -2760,10 +2766,10 @@ class IntervalSet(BaseIntervalCollection):
             
     def _insert_sublist(self, node):
         if node.sublist < 0:
-            if self._subslot.length > 0:
+            if len(self._subslot) > 0:
                 node.sublist = self._subslot.popleft()
             else:
-                node.sublist = self._sublist.length
+                node.sublist = len(self._sublist)
                 self._sublist.append(_Sublist())
         return self._sublist[node.sublist]
             
@@ -2863,17 +2869,17 @@ class IntervalSet(BaseIntervalCollection):
         # be contained.
 
         if toplist.index < 0 or \
-           toplist.length < 1:
+           len(toplist) < 1:
             raise KeyError("'%s'" % repr(node.instance))
         
         listdeque = _deque()
         listdeque.append(toplists)
         while listdeque:
             toplist = listdeque[0]
-            if 0 <= toplist.index < toplist.length:
+            if 0 <= toplist.index < len(toplist):
                 if toplist[toplist.index].instance is node.instance:
                     # If node has a sublist, re-insort sublist
-                    if 0 <= toplist[toplist.index].sublist < sublists.length:
+                    if 0 <= toplist[toplist.index].sublist < len(sublists):
                         # Save the sublist data before deleting the
                         # node and making its sublist slot available
                         # or the indexing will be incorrect.
@@ -2889,7 +2895,7 @@ class IntervalSet(BaseIntervalCollection):
                             self._insert(toplist.index-1, subnode, _list=toplist)
                             # if-else condition order matters.
                             # Prioritize sort order:
-                            # if ((after < toplist.length) and
+                            # if ((after < len(toplist)) and
                             #     (toplist[after].interval.beg <= subnode.interval.beg) and
                             #     (toplist[after].interval.end >= subnode.interval.end)):
                             #     # Insert after current index
@@ -2905,7 +2911,7 @@ class IntervalSet(BaseIntervalCollection):
                     listdeque.popleft()
                     return
 
-                elif 0 <= toplist[toplist.index].sublist < sublists.length:
+                elif 0 <= toplist[toplist.index].sublist < len(sublists):
                     # No match in toplist, add its sublist to the deque
                     # for dfs search. Increment toplist.index because
                     # our query interval may not be contained in node i,
@@ -3158,7 +3164,7 @@ class IntervalSet(BaseIntervalCollection):
         ncls = self.__class__(setter=self._setter)
         if self._length < 1:
             return ncls
-        N = self._toplist.length
+        N = len(self._toplist)
         i = 1
         p = 0
         dist = 0  # = -dist
@@ -3239,7 +3245,7 @@ class IntervalSet(BaseIntervalCollection):
                 end=self.beg
             )))
             ncls._length += 1
-        for i in range(1, self._toplist.length):
+        for i in range(1, len(self._toplist)):
             if gapped(nodes[i].interval.beg - nodes[i-1].interval.end):
                 # gap between the two intervals, new record:
                 toplist.append(_Node(LeftClosedInterval(
@@ -3341,7 +3347,7 @@ class IntervalSet(BaseIntervalCollection):
             listdeque.append(toplist)
             while listdeque:
                 toplist = listdeque[0]
-                if ((0 <= toplist.index < toplist.length) and
+                if ((0 <= toplist.index < len(toplist)) and
                     (toplist[toplist.index].interval.beg < node.interval.end)):
                     # member node must intersection query node by search criterion
                     copy = LeftClosedInterval()
@@ -3359,7 +3365,7 @@ class IntervalSet(BaseIntervalCollection):
                         copy.beg = toplist[toplist.index].interval.beg
                         copy.end = node.interval.end
                     nodes.append(_Node(copy, (toplist[toplist.index].instance, node.instance)))
-                    if 0 <= toplist[toplist.index].sublist < sublists.length:
+                    if 0 <= toplist[toplist.index].sublist < len(sublists):
                         sublist = sublists[toplist[toplist.index].sublist]
                         sublist.index = sublist.find_intersection_index_beg(node)
                         listdeque.appendleft(sublist)

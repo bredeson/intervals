@@ -170,7 +170,6 @@ The following methods are available on interval values, where `self` and `other`
 
 | Operation                                 | Description                                                  |
 | ----------------------------------------- | ------------------------------------------------------------ |
-| `len(self)`                               | Length of interval span, or `0` when empty.                  |
 | `self.beg`                                | Bound variable. Return the begin/start coordinate (0-based, inclusive) of `self`. |
 | `self.clear()`                            | Callable. Alias for `null()`.                                |
 | `self.copy()`                             | Callable. Return news shallow copy (default) or deep copy (`deep=True`) of `self`. |
@@ -180,7 +179,7 @@ The following methods are available on interval values, where `self` and `other`
 | `self.end`                                | Bound variable. Return the end/stop coordinate (0-based, exclusive) of `self`. |
 | `self.inner_distance(other)`              | Callable. Return the numeric inner distance between two `self` and `other`. |
 | `self.intersection(other)`                | Callable. Return an Interval representing the set intersection between `self` and `other`. |
-| `self.intersection_update(other)`         | Update the `self` with the result of `intersection()`.       |
+| `self.intersection_update(other)`         | Callable. Update the `self` with the result of `intersection()`.       |
 | `self.isabutting(other)`                  | Callable. Test if `self` is abutting the start or end of `other`. |
 | `self.isabutting_beg(other)`              | Callable. Test if `self` is abutting the start of `other`.   |
 | `self.isabutting_end(other)`              | Callable. Test if `self` is abutting the end of `other`.     |
@@ -200,6 +199,8 @@ The following methods are available on interval values, where `self` and `other`
 | `self.issubset(other)`                    | Callable. Test if `self` is contained within `other`.        |
 | `self.issuperinterval(other)`             | Callable. Alias for `issuperset()`.                          |
 | `self.issuperset(other)`                  | Callable. Test if `self` contains `other`.                   |
+| `self.length()`                           | Callable. Return the length of the interval.                 |
+| `len(self)`                               | Length of interval span, or `0` when empty.                  |
 | `self.mid`                                | Bound variable. Read only. Return the mid-point coordinate of `self`. |
 | `self.name`                               | Bound variable. Alias for `namespace`.                       |
 | `self.namespace`                          | Bound variable. The namespace of `self` (optional).          |
@@ -216,7 +217,7 @@ The following methods are available on interval values, where `self` and `other`
 | `self.to_string()`                        | Callable. Return string representatio of `self`. Same as `str(self)`. |
 | `self.union(other)`                       | Callable. Return an Interval object representing the union of `self` and `other`. |
 | `self.union_update(other)`                | Callable. Update `self` with the result of `union()`.        |
-| `self.width()`                            | Callable. Return the length/width of the interval.           |
+
 
 
 
@@ -387,8 +388,10 @@ ClosedPoint(pos=nan, namespace=None)
 A list of `BaseInterval`-descendant objects, sorted by start position.` IntervalList` inherits from `collections.deque()` but requires all `BaseInterval`-descendant object members to be of the same namespace, or a `ValueError` is raised. 
 
 Read-only bounds (`beg`/`start`, `end`/`stop`, `mid`, `namespace`) describe the collection extremities. An empty list is null. `copy`, `clear`/`null`, `append`, `appendleft`, `extend`, `extendleft`, `insert`, `pop`, `popleft`, `remove`, `count`, `index`, and `deque`-style indexing are supported.
-    
-For many functions to work as expected, the user is required to maintain IntervalList members in sorted order (which is not  enforced by the class) or risk incorrect behavior. As such, the  user is recommended to use the `insort()` and `insortleft()`  methods to insert new members into the `IntervalList` in proper order. The `update()` and `updateleft()` methods are provided to insert multiple members at once. Methods such as `append()`, `appendleft()`, `extend()`, and `extendleft()` are provided for convenience and API consistency with `collections.deque()`, but the user is responsible for ensuring sort order is maintained when using these methods. Unlike the `deque()` class,however,  an in-place `list()`-like `sort()` method is provided.
+
+For many functions to work as expected, the user is required to maintain `IntervalList` members in sorted order (which is not  enforced by the class) or risk incorrect behavior. As such, the  user is recommended to use the `insort()` and `insortleft()`  methods to insert new members into the `IntervalList` in proper order. The `update()` and `updateleft()` methods are provided to insert multiple members at once. Methods such as `append()`, `appendleft()`, `extend()`, and `extendleft()` are provided for convenience and API consistency with `collections.deque()`, but the user is responsible for ensuring sort order is maintained when using these methods. Unlike the `deque()` class, however, an in-place `list()`-like `sort()` method is provided. 
+
+Because `len()` has differing meanings for `BaseInterval` (a scalar class) and `BaseIntervalCollections`  (a sequence class), these classes have a `.length()` method to provide a uniform interface for calculating the length(s) of their interval(s). 
 
 Use the `find_index()` method to find the index of a member equal to a given interval.
 
@@ -409,7 +412,6 @@ In the python REPL, call `help()` on the class or instance method to learn more 
 
 | Operation  | Description |
 |---------------------------------------------|------------------------------|
-|  `len(self)`                                |  Return the count of intervals contained in `self` |
 | `self.append(interval)`                     | Callable. Add an interval to the right side of `self`. |
 | `self.appendleft(interval)`                 | Callable. Add an interval to the left side of `self`. |
 | `self.beg`                                  | Bound variable. Read only. Return the begin/start coordinate (0-based, inclusive) of the first interval in `self`, or `nan` if empty. |
@@ -448,6 +450,8 @@ In the python REPL, call `help()` on the class or instance method to learn more 
 | `self.isempty()`                            | Callable. Test if `self` is contains no intervals. |
 | `self.isfinite()`                           | Callable. Test if `self` is a finite interval. |
 | `self.isnull()`                             | Callable. Test if `self` has `nan`-valued start or end. |
+| `self.length()`                            | Callable. Return the sum of lengths of the intervals in `self`. Use `.span().length()` to obtain the length between outer-most coordinates of the intervals in `self`. |
+|  `len(self)`                                |  Return the count of intervals contained in `self` |
 | `self.namespace`                            | Bound variable. Read only. The namespace of `self` (optional). |
 | `self.null()`                               | Callable. Alias for `clear()`. |
 | `self.pop()`                                | Callable. Pop one interval off the right side of `self` and return it. |
@@ -461,7 +465,6 @@ In the python REPL, call `help()` on the class or instance method to learn more 
 | `self.stop`                                 | Bound variable. Read only. Alias for `end`. |
 | `self.update(iterable)`                     | Callable. Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the right of existing ones. |
 | `self.updateleft(iterable)`                 | Callable. Insort into `self` the intervals contained in `iterable`, with identical intervals inserted to the left of existing ones. |
-| `self.width()`                            | Callable. Return the length/width of the interval.           |
 
 
 

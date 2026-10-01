@@ -244,8 +244,8 @@ class TestCase000_BaseInterval(TestCase):
     def test_issubinterval_0(self):
         self.assertTrue(hasattr(self.constructor(), 'issubinterval'))
 
-    def test_width_0(self):
-        self.assertTrue(hasattr(self.constructor(), 'width'))
+    def test_length_0(self):
+        self.assertTrue(hasattr(self.constructor(), 'length'))
 
 
         
@@ -814,17 +814,17 @@ class TestCase007_BaseInterval(TestCase):
         self.assertLessEqual(self.interval0, self.interval0)
 
     def test__len__1(self):
-        # see also test_width_1
+        # see also test_length_1
         self.assertEqual(len(self.interval0), 50)
         self.assertEqual(len(self.interval1), 50)
         self.assertEqual(len(self.interval2),  5)
         self.assertEqual(len(self.interval3), 25)
 
-    def test_width_1(self):
-        self.assertEqual(self.interval0.width(), 50)
-        self.assertEqual(self.interval1.width(), 50)
-        self.assertEqual(self.interval2.width(),  5)
-        self.assertEqual(self.interval3.width(), 25)
+    def test_length_1(self):
+        self.assertEqual(self.interval0.length(), 50)
+        self.assertEqual(self.interval1.length(), 50)
+        self.assertEqual(self.interval2.length(),  5)
+        self.assertEqual(self.interval3.length(), 25)
 
     def test__lt__1(self):
         self.assertLess(self.interval1, self.interval0)
@@ -3772,17 +3772,17 @@ class TestCase016_IntervalList(TestCase):
         )
         self.assertEqual(self.instance4.span(), expected)
 
-    def test_width_1(self):
-        self.assertEqual(self.instance1.width(), 0)
+    def test_length_1(self):
+        self.assertEqual(self.instance1.length(), 0)
 
-    def test_width_2(self):
-        self.assertEqual(self.instance2.width(), 34)
+    def test_length_2(self):
+        self.assertEqual(self.instance2.length(), 34)
 
-    def test_width_3(self):
-        self.assertEqual(self.instance3.width(), 110)
+    def test_length_3(self):
+        self.assertEqual(self.instance3.length(), 163)
 
-    def test_width_4(self):
-        self.assertEqual(self.instance4.width(), 99)
+    def test_length_4(self):
+        self.assertEqual(self.instance4.length(), 144)
         
     def test_find_index_beg_1(self):
         index = self.instance2.find_index_beg(Interval("Chr", 0, 1))

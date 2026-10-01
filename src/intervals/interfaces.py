@@ -184,9 +184,9 @@ class _IntervalIdentityInterface(object):
         """
         len(self) -> value
 
-        Return the width of the interval.
+        Return the length of the interval.
         """
-        return self.width()
+        return 0 if self.isempty() else abs(self.end - self.beg)
 
 
     def __le__(self, other):
@@ -302,7 +302,7 @@ class _IntervalIdentityInterface(object):
         """
         return _NULL_POS \
             if   self.isempty() \
-            else (self.beg + self.width() / 2.0)
+            else (self.beg + self.length() / 2.0)
 
 
     @property
@@ -377,7 +377,7 @@ class _IntervalIdentityInterface(object):
 
         Return a boolean indicating whether self is a singleton interval.
         """
-        return self.width() == 1
+        return self.length() == 1
 
 
     def span(self, other=None):
@@ -405,18 +405,18 @@ class _IntervalIdentityInterface(object):
         return copy
 
 
-    def width(self):
+    def length(self):
         """
-        self.width() -> value
+        self.length() -> value
 
-        Return the width of the interval.
+        Return the length of the interval.
 
         >>> interval = Interval("Chr", 350, 475)
-        >>> print(interval.width())
+        >>> print(interval.length())
         125
         """
-        return 0 if self.isempty() else abs(self.end - self.beg)
-    
+        return self.__len__()
+
 
     def to_string(self):
         return self.__str__()
@@ -473,7 +473,7 @@ class _IntervalIntegerInterface(object):
         """        
         return _NULL_POS \
             if   self.isempty() \
-            else self.beg + ((self.end - self.beg) >> 1)
+            else self.beg + (self.length() >> 1)
         
 
     @property
@@ -1412,7 +1412,7 @@ class _IntervalSetInterface(object):
         >>> I1.intersection_fraction(I2)
         0.5
         """
-        return float(self.intersection_length(other)) / max(1, self.end - self.beg)
+        return float(self.intersection_length(other)) / max(1, self.length())
     
     
     def inner_distance(self, other):
@@ -1455,8 +1455,7 @@ class _IntervalSetInterface(object):
         """
         intersection_length = float(self.intersection_length(other))
         return 1.0 - intersection_length / (
-            (self.end - self.beg) + (other.end - other.beg)
-            - intersection_length
+            self.length() + other.length() - intersection_length
         )
 
     
