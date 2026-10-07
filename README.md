@@ -24,7 +24,6 @@
     - [The IntervalList class](#the-intervallist-class)
       - [IntervalList methods and bound variables](#IntervalList-methods-and-bound-variables)
       - [IntervalList examples](#intervallist-examples)
-    - [The IntervalSet class](#the-intervalset-class)
   - [Errors](#errors)
 
 
@@ -118,7 +117,6 @@ BaseInterval,
   
 BaseIntervalCollection,
   IntervalList,
-  IntervalSet,
   DuplicateKeyError
 
 ```
@@ -136,8 +134,7 @@ BaseInterval(_IntervalSetInterface, _IntervalIdentityInterface, _IntervalArithme
             Point(_IntervalIndexInterface, LeftClosedPoint)
             
 BaseIntervalCollection(_IntervalSetInterface, _IntervalIdentityInterface)
-    IntervalList(BaseIntervalCollection, collections.deque)
-    IntervalSet
+    IntervalList(BaseIntervalCollection, list)
 
 ```
 
@@ -385,11 +382,11 @@ ClosedPoint(pos=nan, namespace=None)
 
 ### The IntervalList class
 
-A list of `BaseInterval`-descendant objects, sorted by start position.` IntervalList` inherits from `collections.deque()` but requires all `BaseInterval`-descendant object members to be of the same namespace, or a `ValueError` is raised. 
+A list of `BaseInterval`-descendant objects, sorted by start position.` IntervalList` inherits from `list` but requires all `BaseInterval`-descendant object members to be of the same namespace, or a `ValueError` is raised. 
 
-Read-only bounds (`beg`/`start`, `end`/`stop`, `mid`, `namespace`) describe the collection extremities. An empty list is null. `copy`, `clear`/`null`, `append`, `appendleft`, `extend`, `extendleft`, `insert`, `pop`, `popleft`, `remove`, `count`, `index`, and `deque`-style indexing are supported.
+Read-only bounded variables (`beg`/`start`, `end`/`stop`, `mid`, `namespace`) describe the collection extremities. An empty list is null. `copy`, `clear`/`null`, `append`, `appendleft`, `extend`, `extendleft`, `insert`, `pop`, `popleft`, `remove`, `count`, `index`, and `list`-style indexing are supported.
 
-For many functions to work as expected, the user is required to maintain `IntervalList` members in sorted order (which is not  enforced by the class) or risk incorrect behavior. As such, the  user is recommended to use the `insort()` and `insortleft()`  methods to insert new members into the `IntervalList` in proper order. The `update()` and `updateleft()` methods are provided to insert multiple members at once. Methods such as `append()`, `appendleft()`, `extend()`, and `extendleft()` are provided for convenience and API consistency with `collections.deque()`, but the user is responsible for ensuring sort order is maintained when using these methods. Unlike the `deque()` class, however, an in-place `list()`-like `sort()` method is provided. 
+For many functions to work as expected, the user is required to maintain `IntervalList` members in sorted order (which is not  enforced by the class) or risk incorrect behavior. As such, the  user is recommended to use the `insort()` and `insortleft()`  methods to insert new members into the `IntervalList` in proper order. The `update()` and `updateleft()` methods are provided to insert multiple members at once. Methods such as `append()`, `appendleft()`, `extend()`, and `extendleft()` are provided for convenience, but the user is responsible for ensuring sort order is maintained when using these methods.
 
 Because `len()` has differing meanings for `BaseInterval` (a scalar class) and `BaseIntervalCollections`  (a sequence class), these classes have a `.length()` method to provide a uniform interface for calculating the length(s) of their interval(s). 
 
@@ -544,14 +541,6 @@ chr1:1000000-1500000 chr2:1100000-1600000
 
 
 
-### The IntervalSet class
-
-***WARNING*: Still under development, not yet recommended for use.**
-
-Inspired by and implemented as a [Nested Containment List](https://doi.org/10.1093/bioinformatics/btl647). 
-
-
-
 ## Errors
 
-Methods that store intervals in a collection raise `ValueError` for mixed namespaces. A bad `setter`, or one that does not produce a `BaseInterval`, raises `TypeError`. Missing `IntervalList` items raise `ValueError`; missing `IntervalSet` items raise `KeyError`. Unsupported interval arithmetic operand types raise `TypeError`.
+Methods that store intervals in a collection raise `ValueError` for mixed namespaces. A bad `setter`, or one that does not produce a `BaseInterval`, raises `TypeError`. Missing `IntervalList` items raise `ValueError`. Unsupported interval arithmetic operand types raise `TypeError`.

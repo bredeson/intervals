@@ -16,7 +16,6 @@ from intervals import (
     IntervalList,
 )
 from intervals.collections import _Node
-from collections import deque
 from math import isnan, nan, isinf, inf
 from copy import copy
 
@@ -2709,14 +2708,14 @@ class TestCase015_IntervalList(TestCase):
         ilist = self.constructor()
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 0)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
 
     def test__init__2(self):
         mysetter = lambda i: i
         ilist = self.constructor(setter=mysetter)
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 0)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         self.assertIs(ilist._setter, mysetter)
 
     def test__init__3(self):
@@ -2724,7 +2723,7 @@ class TestCase015_IntervalList(TestCase):
         ilist = self.constructor([], setter=mysetter)
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 0)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         self.assertIs(ilist._setter, mysetter)
 
     def test__init__4(self):
@@ -3010,7 +3009,7 @@ class TestCase016_IntervalList(TestCase):
         ilist = self.constructor([self.interval0])
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 1)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         self.assertEqual(ilist[0], self.interval0)
         self.assertEqual(ilist._get_node(0).max, self.interval0.end)
         
@@ -3019,7 +3018,7 @@ class TestCase016_IntervalList(TestCase):
         ilist = self.constructor(intervals, setter=lambda i: i[1])
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), len(intervals))
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         self.assertEqual(list(ilist), intervals)
         self.assertEqual(ilist._get_node(0).max, self.interval0.end)
         
@@ -3032,7 +3031,7 @@ class TestCase016_IntervalList(TestCase):
         ilist = self.constructor(intervals, setter=lambda i: i[1])
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), len(intervals))
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         self.assertEqual(list(ilist), intervals)
         for i in range(len(intervals)):
             self.assertEqual(ilist._get_node(i).max, intervals[i][0])
@@ -3068,7 +3067,7 @@ class TestCase016_IntervalList(TestCase):
         num_items = len(self.instance2)
         self.instance2[2] = self.interval12  # 35-97
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[2], self.interval12)
         expected_max = [5, 25, 97]
         observed_max = [
@@ -3081,7 +3080,7 @@ class TestCase016_IntervalList(TestCase):
         num_items = len(self.instance2)
         self.instance2[1] = self.interval8  # 5-15
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[1], self.interval8)
         expected_max = [5, 15, 35]
         observed_max = [
@@ -3094,7 +3093,7 @@ class TestCase016_IntervalList(TestCase):
         num_items = len(self.instance2)
         self.instance2[1] = interval = Interval("Chr",10,40)
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[1], interval)
         expected_max = [5, 40, 40]
         observed_max = [
@@ -3107,7 +3106,7 @@ class TestCase016_IntervalList(TestCase):
         num_items = len(self.instance3)
         self.instance3[5] = interval = Interval("Chr",41,99)
         self.assertEqual(len(self.instance3), num_items)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertIs(self.instance3[5], interval)
         expected_max = [4, 5, 15, 50, 100, 100, 110]
         observed_max = [
@@ -3120,7 +3119,7 @@ class TestCase016_IntervalList(TestCase):
         num_items = len(self.instance3)
         self.instance3[4] = interval = Interval("Chr",40,55)
         self.assertEqual(len(self.instance3), num_items)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertIs(self.instance3[4], interval)
         expected_max = [4, 5, 15, 50, 55, 95, 110]
         observed_max = [
@@ -3133,7 +3132,7 @@ class TestCase016_IntervalList(TestCase):
         num_items = len(self.instance3)
         self.instance3[4] = interval = Interval("Chr",40,45)
         self.assertEqual(len(self.instance3), num_items)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertIs(self.instance3[4], interval)
         expected_max = [4, 5, 15, 50, 50, 95, 110]
         observed_max = [
@@ -3187,18 +3186,18 @@ class TestCase016_IntervalList(TestCase):
         
     def test_append_0(self):
         num_items = len(self.instance1)
-        self.assertEqual(num_items, deque.__len__(self.instance1))
+        self.assertEqual(num_items, list.__len__(self.instance1))
         self.instance1.append(self.interval6)
         self.assertEqual(len(self.instance1), num_items+1)
-        self.assertEqual(len(self.instance1), deque.__len__(self.instance1))
+        self.assertEqual(len(self.instance1), list.__len__(self.instance1))
         self.assertIs(self.instance1[-1], self.interval6)
 
     def test_append_1(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.append(self.interval6)
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[-1], self.interval6)
         
     def test_append_2(self):
@@ -3233,18 +3232,18 @@ class TestCase016_IntervalList(TestCase):
                     
     def test_appendleft_0(self):
         num_items = len(self.instance1)
-        self.assertEqual(num_items, deque.__len__(self.instance1))
+        self.assertEqual(num_items, list.__len__(self.instance1))
         self.instance1.appendleft(self.interval6)
         self.assertEqual(len(self.instance1), num_items+1)
-        self.assertEqual(len(self.instance1), deque.__len__(self.instance1))
+        self.assertEqual(len(self.instance1), list.__len__(self.instance1))
         self.assertIs(self.instance1[0], self.interval6)
 
     def test_appendleft_1(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.appendleft(self.interval6)
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[0], self.interval6)
         
     def test_appendleft_2(self):
@@ -3281,28 +3280,28 @@ class TestCase016_IntervalList(TestCase):
         ilist = self.constructor([self.interval0])
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 1)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         ilist.clear()
         self.assertEqual(len(ilist), 0)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
 
     def test_copy_1(self):
         # shallow copy of the list, but not the items
         ilist = self.constructor([self.interval0])
         self.assertIsInstance(ilist, self.constructor)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         ilist_copy = ilist.copy()
         self.assertIsInstance(ilist_copy, self.constructor)
-        self.assertEqual(len(ilist_copy), deque.__len__(ilist_copy))
+        self.assertEqual(len(ilist_copy), list.__len__(ilist_copy))
         self.assertIsNot(ilist, ilist_copy)
         self.assertEqual(ilist[0], ilist_copy[0])
         
     def test_extend_0(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.extend([self.interval0])
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[-1], self.interval0)
 
     def test_extend_1(self):
@@ -3347,10 +3346,10 @@ class TestCase016_IntervalList(TestCase):
         
     def test_extendleft_0(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.extendleft([self.interval6])
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[0], self.interval6)
 
     def test_extendleft_1(self):
@@ -3392,10 +3391,10 @@ class TestCase016_IntervalList(TestCase):
         
     def test_insert_0(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.insert(2, self.interval4)
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertEqual(
             list(self.instance2),
             [self.interval1, self.interval3, self.interval4, self.interval5]
@@ -3438,10 +3437,10 @@ class TestCase016_IntervalList(TestCase):
             self.interval4,   # 25-50
         ])
         num_items = len(ilist)
-        self.assertEqual(num_items, deque.__len__(ilist))
+        self.assertEqual(num_items, list.__len__(ilist))
         ilist.insert(1, self.interval5)
         self.assertEqual(len(ilist), num_items+1)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         observed_max = [
             ilist._get_node(i).max \
             for i in range(len(ilist))
@@ -3458,14 +3457,14 @@ class TestCase016_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.update([
             self.interval6, 
             self.interval2, 
             self.interval7
         ])
         self.assertEqual(len(self.instance2), num_items+3)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertEqual(list(self.instance2), expected)
         self.assertIs(self.instance2[0], self.interval1)
         self.assertIs(self.instance2[1], self.interval2)
@@ -3480,25 +3479,25 @@ class TestCase016_IntervalList(TestCase):
             self.interval5,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.updateleft([
             self.interval0, 
             self.interval2, 
             self.interval7
         ])
         self.assertEqual(len(self.instance2), num_items+3)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertEqual(list(self.instance2), expected)
         self.assertIs(self.instance2[1], self.interval2)
         self.assertIs(self.instance2[2], self.interval1)
         
     def test_popleft_1(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         item1 = self.instance2[0]
         item2 = self.instance2.popleft()
         self.assertEqual(len(self.instance2), num_items-1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(item1, item2)
 
     def test_popleft_2(self):
@@ -3551,11 +3550,11 @@ class TestCase016_IntervalList(TestCase):
         
     def test_pop_1(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         item1 = self.instance2[-1]
         item2 = self.instance2.pop()
         self.assertEqual(len(self.instance2), num_items-1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(item1, item2)
 
     def test_pop_2(self):
@@ -3614,7 +3613,7 @@ class TestCase016_IntervalList(TestCase):
         item3 = self.instance2[-1]
         self.instance2.rotate(-1)  # pull leftward
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[0], item2)
         self.assertIs(self.instance2[-2], item3)
         self.assertIs(self.instance2[-1], item1)
@@ -3629,7 +3628,7 @@ class TestCase016_IntervalList(TestCase):
         item3 = self.instance2[-1]
         self.instance2.rotate(+1)  # pull rightward
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[0], item3)
         self.assertIs(self.instance2[1], item1)
         self.assertIs(self.instance2[-1], item2)        
@@ -3644,10 +3643,10 @@ class TestCase016_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.assertEqual(num_items, list.__len__(self.instance3))
         self.instance3.remove(self.interval11)
         self.assertEqual(len(self.instance3), num_items-1)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertEqual(list(self.instance3), expected)
 
     def test_remove_2(self):
@@ -3660,10 +3659,10 @@ class TestCase016_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.assertEqual(num_items, list.__len__(self.instance3))
         self.instance3.remove(self.interval0)
         self.assertEqual(len(self.instance3), num_items-1)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertEqual(list(self.instance3), expected)
 
     def test_remove_3(self):
@@ -3676,10 +3675,10 @@ class TestCase016_IntervalList(TestCase):
             self.interval11,
             self.interval6,
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.assertEqual(num_items, list.__len__(self.instance3))
         self.instance3.remove(self.interval7)
         self.assertEqual(len(self.instance3), num_items-1)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertEqual(list(self.instance3), expected)        
         
     def test_remove_4(self):
@@ -4532,7 +4531,7 @@ class TestCase017_IntervalList(TestCase):
         ilist = self.constructor([self.interval0], setter=self.setter)
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 1)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         self.assertEqual(ilist[0], self.interval0)
         self.assertEqual(ilist._get_node(0).max, self.interval0.interval.end)
         
@@ -4541,7 +4540,7 @@ class TestCase017_IntervalList(TestCase):
         ilist = self.constructor(intervals, setter=lambda i: i[1].interval)
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), len(intervals))
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         self.assertEqual(list(ilist), intervals)
         self.assertEqual(ilist._get_node(0).max, self.interval0.interval.end)
         
@@ -4554,7 +4553,7 @@ class TestCase017_IntervalList(TestCase):
         ilist = self.constructor(intervals, setter=lambda i: i[1].interval)
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), len(intervals))
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         self.assertEqual(list(ilist), intervals)
         for i in range(len(intervals)):
             self.assertEqual(ilist._get_node(i).max, intervals[i][0])
@@ -4586,7 +4585,7 @@ class TestCase017_IntervalList(TestCase):
         num_items = len(self.instance2)
         self.instance2[2] = self.interval12  # 35-97
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[2], self.interval12)
         expected_max = [5, 25, 97]
         observed_max = [
@@ -4599,7 +4598,7 @@ class TestCase017_IntervalList(TestCase):
         num_items = len(self.instance2)
         self.instance2[1] = self.interval8  # 5-15
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[1], self.interval8)
         expected_max = [5, 15, 35]
         observed_max = [
@@ -4612,7 +4611,7 @@ class TestCase017_IntervalList(TestCase):
         num_items = len(self.instance2)
         self.instance2[1] = interval = self.container("Chr",10,40)
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[1], interval)
         expected_max = [5, 40, 40]
         observed_max = [
@@ -4625,7 +4624,7 @@ class TestCase017_IntervalList(TestCase):
         num_items = len(self.instance3)
         self.instance3[5] = interval = self.container("Chr",41,99)
         self.assertEqual(len(self.instance3), num_items)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertIs(self.instance3[5], interval)
         expected_max = [4, 5, 15, 50, 100, 100, 110]
         observed_max = [
@@ -4638,7 +4637,7 @@ class TestCase017_IntervalList(TestCase):
         num_items = len(self.instance3)
         self.instance3[4] = interval = self.container("Chr",40,55)
         self.assertEqual(len(self.instance3), num_items)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertIs(self.instance3[4], interval)
         expected_max = [4, 5, 15, 50, 55, 95, 110]
         observed_max = [
@@ -4651,7 +4650,7 @@ class TestCase017_IntervalList(TestCase):
         num_items = len(self.instance3)
         self.instance3[4] = interval = self.container("Chr",40,45)
         self.assertEqual(len(self.instance3), num_items)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertIs(self.instance3[4], interval)
         expected_max = [4, 5, 15, 50, 50, 95, 110]
         observed_max = [
@@ -4686,18 +4685,18 @@ class TestCase017_IntervalList(TestCase):
         
     def test_append_0(self):
         num_items = len(self.instance1)
-        self.assertEqual(num_items, deque.__len__(self.instance1))
+        self.assertEqual(num_items, list.__len__(self.instance1))
         self.instance1.append(self.interval6)
         self.assertEqual(len(self.instance1), num_items+1)
-        self.assertEqual(len(self.instance1), deque.__len__(self.instance1))
+        self.assertEqual(len(self.instance1), list.__len__(self.instance1))
         self.assertIs(self.instance1[-1], self.interval6)
 
     def test_append_1(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.append(self.interval6)
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[-1], self.interval6)
         
     def test_append_2(self):
@@ -4745,18 +4744,18 @@ class TestCase017_IntervalList(TestCase):
                     
     def test_appendleft_0(self):
         num_items = len(self.instance1)
-        self.assertEqual(num_items, deque.__len__(self.instance1))
+        self.assertEqual(num_items, list.__len__(self.instance1))
         self.instance1.appendleft(self.interval6)
         self.assertEqual(len(self.instance1), num_items+1)
-        self.assertEqual(len(self.instance1), deque.__len__(self.instance1))
+        self.assertEqual(len(self.instance1), list.__len__(self.instance1))
         self.assertIs(self.instance1[0], self.interval6)
 
     def test_appendleft_1(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.appendleft(self.interval6)
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[0], self.interval6)
         
     def test_appendleft_2(self):
@@ -4806,28 +4805,28 @@ class TestCase017_IntervalList(TestCase):
         ilist = self.constructor([self.interval0], setter=self.setter)
         self.assertIsInstance(ilist, self.constructor)
         self.assertEqual(len(ilist), 1)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         ilist.clear()
         self.assertEqual(len(ilist), 0)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
 
     def test_copy_1(self):
         # shallow copy of the list, but not the items
         ilist = self.constructor([self.interval0], setter=self.setter)
         self.assertIsInstance(ilist, self.constructor)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         ilist_copy = ilist.copy()
         self.assertIsInstance(ilist_copy, self.constructor)
-        self.assertEqual(len(ilist_copy), deque.__len__(ilist_copy))
+        self.assertEqual(len(ilist_copy), list.__len__(ilist_copy))
         self.assertIsNot(ilist, ilist_copy)
         self.assertEqual(ilist[0], ilist_copy[0])
         
     def test_extend_0(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.extend([self.interval0])
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[-1], self.interval0)
 
     def test_extend_1(self):
@@ -4893,10 +4892,10 @@ class TestCase017_IntervalList(TestCase):
         
     def test_extendleft_0(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.extendleft([self.interval6])
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[0], self.interval6)
 
     def test_extendleft_1(self):
@@ -4959,10 +4958,10 @@ class TestCase017_IntervalList(TestCase):
         
     def test_insert_0(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.insert(2, self.interval4)
         self.assertEqual(len(self.instance2), num_items+1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertEqual(
             list(self.instance2),
             [self.interval1, self.interval3, self.interval4, self.interval5]
@@ -5008,10 +5007,10 @@ class TestCase017_IntervalList(TestCase):
             setter=self.setter
         )
         num_items = len(ilist)
-        self.assertEqual(num_items, deque.__len__(ilist))
+        self.assertEqual(num_items, list.__len__(ilist))
         ilist.insert(1, self.interval5)
         self.assertEqual(len(ilist), num_items+1)
-        self.assertEqual(len(ilist), deque.__len__(ilist))
+        self.assertEqual(len(ilist), list.__len__(ilist))
         observed_max = [
             ilist._get_node(i).max \
             for i in range(len(ilist))
@@ -5041,10 +5040,10 @@ class TestCase017_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.update([self.interval6, self.interval2, self.interval7])
         self.assertEqual(len(self.instance2), num_items+3)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertEqual(list(self.instance2), expected)
         self.assertIs(self.instance2[0], self.interval1)
         self.assertIs(self.instance2[1], self.interval2)
@@ -5080,10 +5079,10 @@ class TestCase017_IntervalList(TestCase):
             self.interval5,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         self.instance2.updateleft([self.interval0, self.interval2, self.interval7])
         self.assertEqual(len(self.instance2), num_items+3)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertEqual(list(self.instance2), expected)
         self.assertIs(self.instance2[1], self.interval2)
         self.assertIs(self.instance2[2], self.interval1)
@@ -5115,11 +5114,11 @@ class TestCase017_IntervalList(TestCase):
         
     def test_popleft_1(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         item1 = self.instance2[0]
         item2 = self.instance2.popleft()
         self.assertEqual(len(self.instance2), num_items-1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(item1, item2)
 
     def test_popleft_2(self):
@@ -5175,11 +5174,11 @@ class TestCase017_IntervalList(TestCase):
         
     def test_pop_1(self):
         num_items = len(self.instance2)
-        self.assertEqual(num_items, deque.__len__(self.instance2))
+        self.assertEqual(num_items, list.__len__(self.instance2))
         item1 = self.instance2[-1]
         item2 = self.instance2.pop()
         self.assertEqual(len(self.instance2), num_items-1)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(item1, item2)
 
     def test_pop_2(self):
@@ -5244,7 +5243,7 @@ class TestCase017_IntervalList(TestCase):
         item3 = self.instance2[-1]
         self.instance2.rotate(-1)  # pull leftward
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[0], item2)
         self.assertIs(self.instance2[-2], item3)
         self.assertIs(self.instance2[-1], item1)
@@ -5262,7 +5261,7 @@ class TestCase017_IntervalList(TestCase):
         item3 = self.instance2[-1]
         self.instance2.rotate(+1)  # pull rightward
         self.assertEqual(len(self.instance2), num_items)
-        self.assertEqual(len(self.instance2), deque.__len__(self.instance2))
+        self.assertEqual(len(self.instance2), list.__len__(self.instance2))
         self.assertIs(self.instance2[0], item3)
         self.assertIs(self.instance2[1], item1)
         self.assertIs(self.instance2[-1], item2)        
@@ -5277,10 +5276,10 @@ class TestCase017_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.assertEqual(num_items, list.__len__(self.instance3))
         self.instance3.remove(self.interval11)
         self.assertEqual(len(self.instance3), num_items-1)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertEqual(list(self.instance3), expected)
 
     def test_remove_2(self):
@@ -5293,10 +5292,10 @@ class TestCase017_IntervalList(TestCase):
             self.interval6,
             self.interval7
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.assertEqual(num_items, list.__len__(self.instance3))
         self.instance3.remove(self.interval0)
         self.assertEqual(len(self.instance3), num_items-1)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertEqual(list(self.instance3), expected)
 
     def test_remove_3(self):
@@ -5309,10 +5308,10 @@ class TestCase017_IntervalList(TestCase):
             self.interval11,
             self.interval6,
         ]
-        self.assertEqual(num_items, deque.__len__(self.instance3))
+        self.assertEqual(num_items, list.__len__(self.instance3))
         self.instance3.remove(self.interval7)
         self.assertEqual(len(self.instance3), num_items-1)
-        self.assertEqual(len(self.instance3), deque.__len__(self.instance3))
+        self.assertEqual(len(self.instance3), list.__len__(self.instance3))
         self.assertEqual(list(self.instance3), expected)        
         
     def test_remove_4(self):
